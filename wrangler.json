@@ -7,10 +7,34 @@
   "observability": {
     "enabled": true
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "stray-tracker",
+      "database_id": "stray-tracker"
+    }
+  ],
   "kv_namespaces": [
     {
       "binding": "CACHE",
       "id": "stray-tracker"
     }
-  ]
+  ],
+  "vars": {
+    "NODE_ENV": "production",
+    "BASE_URL": "https://stray-tracker.pages.dev"
+  },
+  "security": {
+    "cross-origin-embedder-policy": "credentialless",
+    "cross-origin-opener-policy": "same-origin",
+    "cross-origin-resource-policy": "cross-origin",
+    "content-security-policy": {
+      "default-src": "'self'",
+      "script-src": "'self' 'unsafe-inline'",
+      "style-src": "'self' 'unsafe-inline'",
+      "img-src": "'self' data: https:",
+      "connect-src": "'self'",
+      "frame-ancestors": "'none'"
+    }
+  }
 }

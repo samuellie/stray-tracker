@@ -50,11 +50,11 @@ Stray Tracker is a community-driven Progressive Web App for tracking and helping
 - [x] Configure Cloudflare Pages for static site hosting
 - [x] Initialize Cloudflare D1 serverless SQLite database
 - [x] Set up Cloudflare R2 object storage for media files
-- [ ] Configure Cloudflare KV for key-value caching and session storage
-- [ ] Configure Better Auth framework with OAuth providers (Google, Facebook, Instagram)
-- [ ] Implement Better Auth session management and token handling
-- [ ] Set up API rate limiting and DDoS protection with Better Auth
-- [ ] Configure Content Security Policy (CSP) and security headers
+- [x] Configure Cloudflare KV for key-value caching and session storage
+- [x] Configure Better Auth framework with OAuth providers (Google, Facebook, Instagram)
+- [x] Implement Better Auth session management and token handling
+- [x] Set up API rate limiting and DDoS protection with Better Auth
+- [x] Configure Content Security Policy (CSP) and security headers
 
 #### 1.4 Testing Framework Setup
 

@@ -9,7 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SightingsRouteImport } from './routes/sightings'
 import { Route as ShadcnTestRouteImport } from './routes/shadcn-test'
+import { Route as ReportRouteImport } from './routes/report'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AnimalsRouteImport } from './routes/animals'
 import { Route as PathlessLayoutRouteImport } from './routes/_pathlessLayout'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiUsersRouteImport } from './routes/api/users'
@@ -18,9 +23,34 @@ import { Route as ApiUsersUserIdRouteImport } from './routes/api/users.$userId'
 import { Route as PathlessLayoutNestedLayoutRouteBRouteImport } from './routes/_pathlessLayout/_nested-layout/route-b'
 import { Route as PathlessLayoutNestedLayoutRouteARouteImport } from './routes/_pathlessLayout/_nested-layout/route-a'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SightingsRoute = SightingsRouteImport.update({
+  id: '/sightings',
+  path: '/sightings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShadcnTestRoute = ShadcnTestRouteImport.update({
   id: '/shadcn-test',
   path: '/shadcn-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportRoute = ReportRouteImport.update({
+  id: '/report',
+  path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnimalsRoute = AnimalsRouteImport.update({
+  id: '/animals',
+  path: '/animals',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PathlessLayoutRoute = PathlessLayoutRouteImport.update({
@@ -62,7 +92,12 @@ const PathlessLayoutNestedLayoutRouteARoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/animals': typeof AnimalsRoute
+  '/login': typeof LoginRoute
+  '/report': typeof ReportRoute
   '/shadcn-test': typeof ShadcnTestRoute
+  '/sightings': typeof SightingsRoute
+  '/signup': typeof SignupRoute
   '/api/users': typeof ApiUsersRouteWithChildren
   '/route-a': typeof PathlessLayoutNestedLayoutRouteARoute
   '/route-b': typeof PathlessLayoutNestedLayoutRouteBRoute
@@ -70,7 +105,12 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/animals': typeof AnimalsRoute
+  '/login': typeof LoginRoute
+  '/report': typeof ReportRoute
   '/shadcn-test': typeof ShadcnTestRoute
+  '/sightings': typeof SightingsRoute
+  '/signup': typeof SignupRoute
   '/api/users': typeof ApiUsersRouteWithChildren
   '/route-a': typeof PathlessLayoutNestedLayoutRouteARoute
   '/route-b': typeof PathlessLayoutNestedLayoutRouteBRoute
@@ -80,7 +120,12 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_pathlessLayout': typeof PathlessLayoutRouteWithChildren
+  '/animals': typeof AnimalsRoute
+  '/login': typeof LoginRoute
+  '/report': typeof ReportRoute
   '/shadcn-test': typeof ShadcnTestRoute
+  '/sightings': typeof SightingsRoute
+  '/signup': typeof SignupRoute
   '/_pathlessLayout/_nested-layout': typeof PathlessLayoutNestedLayoutRouteWithChildren
   '/api/users': typeof ApiUsersRouteWithChildren
   '/_pathlessLayout/_nested-layout/route-a': typeof PathlessLayoutNestedLayoutRouteARoute
@@ -91,7 +136,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/animals'
+    | '/login'
+    | '/report'
     | '/shadcn-test'
+    | '/sightings'
+    | '/signup'
     | '/api/users'
     | '/route-a'
     | '/route-b'
@@ -99,7 +149,12 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/animals'
+    | '/login'
+    | '/report'
     | '/shadcn-test'
+    | '/sightings'
+    | '/signup'
     | '/api/users'
     | '/route-a'
     | '/route-b'
@@ -108,7 +163,12 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_pathlessLayout'
+    | '/animals'
+    | '/login'
+    | '/report'
     | '/shadcn-test'
+    | '/sightings'
+    | '/signup'
     | '/_pathlessLayout/_nested-layout'
     | '/api/users'
     | '/_pathlessLayout/_nested-layout/route-a'
@@ -119,17 +179,57 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   PathlessLayoutRoute: typeof PathlessLayoutRouteWithChildren
+  AnimalsRoute: typeof AnimalsRoute
+  LoginRoute: typeof LoginRoute
+  ReportRoute: typeof ReportRoute
   ShadcnTestRoute: typeof ShadcnTestRoute
+  SightingsRoute: typeof SightingsRoute
+  SignupRoute: typeof SignupRoute
   ApiUsersRoute: typeof ApiUsersRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sightings': {
+      id: '/sightings'
+      path: '/sightings'
+      fullPath: '/sightings'
+      preLoaderRoute: typeof SightingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/shadcn-test': {
       id: '/shadcn-test'
       path: '/shadcn-test'
       fullPath: '/shadcn-test'
       preLoaderRoute: typeof ShadcnTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/report': {
+      id: '/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/animals': {
+      id: '/animals'
+      path: '/animals'
+      fullPath: '/animals'
+      preLoaderRoute: typeof AnimalsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_pathlessLayout': {
@@ -229,7 +329,12 @@ const ApiUsersRouteWithChildren = ApiUsersRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PathlessLayoutRoute: PathlessLayoutRouteWithChildren,
+  AnimalsRoute: AnimalsRoute,
+  LoginRoute: LoginRoute,
+  ReportRoute: ReportRoute,
   ShadcnTestRoute: ShadcnTestRoute,
+  SightingsRoute: SightingsRoute,
+  SignupRoute: SignupRoute,
   ApiUsersRoute: ApiUsersRouteWithChildren,
 }
 export const routeTree = rootRouteImport
