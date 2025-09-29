@@ -26,8 +26,8 @@ Stray Tracker is a community-driven Progressive Web App for tracking and helping
 - [x] Configure TypeScript with strict type checking enabled
 - [x] Set up Vite build tool with hot module replacement
 - [x] Install and configure Wrangler CLI for Cloudflare development
-- [ ] Configure ESLint and Prettier for code quality
-- [ ] Set up development scripts (dev, build, preview, deploy)
+- [x] Configure ESLint and Prettier for code quality
+- [x] Set up development scripts (dev, build, preview, deploy)
 
 #### 1.2 Frontend Technology Stack Implementation
 

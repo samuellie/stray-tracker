@@ -118,7 +118,7 @@ export const Route = createRootRoute({
     //       },
     //     },
     //   }),
-    test: (test) => {},
+    test: test => {},
   },
   beforeLoad: ({ serverContext }) => {
     serverContext?.fromFetch

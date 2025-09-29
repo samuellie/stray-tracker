@@ -1,17 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Button } from "~/components/ui/button";
+import { createFileRoute } from '@tanstack/react-router'
+import { Button } from '~/components/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
+} from '~/components/ui/card'
+import { Input } from '~/components/ui/input'
 
-export const Route = createFileRoute("/shadcn-test")({
+export const Route = createFileRoute('/shadcn-test')({
   component: ShadcnTest,
-});
+})
 
 function ShadcnTest() {
   return (
@@ -68,5 +68,5 @@ function ShadcnTest() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

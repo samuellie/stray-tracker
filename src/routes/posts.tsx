@@ -13,7 +13,7 @@ function PostsComponent() {
     <div className="p-2 flex gap-2">
       <ul className="list-disc pl-4">
         {[...posts, { id: 'i-do-not-exist', title: 'Non-existent Post' }].map(
-          (post) => {
+          post => {
             return (
               <li key={post.id} className="whitespace-nowrap">
                 <Link
@@ -28,7 +28,7 @@ function PostsComponent() {
                 </Link>
               </li>
             )
-          },
+          }
         )}
       </ul>
       <hr />

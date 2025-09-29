@@ -25,7 +25,7 @@ function UsersComponent() {
         {[
           ...users,
           { id: 'i-do-not-exist', name: 'Non-existent User', email: '' },
-        ].map((user) => {
+        ].map(user => {
           return (
             <li key={user.id} className="whitespace-nowrap">
               <Link
