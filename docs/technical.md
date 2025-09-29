@@ -47,9 +47,10 @@
 
 **Authentication & Security**
 
-- **OAuth 2.0**: Social authentication with Google, Facebook, and Instagram
-- **JWT**: JSON Web Tokens for secure API authentication
-- **Cloudflare Access**: Identity and access management
+- **Better Auth**: Comprehensive authentication framework with multiple providers and session management
+- **Social OAuth**: Google, Facebook, Instagram, and other social providers
+- **Multi-Device Sessions**: Secure session management across devices
+- **Cloudflare Workers Integration**: Optimized for serverless environment
 
 ## Development Environment
 
@@ -263,12 +264,14 @@ graph LR
 
 ### Authentication & Authorization
 
-**OAuth Integration**
+**Better Auth Framework**
 
-- **Social Providers**: Google, Facebook, and Instagram authentication
-- **JWT Management**: Secure token generation and validation
-- **Session Handling**: Secure session management with automatic refresh
-- **Role-Based Access**: Different permission levels for various user types
+- **Unified Authentication**: Single framework handling OAuth, email/password, and social providers
+- **Multi-Provider Support**: Google, Facebook, Instagram, and extensible provider system
+- **Session Management**: Secure, scalable session handling with device management
+- **Cloudflare Workers Optimized**: Designed for serverless environments with edge computing
+- **Role-Based Access Control**: Granular permission system with user roles and permissions
+- **Security Features**: Built-in CSRF protection, rate limiting, and secure token handling
 
 **Data Protection**
 
@@ -350,19 +353,19 @@ API Routes:
 
 ```typescript
 interface APIResponse<T> {
-  data: T;
-  message?: string;
-  errors?: string[];
+  data: T
+  message?: string
+  errors?: string[]
   meta?: {
     pagination?: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-    };
-    timestamp: string;
-    requestId: string;
-  };
+      page: number
+      limit: number
+      total: number
+      totalPages: number
+    }
+    timestamp: string
+    requestId: string
+  }
 }
 ```
 
@@ -373,12 +376,12 @@ interface APIResponse<T> {
 ```typescript
 interface ErrorResponse {
   error: {
-    code: string;
-    message: string;
-    details?: Record<string, any>;
-    requestId: string;
-    timestamp: string;
-  };
+    code: string
+    message: string
+    details?: Record<string, any>
+    requestId: string
+    timestamp: string
+  }
 }
 ```
 

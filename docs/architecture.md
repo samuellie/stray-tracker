@@ -95,8 +95,8 @@ sequenceDiagram
     CF->>D1: Create/update user profile
     D1-->>CF: Store user data
     CF->>KV: Cache user session
-    CF-->>W: Issue JWT token
-    W-->>U: Redirect to app with auth
+    CF-->>W: Establish Better Auth session
+    W-->>U: Redirect to app with Better Auth session
 
     Note over U,KV: Core Functionality Phase
     U->>W: Navigate to community feed
@@ -205,9 +205,9 @@ sequenceDiagram
 
 **Authentication Service**
 
-- OAuth 2.0 integration with Google, Facebook, and Instagram
-- JWT token management with secure refresh mechanisms
-- Role-based access control (RBAC) for different user types
+- Better Auth framework integration with Google, Facebook, and Instagram
+- Better Auth session management with secure token handling
+- Role-based access control (RBAC) with Better Auth's permission system
 
 **File Management Service**
 
@@ -462,27 +462,27 @@ erDiagram
 
 ```typescript
 interface User {
-  id: string;
-  email?: string;
-  displayName: string;
-  avatar?: string;
+  id: string
+  email?: string
+  displayName: string
+  avatar?: string
   socialProfiles: {
-    google?: { id: string; email: string };
-    facebook?: { id: string; name: string };
-    instagram?: { id: string; username: string };
-  };
+    google?: { id: string; email: string }
+    facebook?: { id: string; name: string }
+    instagram?: { id: string; username: string }
+  }
   preferences: {
-    notifications: boolean;
-    locationRadius: number;
-    emailDigest: "daily" | "weekly" | "never";
-  };
+    notifications: boolean
+    locationRadius: number
+    emailDigest: 'daily' | 'weekly' | 'never'
+  }
   stats: {
-    sightingsReported: number;
-    animalsHelped: number;
-  };
-  role: "member" | "caretaker" | "admin" | "organization";
-  joinedAt: Date;
-  lastActive: Date;
+    sightingsReported: number
+    animalsHelped: number
+  }
+  role: 'member' | 'caretaker' | 'admin' | 'organization'
+  joinedAt: Date
+  lastActive: Date
 }
 ```
 
@@ -490,30 +490,30 @@ interface User {
 
 ```typescript
 interface Animal {
-  id: string;
-  name?: string;
-  species: "cat" | "dog" | "other";
-  breed?: string;
-  age?: "puppy" | "young" | "adult" | "senior";
-  size: "small" | "medium" | "large";
-  colors: string[];
-  markings?: string[];
-  status: "spotted" | "being_cared_for" | "adopted" | "deceased";
-  description?: string;
-  healthNotes?: string;
-  careRequirements?: string;
+  id: string
+  name?: string
+  species: 'cat' | 'dog' | 'other'
+  breed?: string
+  age?: 'puppy' | 'young' | 'adult' | 'senior'
+  size: 'small' | 'medium' | 'large'
+  colors: string[]
+  markings?: string[]
+  status: 'spotted' | 'being_cared_for' | 'adopted' | 'deceased'
+  description?: string
+  healthNotes?: string
+  careRequirements?: string
   primaryLocation: {
-    lat: number;
-    lng: number;
-    address?: string;
-    neighborhood?: string;
-  };
-  sightingHistory: Sighting[];
-  photos: MediaFile[];
-  namingSuggestions: NamingSuggestion[];
-  caretakerId?: string;
-  createdAt: Date;
-  updatedAt: Date;
+    lat: number
+    lng: number
+    address?: string
+    neighborhood?: string
+  }
+  sightingHistory: Sighting[]
+  photos: MediaFile[]
+  namingSuggestions: NamingSuggestion[]
+  caretakerId?: string
+  createdAt: Date
+  updatedAt: Date
 }
 ```
 
@@ -521,41 +521,41 @@ interface Animal {
 
 ```typescript
 interface SightingSubscription {
-  id: string;
-  userId: string;
-  animalId?: string;
+  id: string
+  userId: string
+  animalId?: string
   location?: {
-    lat: number;
-    lng: number;
-    radius: number; // km
-  };
+    lat: number
+    lng: number
+    radius: number // km
+  }
   notificationPreferences: {
-    immediate: boolean;
-    email: boolean;
-    push: boolean;
-    digest: "daily" | "weekly" | "never";
-  };
-  isActive: boolean;
-  createdAt: Date;
+    immediate: boolean
+    email: boolean
+    push: boolean
+    digest: 'daily' | 'weekly' | 'never'
+  }
+  isActive: boolean
+  createdAt: Date
 }
 
 interface NamingSuggestion {
-  id: string;
-  animalId: string;
-  userId: string;
-  name: string;
-  description?: string;
-  votes: number;
-  isSelected: boolean;
-  createdAt: Date;
+  id: string
+  animalId: string
+  userId: string
+  name: string
+  description?: string
+  votes: number
+  isSelected: boolean
+  createdAt: Date
 }
 
 interface UserAchievement {
-  id: string;
-  userId: string;
-  achievementTypeId: string;
-  earnedAt: Date;
-  metadata?: Record<string, any>;
+  id: string
+  userId: string
+  achievementTypeId: string
+  earnedAt: Date
+  metadata?: Record<string, any>
 }
 ```
 

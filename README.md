@@ -50,9 +50,9 @@
 
 ### Authentication & Security
 
-- **OAuth 2.0** - Google, Facebook, and Instagram integration
-- **JWT** - Secure API authentication
-- **Cloudflare Access** - Identity and access management
+- **Better Auth** - Comprehensive authentication framework
+- **OAuth Providers** - Google, Facebook, and Instagram integration
+- **Session Management** - Secure multi-device session handling
 
 ## 🛠️ Installation & Setup
 
@@ -212,12 +212,7 @@ We welcome contributions from the community! Here's how you can help:
 
 ### Authentication
 
-All API requests require authentication via JWT token:
-
-```bash
-curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-     https://api.straytracker.app/api/animals
-```
+All API requests require authentication via Better Auth session. Sessions are managed automatically through the framework's secure cookie-based system.
 
 ## 🐾 Animal Welfare Impact
 
