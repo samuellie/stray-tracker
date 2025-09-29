@@ -1,360 +1,282 @@
 # 🐾 Stray Tracker
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
-[![License](https://img.shields.io/badge/license-MIT-blue)]()
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)]()
-[![Cloudflare Workers](https://img.shields.io/badge/cloudflare-workers-orange)]()
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare%20Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 
-> A community-driven platform for tracking and helping stray cats and dogs in your neighborhood. Join thousands of animal lovers in creating a safer world for our furry friends.
+> A community-driven Progressive Web App for tracking and helping stray animals in neighborhoods. Empower your community to take collective action in caring for stray cats and dogs through real-time tracking, collaborative care coordination, and gamified engagement.
 
-## 📋 Table of Contents
+## 🌟 Features
 
-- [About The Project](#about-the-project)
-  - [Problem Statement](#problem-statement)
-  - [Solution](#solution)
-  - [Key Features](#key-features)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Environment Setup](#environment-setup)
-  - [Development](#development)
-- [Project Structure](#project-structure)
-- [Usage](#usage)
-- [API Documentation](#api-documentation)
-- [Deployment](#deployment)
-- [Contributing](#contributing)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
+### Core Functionality
 
-## 🌟 About The Project
+- **🐕 Animal Profiles**: Create detailed profiles for stray animals with photos, locations, and care history
+- **📍 Real-time Tracking**: GPS-based sighting reports with location mapping and status updates
+- **👥 Community Feed**: Share sightings, updates, and coordinate care efforts with neighbors
+- **📱 Progressive Web App**: Install on any device with offline support and push notifications
 
-### Problem Statement
+### Community Engagement
 
-Every day, countless stray animals roam our streets without proper care, food, or medical attention. Community members want to help but lack the tools to effectively track, monitor, and coordinate care for these animals. Traditional animal control services are often overwhelmed and under-resourced.
+- **🏷️ Collaborative Naming**: Community-driven naming with democratic voting system
+- **📢 Smart Notifications**: Subscribe to specific animals or locations with customizable alerts
+- **🎯 Location Tracking Requests**: Request community help for specific areas or animals
+- **🌐 Social Sharing**: Share animal profiles and success stories on social media
 
-### Solution
+### Advanced Features
 
-Stray Tracker is a modern web application that empowers communities to take collective action in caring for stray animals. By providing an intuitive platform for tracking, sharing information, and coordinating efforts, we can significantly improve the lives of stray animals and strengthen community bonds.
+- **⚡ Real-time Updates**: Live notifications and feed updates using WebSockets
+- **🔍 Advanced Search**: Filter by location, animal type, status, and other criteria
+- **📊 Community Impact**: Track collective impact and success metrics
+- **🎮 Gamification**: Achievement system and community challenges
 
-### Key Features
-
-- ✅ **User Registration & Profiles** - Create member accounts with personalized profiles
-- ✅ **Photo Upload & Management** - Upload and organize photos of stray animals
-- ✅ **Location Tracking** - Record and map sighting locations with GPS coordinates
-- ✅ **Animal Profiles** - Create detailed profiles for individual animals
-- ✅ **Community Feed** - Share sightings and updates with the community
-- ✅ **Search & Filter** - Find animals by location, type, or other criteria
-- ✅ **Mobile Responsive** - Access the platform from any device
-- ✅ **Real-time Updates** - Get notified about new sightings in your area
-
-## 🛠 Tech Stack
-
-This project uses a modern, scalable tech stack optimized for performance and developer experience:
+## 🚀 Tech Stack
 
 ### Frontend
 
-- **[TanStack Start](https://tanstack.com/start)** - Full-stack React framework
-- **React 18** - UI library with modern hooks and concurrent features
-- **TypeScript** - Type-safe JavaScript for better development experience
-- **Tailwind CSS** - Utility-first CSS framework for rapid styling
-- **React Query** - Powerful data synchronization for web applications
+- **React 18** - Modern React with concurrent features
+- **TanStack Start** - Full-stack React framework
+- **TypeScript** - Type-safe development
+- **Tailwind CSS + shadcn/ui** - Beautiful, accessible UI components
+- **TanStack Router** - Type-safe routing with file-based routes
+- **TanStack Query** - Powerful data synchronization and caching
 
 ### Backend & Infrastructure
 
-- **[Cloudflare Workers](https://workers.cloudflare.com/)** - Serverless compute platform
-- **[Cloudflare Pages](https://pages.cloudflare.com/)** - Static site hosting and deployment
-- **[Cloudflare D1](https://www.cloudflare.com/products/d1/)** - Serverless database
-- **[Cloudflare R2](https://www.cloudflare.com/products/r2/)** - Object storage for images
-- **[Cloudflare Workers KV](https://www.cloudflare.com/products/workers-kv/)** - Key-value storage for caching
+- **Cloudflare Workers** - Serverless edge computing
+- **Cloudflare D1** - Serverless SQLite database
+- **Cloudflare R2** - Object storage for images and files
+- **Cloudflare KV** - Key-value storage for caching
 
-### Architecture Benefits
+### Authentication & Security
 
-- ⚡ **Serverless** - No infrastructure management required
-- 🌍 **Global CDN** - Fast loading worldwide
-- 🔒 **Secure by default** - Built-in security features
-- 💰 **Cost-effective** - Pay only for usage
-- 🚀 **Auto-scaling** - Handles traffic spikes automatically
+- **OAuth 2.0** - Google, Facebook, and Instagram integration
+- **JWT** - Secure API authentication
+- **Cloudflare Access** - Identity and access management
 
-## 🚀 Getting Started
+## 🛠️ Installation & Setup
 
 ### Prerequisites
 
-Before you begin, ensure you have the following installed:
+- **Node.js 18+**
+- **pnpm** (recommended) or **npm**
+- **Cloudflare account** with Workers & Pages enabled
 
-- **Node.js** (v18.0.0 or higher) - [Download here](https://nodejs.org/)
-- **npm** or **yarn** - Package managers
-- **Git** - Version control system
-- **Cloudflare account** - For deployment and services
-
-### Installation
-
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/your-username/stray-tracker.git
-   cd stray-tracker
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
-
-### Environment Setup
-
-Setting up the development environment is simple - just run these two scripts:
+### Local Development
 
 ```bash
-# Initialize the local database with schema
-npm run local:init
+# Clone the repository
+git clone <repository-url>
+cd stray-tracker
 
-# Load sample data into the database
-npm run local:load
+# Install dependencies
+pnpm install
+
+# Set up environment variables
+cp .env.example .env.local
+
+# Start development server
+pnpm dev
+
+# Start Cloudflare Workers locally
+pnpm wrangler dev
 ```
 
-That's it! The scripts will handle:
+### Environment Configuration
 
-- Setting up the local D1 database
-- Creating all necessary tables (users, animals, sightings)
-- Loading sample data for development
+Create a `.env.local` file with:
 
-**Database Integration:**
+```env
+# Local Development
+VITE_API_URL=http://localhost:8787
+VITE_APP_URL=http://localhost:3000
 
-The application uses Cloudflare D1 database through Workers bindings:
+# Cloudflare Configuration
+CF_API_TOKEN=your_api_token
+CF_ACCOUNT_ID=your_account_id
 
-```typescript
-import { createServerFn } from "@tanstack/react-start";
-import { getBindings } from "~/utils/bindings";
+# OAuth Configuration
+GOOGLE_CLIENT_ID=your_google_client_id
+FACEBOOK_APP_ID=your_facebook_app_id
+INSTAGRAM_CLIENT_ID=your_instagram_client_id
 
-const animalServerFn = createServerFn({ method: "GET" }).handler(async () => {
-  const env = getBindings();
+# Database
+DATABASE_URL=your_database_url
 
-  // Access D1 database through bindings
-  const animals = await env.DB.prepare("SELECT * FROM animals WHERE status = ?")
-    .bind("spotted")
-    .all();
-
-  return animals.results;
-});
+# Storage
+R2_ACCESS_KEY_ID=your_r2_access_key
+R2_SECRET_ACCESS_KEY=your_r2_secret_key
 ```
 
-**Key Points:**
+## 🌐 Deployment
 
-- D1 is accessed via `env.DB` binding (not DATABASE_URL)
-- Use `env.DB.prepare()` for SQL queries
-- Use `.bind()` for parameterized queries (prevents SQL injection)
-- Use `.all()`, `.first()`, or `.run()` to execute queries
-- Always use `getBindings()` from `~/utils/bindings` to access the database
+### Production Deployment
 
-### Development
+```bash
+# Build and deploy to Cloudflare Pages
+pnpm build
+pnpm deploy
 
-1. **Start the development server**
+# Deploy Workers
+pnpm wrangler deploy
+```
 
-   ```sh
-    pnpm install
-    pnpm dev
-   ```
+The application is automatically deployed to Cloudflare's global edge network for optimal performance worldwide.
 
-2. **Open your browser**
-   Navigate to `http://localhost:3000` to see the application running.
+## 📖 Usage
 
-3. **Development workflow**
-   - All source code lives in `/src`
-   - Routes are defined using file-based routing in `/src/routes`
-   - Components are in `/src/components`
-   - Utilities and helpers are in `/src/utils`
-   - Styles are in `/src/styles`
+### Getting Started
 
-## 📁 Project Structure
+1. **Sign Up**: Create an account using Google, Facebook, or Instagram
+2. **Explore**: Browse the community feed to see recent animal sightings
+3. **Report**: Add a new animal sighting with photos and location
+4. **Engage**: Subscribe to animals or locations you're interested in
+5. **Help**: Participate in community challenges and collaborative naming
+
+### Community Guidelines
+
+- Be respectful and kind to all community members
+- Only report genuine animal sightings
+- Respect animal welfare and local regulations
+- Use photos responsibly and respect privacy
+- Help moderate content by reporting inappropriate posts
+
+## 🔧 Development
+
+### Project Structure
 
 ```
 stray-tracker/
-├── public/                 # Static assets (icons, manifest, etc.)
-├── src/
-│   ├── components/         # Reusable UI components
-│   │   ├── DefaultCatchBoundary.tsx
-│   │   ├── NotFound.tsx
-│   │   ├── PostError.tsx
-│   │   └── UserError.tsx
-│   ├── routes/            # Application routes (file-based routing)
-│   │   ├── __root.tsx     # Root layout component
-│   │   ├── _pathlessLayout.tsx
-│   │   ├── index.tsx      # Home page
-│   │   ├── posts.tsx      # Posts listing page
-│   │   ├── posts.index.tsx
-│   │   ├── posts.$postId.tsx
-│   │   ├── posts_.$postId.deep.tsx
-│   │   ├── users.tsx      # Users listing page
-│   │   ├── users.index.tsx
-│   │   ├── users.$userId.tsx
-│   │   ├── redirect.tsx
-│   │   ├── deferred.tsx
-│   │   ├── customScript[.]js.ts
-│   │   ├── _pathlessLayout/
-│   │   │   ├── _nested-layout.tsx
-│   │   │   └── _nested-layout/
-│   │   │       ├── route-a.tsx
-│   │   │       └── route-b.tsx
-│   │   └── api/           # API route handlers
-│   │       ├── users.ts
-│   │       └── users.$userId.ts
-│   ├── styles/            # Global styles
-│   │   └── app.css
-│   ├── utils/             # Utility functions
-│   │   ├── loggingMiddleware.tsx
-│   │   ├── posts.tsx
-│   │   ├── seo.ts
-│   │   └── users.tsx
-│   ├── Foo.ts            # Example utility file
-│   ├── router.tsx        # Router configuration
-│   ├── routeTree.gen.ts # Generated route tree
-│   ├── server.ts         # Server configuration
-│   └── start.tsx         # Application entry point
-├── .gitignore
-├── .prettierignore
-├── package.json          # Project dependencies and scripts
-├── pnpm-lock.yaml        # pnpm lock file
-├── postcss.config.mjs    # PostCSS configuration
-├── tailwind.config.mjs   # Tailwind CSS configuration
-├── tsconfig.json         # TypeScript configuration
-├── vite.config.ts        # Vite build configuration
-├── wrangler.json         # Cloudflare Workers configuration
-└── README.md
+├── docs/                    # Documentation
+│   ├── architecture.md     # System architecture
+│   ├── product_requirement_docs.md  # PRD
+│   └── technical.md        # Technical documentation
+├── src/                    # Source code
+│   ├── components/         # React components
+│   ├── routes/            # File-based routing
+│   ├── lib/               # Utility libraries
+│   └── utils/             # Helper functions
+├── public/                # Static assets
+├── db/                   # Database files
+└── tasks/                # Project tasks and context
 ```
 
-## 🎯 Usage
+### Key Technologies Explained
 
-### For Community Members
-
-1. **Sign Up** - Create your member account
-2. **Explore** - Browse recent sightings in your area
-3. **Report Sighting** - Upload photos and location of stray animals
-4. **Track Animals** - Follow specific animals you're helping
-5. **Coordinate Care** - Connect with other community members
-
-### For Animal Caretakers
-
-1. **Create Animal Profiles** - Document animals you're caring for
-2. **Update Status** - Track progress and needs
-3. **Share Updates** - Keep the community informed
-4. **Find Resources** - Connect with vets, shelters, and supplies
-
-## 📚 API Documentation
-
-### Core Endpoints
-
-- `GET /api/animals` - List all animals with optional filtering
-- `POST /api/animals` - Create a new animal profile
-- `GET /api/animals/:id` - Get specific animal details
-- `POST /api/sightings` - Report a new sighting
-- `GET /api/sightings` - Get sightings with location data
-- `POST /api/users/register` - Register a new user
-
-### Authentication
-
-All API requests require authentication via JWT tokens:
-
-```bash
-Authorization: Bearer <your_jwt_token>
-```
-
-## 🚀 Deployment
-
-### Cloudflare Pages (Frontend)
-
-1. **Connect repository** to Cloudflare Pages
-2. **Build configuration**:
-   - Build command: `npm run build`
-   - Build output directory: `dist`
-3. **Deploy** automatically on git push
-
-### Cloudflare Workers (Backend)
-
-1. **Deploy Workers**:
-
-   ```bash
-   npm run deploy
-   ```
-
-2. **Set up custom domains** (optional)
-3. **Configure environment variables** in Cloudflare dashboard
-
-### Environment Variables
-
-```env
-NODE_ENV=production
-CLOUDFLARE_ACCOUNT_ID=your_account_id
-CLOUDFLARE_API_TOKEN=your_api_token
-DATABASE_URL=your_d1_database_url
-R2_ACCESS_KEY_ID=your_r2_access_key
-R2_SECRET_ACCESS_KEY=your_r2_secret_key
-R2_BUCKET_NAME=your_bucket_name
-JWT_SECRET=your_jwt_secret
-```
+- **TanStack Ecosystem**: Unified tooling for routing, querying, and data management
+- **Cloudflare Workers**: Serverless functions running at the edge
+- **Progressive Web App**: Native app experience on any device
+- **Real-time Features**: Live updates using WebSockets and edge computing
 
 ## 🤝 Contributing
 
-We love your input! We want to make contributing to this project as easy and transparent as possible.
+We welcome contributions from the community! Here's how you can help:
+
+### Ways to Contribute
+
+- 🐛 **Bug Reports**: Found a bug? Let us know!
+- 💡 **Feature Requests**: Have ideas for new features?
+- 📝 **Documentation**: Help improve our docs
+- 🧪 **Testing**: Help test new features
+- 💻 **Code**: Submit pull requests with improvements
 
 ### Development Process
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Add tests if applicable
+5. Run the test suite (`pnpm test`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
 
-### Code Standards
+### Code Style
 
-- **TypeScript** - All code must be typed
-- **ESLint** - Follow provided linting rules
-- **Prettier** - Code formatting is enforced
-- **Conventional Commits** - Use conventional commit messages
+- Use TypeScript for all new code
+- Follow the existing code style (ESLint + Prettier configured)
+- Write meaningful commit messages
+- Add JSDoc comments for functions
+- Update documentation for new features
 
-### Local Development Setup
+## 📄 API Documentation
+
+### Core Endpoints
+
+- `GET /api/animals` - List animals with filtering
+- `POST /api/animals` - Create new animal profile
+- `GET /api/sightings` - Get recent sightings
+- `POST /api/sightings` - Report new sighting
+- `GET /api/users/me` - Get current user profile
+- `POST /api/subscriptions` - Manage subscriptions
+
+### Authentication
+
+All API requests require authentication via JWT token:
 
 ```bash
-# Install dependencies
-npm install
-
-# Run linting
-npm run lint
-
-# Run tests
-npm run test
-
-# Format code
-npm run format
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     https://api.straytracker.app/api/animals
 ```
 
-### Pull Request Process
+## 🐾 Animal Welfare Impact
 
-1. Ensure all tests pass
-2. Update the README with details of changes if needed
-3. Follow the pull request template
-4. Get at least one approval before merging
+Stray Tracker is more than just an app—it's a movement to improve animal welfare through community action:
 
-## 📄 License
+- **📈 Track Impact**: Monitor collective community efforts
+- **🏆 Success Stories**: Share and celebrate rescued animals
+- **🤝 Partnerships**: Connect with local shelters and vets
+- **📚 Education**: Learn about proper animal care
+- **🌍 Global Reach**: Help animals worldwide through edge computing
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## 📋 Roadmap
+
+### Upcoming Features
+
+- [ ] Mobile app for iOS and Android
+- [ ] AI-powered animal identification
+- [ ] Integration with animal shelters
+- [ ] Advanced analytics dashboard
+- [ ] Multi-language support
+- [ ] AR features for enhanced tracking
+
+### Recent Updates
+
+- ✅ Progressive Web App capabilities
+- ✅ Real-time notifications
+- ✅ Collaborative naming system
+- ✅ Advanced search and filtering
+- ✅ Social media integration
+
+## 📞 Support & Contact
+
+### Get Help
+
+- 📖 **Documentation**: Check our [technical docs](./docs/)
+- 🐛 **Issues**: Report bugs on [GitHub Issues](https://github.com/your-repo/issues)
+- 💬 **Discussions**: Join [GitHub Discussions](https://github.com/your-repo/discussions)
+- 📧 **Email**: Contact us at support@straytracker.app
+
+### Community
+
+- 🐦 **Twitter**: Follow [@StrayTracker](https://twitter.com/straytracker)
+- 📘 **Facebook**: Join our community group
+- 🐾 **Instagram**: Share your success stories
+
+## 📜 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- **TanStack Team** for the amazing TanStack Start framework
 - **Cloudflare** for providing excellent serverless infrastructure
-- **Open Source Community** for inspiration and contributions
-- **Animal Welfare Organizations** for their dedication and expertise
+- **TanStack** for the amazing suite of React tools
+- **shadcn/ui** for beautiful, accessible components
+- **Animal Welfare Organizations** for their guidance and expertise
+- **Open Source Community** for making this possible
 
 ---
 
-<div align="center">
+**Made with ❤️ for animals everywhere**
 
-**Made with ❤️ for animals in need**
-
-[🐕 Report a Sighting](#) • [📊 View Statistics](#) • [💬 Join Discussion](#)
-
-</div>
+[⭐ Star this repo](https://github.com/your-repo/stray-tracker) | [🐛 Report Bug](https://github.com/your-repo/issues) | [💡 Request Feature](https://github.com/your-repo/issues)
