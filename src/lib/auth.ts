@@ -22,10 +22,27 @@ const createAuth = (env?: Env) => {
             debugLogs: true,
           },
         },
-        kv: {
-          bindEnv: 'CACHE',
-        },
-        // Note: D1 configuration will be set up in the actual handler with runtime env
+        kv: env?.CACHE,
+        r2: env
+          ? {
+              bucket: env.USER_PROFILE_BUCKET,
+              maxFileSize: 5 * 1024 * 1024, // 5MB
+              allowedTypes: [
+                '.jpg',
+                '.jpeg',
+                '.png',
+                '.gif',
+                '.pdf',
+                '.doc',
+                '.docx',
+              ],
+              additionalFields: {
+                category: { type: 'string', required: false },
+                isPublic: { type: 'boolean', required: false },
+                description: { type: 'string', required: false },
+              },
+            }
+          : undefined,
       },
       {
         // Better Auth main configuration

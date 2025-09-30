@@ -13,7 +13,6 @@ import {
 } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
-import { validateLoginForm } from '~/form-config'
 
 export const Route = createFileRoute('/login')({
   component: Login,

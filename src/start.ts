@@ -1,7 +1,5 @@
 import { createMiddleware, createStart } from '@tanstack/react-start'
-import { createSerializationAdapter } from '@tanstack/react-router'
 import { QueryClient } from '@tanstack/react-query'
-import type { Register } from '@tanstack/react-router'
 import { env } from 'cloudflare:workers'
 declare module '@tanstack/react-start' {
   interface Register {
@@ -13,13 +11,10 @@ declare module '@tanstack/react-start' {
   }
 }
 
-// @manuel
 export const serverMw = createMiddleware().server(({ next, context }) => {
-  const nonce = Math.random().toString(16).slice(2, 10)
   return next({
     context: {
       fromServerMw: true,
-      nonce,
     },
   })
 })

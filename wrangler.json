@@ -21,6 +21,28 @@
       "id": "stray-tracker"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA_BUCKET",
+      "bucket_name": "stray-tracker-media",
+      "preview_bucket_name": "stray-tracker-media-preview"
+    },
+    {
+      "binding": "ANIMAL_PHOTOS_BUCKET",
+      "bucket_name": "stray-tracker-animal-photos",
+      "preview_bucket_name": "stray-tracker-animal-photos-preview"
+    },
+    {
+      "binding": "USER_UPLOADS_BUCKET",
+      "bucket_name": "stray-tracker-user-uploads",
+      "preview_bucket_name": "stray-tracker-user-uploads-preview"
+    },
+    {
+      "binding": "USER_PROFILE_BUCKET",
+      "bucket_name": "stray-tracker-user-profile",
+      "preview_bucket_name": "stray-tracker-user-profile-preview"
+    }
+  ],
   "vars": {
     "BASE_URL": "https://stray-tracker.pages.dev",
     "GOOGLE_CLIENT_ID": "your_google_client_id_here",
