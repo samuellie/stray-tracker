@@ -94,71 +94,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="min-h-screen bg-background font-sans">
-        {/* Navigation Header */}
-        <header className="border-b bg-white shadow-sm">
-          <nav className="container mx-auto px-4 py-3">
-            <div className="flex items-center justify-between">
-              <Link
-                to="/"
-                className="text-xl font-bold text-blue-600 hover:text-blue-700 transition-colors"
-              >
-                🐾 Stray Tracker
-              </Link>
-              <div className="flex items-center gap-6">
-                <Link
-                  to="/"
-                  className="text-gray-600 hover:text-gray-900 transition-colors"
-                  activeProps={{
-                    className: 'text-blue-600 font-medium',
-                  }}
-                  activeOptions={{ exact: true }}
-                >
-                  Home
-                </Link>
-                <Link
-                  to="/animals"
-                  className="text-gray-600 hover:text-gray-900 transition-colors"
-                  activeProps={{
-                    className: 'text-blue-600 font-medium',
-                  }}
-                >
-                  Animals
-                </Link>
-                <Link
-                  to="/sightings"
-                  className="text-gray-600 hover:text-gray-900 transition-colors"
-                  activeProps={{
-                    className: 'text-blue-600 font-medium',
-                  }}
-                >
-                  Sightings
-                </Link>
-                <Link
-                  to="/report"
-                  className="text-gray-600 hover:text-gray-900 transition-colors"
-                  activeProps={{
-                    className: 'text-blue-600 font-medium',
-                  }}
-                >
-                  Report
-                </Link>
-                <Link
-                  to="/shadcn-test"
-                  className="text-gray-600 hover:text-gray-900 transition-colors"
-                  activeProps={{
-                    className: 'text-blue-600 font-medium',
-                  }}
-                >
-                  UI Test
-                </Link>
-              </div>
-            </div>
-          </nav>
-        </header>
-
         {/* Main Content */}
-        <main className="flex-1">{children}</main>
-
+        {children}
         {/* Development Tools */}
         {import.meta.env.DEV && (
           <TanStackRouterDevtools position="bottom-right" />

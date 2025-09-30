@@ -170,7 +170,7 @@ export const signupFormDefaults: Partial<SignupFormData> = {
   confirmPassword: 'password',
 }
 
-export const loginFormDefaults: Partial<LoginFormData> = {
-  email: '',
-  password: '',
+export const loginFormDefaults: LoginFormData = {
+  email: 'user@email.com',
+  password: 'password',
 }

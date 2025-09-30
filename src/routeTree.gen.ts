@@ -8,40 +8,32 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
+import { createFileRoute } from '@tanstack/react-router'
+
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
-import { Route as SightingsRouteImport } from './routes/sightings'
-import { Route as ShadcnTestRouteImport } from './routes/shadcn-test'
-import { Route as ReportRouteImport } from './routes/report'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as AnimalsRouteImport } from './routes/animals'
-import { Route as PathlessLayoutRouteImport } from './routes/_pathlessLayout'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppAppLayoutRouteImport } from './routes/app/_appLayout'
 import { Route as ApiUsersRouteImport } from './routes/api/users'
-import { Route as PathlessLayoutNestedLayoutRouteImport } from './routes/_pathlessLayout/_nested-layout'
+import { Route as AppAppLayoutIndexRouteImport } from './routes/app/_appLayout.index'
+import { Route as AppAppLayoutShadcnTestRouteImport } from './routes/app/_appLayout.shadcn-test'
+import { Route as AppAppLayoutReportRouteImport } from './routes/app/_appLayout.report'
+import { Route as AppAppLayoutProfileRouteImport } from './routes/app/_appLayout.profile'
+import { Route as AppAppLayoutAnimalsRouteImport } from './routes/app/_appLayout.animals'
 import { Route as ApiUsersUserIdRouteImport } from './routes/api/users.$userId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as PathlessLayoutNestedLayoutRouteBRouteImport } from './routes/_pathlessLayout/_nested-layout/route-b'
-import { Route as PathlessLayoutNestedLayoutRouteARouteImport } from './routes/_pathlessLayout/_nested-layout/route-a'
 
+const AppRouteImport = createFileRoute('/app')()
+
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SightingsRoute = SightingsRouteImport.update({
-  id: '/sightings',
-  path: '/sightings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ShadcnTestRoute = ShadcnTestRouteImport.update({
-  id: '/shadcn-test',
-  path: '/shadcn-test',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReportRoute = ReportRouteImport.update({
-  id: '/report',
-  path: '/report',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -49,30 +41,45 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AnimalsRoute = AnimalsRouteImport.update({
-  id: '/animals',
-  path: '/animals',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PathlessLayoutRoute = PathlessLayoutRouteImport.update({
-  id: '/_pathlessLayout',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppAppLayoutRoute = AppAppLayoutRouteImport.update({
+  id: '/_appLayout',
+  getParentRoute: () => AppRoute,
 } as any)
 const ApiUsersRoute = ApiUsersRouteImport.update({
   id: '/api/users',
   path: '/api/users',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PathlessLayoutNestedLayoutRoute =
-  PathlessLayoutNestedLayoutRouteImport.update({
-    id: '/_nested-layout',
-    getParentRoute: () => PathlessLayoutRoute,
-  } as any)
+const AppAppLayoutIndexRoute = AppAppLayoutIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppAppLayoutRoute,
+} as any)
+const AppAppLayoutShadcnTestRoute = AppAppLayoutShadcnTestRouteImport.update({
+  id: '/shadcn-test',
+  path: '/shadcn-test',
+  getParentRoute: () => AppAppLayoutRoute,
+} as any)
+const AppAppLayoutReportRoute = AppAppLayoutReportRouteImport.update({
+  id: '/report',
+  path: '/report',
+  getParentRoute: () => AppAppLayoutRoute,
+} as any)
+const AppAppLayoutProfileRoute = AppAppLayoutProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppAppLayoutRoute,
+} as any)
+const AppAppLayoutAnimalsRoute = AppAppLayoutAnimalsRouteImport.update({
+  id: '/animals',
+  path: '/animals',
+  getParentRoute: () => AppAppLayoutRoute,
+} as any)
 const ApiUsersUserIdRoute = ApiUsersUserIdRouteImport.update({
   id: '/$userId',
   path: '/$userId',
@@ -83,152 +90,118 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PathlessLayoutNestedLayoutRouteBRoute =
-  PathlessLayoutNestedLayoutRouteBRouteImport.update({
-    id: '/route-b',
-    path: '/route-b',
-    getParentRoute: () => PathlessLayoutNestedLayoutRoute,
-  } as any)
-const PathlessLayoutNestedLayoutRouteARoute =
-  PathlessLayoutNestedLayoutRouteARouteImport.update({
-    id: '/route-a',
-    path: '/route-a',
-    getParentRoute: () => PathlessLayoutNestedLayoutRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/animals': typeof AnimalsRoute
   '/login': typeof LoginRoute
-  '/report': typeof ReportRoute
-  '/shadcn-test': typeof ShadcnTestRoute
-  '/sightings': typeof SightingsRoute
   '/signup': typeof SignupRoute
   '/api/users': typeof ApiUsersRouteWithChildren
-  '/route-a': typeof PathlessLayoutNestedLayoutRouteARoute
-  '/route-b': typeof PathlessLayoutNestedLayoutRouteBRoute
+  '/app': typeof AppAppLayoutRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/users/$userId': typeof ApiUsersUserIdRoute
+  '/app/animals': typeof AppAppLayoutAnimalsRoute
+  '/app/profile': typeof AppAppLayoutProfileRoute
+  '/app/report': typeof AppAppLayoutReportRoute
+  '/app/shadcn-test': typeof AppAppLayoutShadcnTestRoute
+  '/app/': typeof AppAppLayoutIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/animals': typeof AnimalsRoute
   '/login': typeof LoginRoute
-  '/report': typeof ReportRoute
-  '/shadcn-test': typeof ShadcnTestRoute
-  '/sightings': typeof SightingsRoute
   '/signup': typeof SignupRoute
   '/api/users': typeof ApiUsersRouteWithChildren
-  '/route-a': typeof PathlessLayoutNestedLayoutRouteARoute
-  '/route-b': typeof PathlessLayoutNestedLayoutRouteBRoute
+  '/app': typeof AppAppLayoutIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/users/$userId': typeof ApiUsersUserIdRoute
+  '/app/animals': typeof AppAppLayoutAnimalsRoute
+  '/app/profile': typeof AppAppLayoutProfileRoute
+  '/app/report': typeof AppAppLayoutReportRoute
+  '/app/shadcn-test': typeof AppAppLayoutShadcnTestRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_pathlessLayout': typeof PathlessLayoutRouteWithChildren
-  '/animals': typeof AnimalsRoute
   '/login': typeof LoginRoute
-  '/report': typeof ReportRoute
-  '/shadcn-test': typeof ShadcnTestRoute
-  '/sightings': typeof SightingsRoute
   '/signup': typeof SignupRoute
-  '/_pathlessLayout/_nested-layout': typeof PathlessLayoutNestedLayoutRouteWithChildren
   '/api/users': typeof ApiUsersRouteWithChildren
-  '/_pathlessLayout/_nested-layout/route-a': typeof PathlessLayoutNestedLayoutRouteARoute
-  '/_pathlessLayout/_nested-layout/route-b': typeof PathlessLayoutNestedLayoutRouteBRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/_appLayout': typeof AppAppLayoutRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/users/$userId': typeof ApiUsersUserIdRoute
+  '/app/_appLayout/animals': typeof AppAppLayoutAnimalsRoute
+  '/app/_appLayout/profile': typeof AppAppLayoutProfileRoute
+  '/app/_appLayout/report': typeof AppAppLayoutReportRoute
+  '/app/_appLayout/shadcn-test': typeof AppAppLayoutShadcnTestRoute
+  '/app/_appLayout/': typeof AppAppLayoutIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/animals'
     | '/login'
-    | '/report'
-    | '/shadcn-test'
-    | '/sightings'
     | '/signup'
     | '/api/users'
-    | '/route-a'
-    | '/route-b'
+    | '/app'
     | '/api/auth/$'
     | '/api/users/$userId'
+    | '/app/animals'
+    | '/app/profile'
+    | '/app/report'
+    | '/app/shadcn-test'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/animals'
     | '/login'
-    | '/report'
-    | '/shadcn-test'
-    | '/sightings'
     | '/signup'
     | '/api/users'
-    | '/route-a'
-    | '/route-b'
+    | '/app'
     | '/api/auth/$'
     | '/api/users/$userId'
+    | '/app/animals'
+    | '/app/profile'
+    | '/app/report'
+    | '/app/shadcn-test'
   id:
     | '__root__'
     | '/'
-    | '/_pathlessLayout'
-    | '/animals'
     | '/login'
-    | '/report'
-    | '/shadcn-test'
-    | '/sightings'
     | '/signup'
-    | '/_pathlessLayout/_nested-layout'
     | '/api/users'
-    | '/_pathlessLayout/_nested-layout/route-a'
-    | '/_pathlessLayout/_nested-layout/route-b'
+    | '/app'
+    | '/app/_appLayout'
     | '/api/auth/$'
     | '/api/users/$userId'
+    | '/app/_appLayout/animals'
+    | '/app/_appLayout/profile'
+    | '/app/_appLayout/report'
+    | '/app/_appLayout/shadcn-test'
+    | '/app/_appLayout/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  PathlessLayoutRoute: typeof PathlessLayoutRouteWithChildren
-  AnimalsRoute: typeof AnimalsRoute
   LoginRoute: typeof LoginRoute
-  ReportRoute: typeof ReportRoute
-  ShadcnTestRoute: typeof ShadcnTestRoute
-  SightingsRoute: typeof SightingsRoute
   SignupRoute: typeof SignupRoute
   ApiUsersRoute: typeof ApiUsersRouteWithChildren
+  AppRoute: typeof AppRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sightings': {
-      id: '/sightings'
-      path: '/sightings'
-      fullPath: '/sightings'
-      preLoaderRoute: typeof SightingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/shadcn-test': {
-      id: '/shadcn-test'
-      path: '/shadcn-test'
-      fullPath: '/shadcn-test'
-      preLoaderRoute: typeof ShadcnTestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/report': {
-      id: '/report'
-      path: '/report'
-      fullPath: '/report'
-      preLoaderRoute: typeof ReportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -238,26 +211,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/animals': {
-      id: '/animals'
-      path: '/animals'
-      fullPath: '/animals'
-      preLoaderRoute: typeof AnimalsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_pathlessLayout': {
-      id: '/_pathlessLayout'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof PathlessLayoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/_appLayout': {
+      id: '/app/_appLayout'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppAppLayoutRouteImport
+      parentRoute: typeof AppRoute
     }
     '/api/users': {
       id: '/api/users'
@@ -266,12 +232,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_pathlessLayout/_nested-layout': {
-      id: '/_pathlessLayout/_nested-layout'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof PathlessLayoutNestedLayoutRouteImport
-      parentRoute: typeof PathlessLayoutRoute
+    '/app/_appLayout/': {
+      id: '/app/_appLayout/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppAppLayoutIndexRouteImport
+      parentRoute: typeof AppAppLayoutRoute
+    }
+    '/app/_appLayout/shadcn-test': {
+      id: '/app/_appLayout/shadcn-test'
+      path: '/shadcn-test'
+      fullPath: '/app/shadcn-test'
+      preLoaderRoute: typeof AppAppLayoutShadcnTestRouteImport
+      parentRoute: typeof AppAppLayoutRoute
+    }
+    '/app/_appLayout/report': {
+      id: '/app/_appLayout/report'
+      path: '/report'
+      fullPath: '/app/report'
+      preLoaderRoute: typeof AppAppLayoutReportRouteImport
+      parentRoute: typeof AppAppLayoutRoute
+    }
+    '/app/_appLayout/profile': {
+      id: '/app/_appLayout/profile'
+      path: '/profile'
+      fullPath: '/app/profile'
+      preLoaderRoute: typeof AppAppLayoutProfileRouteImport
+      parentRoute: typeof AppAppLayoutRoute
+    }
+    '/app/_appLayout/animals': {
+      id: '/app/_appLayout/animals'
+      path: '/animals'
+      fullPath: '/app/animals'
+      preLoaderRoute: typeof AppAppLayoutAnimalsRouteImport
+      parentRoute: typeof AppAppLayoutRoute
     }
     '/api/users/$userId': {
       id: '/api/users/$userId'
@@ -287,52 +281,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_pathlessLayout/_nested-layout/route-b': {
-      id: '/_pathlessLayout/_nested-layout/route-b'
-      path: '/route-b'
-      fullPath: '/route-b'
-      preLoaderRoute: typeof PathlessLayoutNestedLayoutRouteBRouteImport
-      parentRoute: typeof PathlessLayoutNestedLayoutRoute
-    }
-    '/_pathlessLayout/_nested-layout/route-a': {
-      id: '/_pathlessLayout/_nested-layout/route-a'
-      path: '/route-a'
-      fullPath: '/route-a'
-      preLoaderRoute: typeof PathlessLayoutNestedLayoutRouteARouteImport
-      parentRoute: typeof PathlessLayoutNestedLayoutRoute
-    }
   }
 }
-
-interface PathlessLayoutNestedLayoutRouteChildren {
-  PathlessLayoutNestedLayoutRouteARoute: typeof PathlessLayoutNestedLayoutRouteARoute
-  PathlessLayoutNestedLayoutRouteBRoute: typeof PathlessLayoutNestedLayoutRouteBRoute
-}
-
-const PathlessLayoutNestedLayoutRouteChildren: PathlessLayoutNestedLayoutRouteChildren =
-  {
-    PathlessLayoutNestedLayoutRouteARoute:
-      PathlessLayoutNestedLayoutRouteARoute,
-    PathlessLayoutNestedLayoutRouteBRoute:
-      PathlessLayoutNestedLayoutRouteBRoute,
-  }
-
-const PathlessLayoutNestedLayoutRouteWithChildren =
-  PathlessLayoutNestedLayoutRoute._addFileChildren(
-    PathlessLayoutNestedLayoutRouteChildren,
-  )
-
-interface PathlessLayoutRouteChildren {
-  PathlessLayoutNestedLayoutRoute: typeof PathlessLayoutNestedLayoutRouteWithChildren
-}
-
-const PathlessLayoutRouteChildren: PathlessLayoutRouteChildren = {
-  PathlessLayoutNestedLayoutRoute: PathlessLayoutNestedLayoutRouteWithChildren,
-}
-
-const PathlessLayoutRouteWithChildren = PathlessLayoutRoute._addFileChildren(
-  PathlessLayoutRouteChildren,
-)
 
 interface ApiUsersRouteChildren {
   ApiUsersUserIdRoute: typeof ApiUsersUserIdRoute
@@ -346,16 +296,42 @@ const ApiUsersRouteWithChildren = ApiUsersRoute._addFileChildren(
   ApiUsersRouteChildren,
 )
 
+interface AppAppLayoutRouteChildren {
+  AppAppLayoutAnimalsRoute: typeof AppAppLayoutAnimalsRoute
+  AppAppLayoutProfileRoute: typeof AppAppLayoutProfileRoute
+  AppAppLayoutReportRoute: typeof AppAppLayoutReportRoute
+  AppAppLayoutShadcnTestRoute: typeof AppAppLayoutShadcnTestRoute
+  AppAppLayoutIndexRoute: typeof AppAppLayoutIndexRoute
+}
+
+const AppAppLayoutRouteChildren: AppAppLayoutRouteChildren = {
+  AppAppLayoutAnimalsRoute: AppAppLayoutAnimalsRoute,
+  AppAppLayoutProfileRoute: AppAppLayoutProfileRoute,
+  AppAppLayoutReportRoute: AppAppLayoutReportRoute,
+  AppAppLayoutShadcnTestRoute: AppAppLayoutShadcnTestRoute,
+  AppAppLayoutIndexRoute: AppAppLayoutIndexRoute,
+}
+
+const AppAppLayoutRouteWithChildren = AppAppLayoutRoute._addFileChildren(
+  AppAppLayoutRouteChildren,
+)
+
+interface AppRouteChildren {
+  AppAppLayoutRoute: typeof AppAppLayoutRouteWithChildren
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAppLayoutRoute: AppAppLayoutRouteWithChildren,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  PathlessLayoutRoute: PathlessLayoutRouteWithChildren,
-  AnimalsRoute: AnimalsRoute,
   LoginRoute: LoginRoute,
-  ReportRoute: ReportRoute,
-  ShadcnTestRoute: ShadcnTestRoute,
-  SightingsRoute: SightingsRoute,
   SignupRoute: SignupRoute,
   ApiUsersRoute: ApiUsersRouteWithChildren,
+  AppRoute: AppRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

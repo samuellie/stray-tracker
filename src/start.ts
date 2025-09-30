@@ -13,8 +13,6 @@ declare module '@tanstack/react-start' {
 
 export const serverMw = createMiddleware().server(({ next, context }) => {
   const nonce = Math.random().toString(16).slice(2, 10)
-  console.log('env', env)
-
   return next({
     context: {
       fromServerMw: true,
