@@ -15,7 +15,7 @@ import { Separator } from '~/components/ui/separator'
 import { Link } from '@tanstack/react-router'
 
 import { type SignupFormData, signupFormDefaults } from '~/form-config'
-import { signUp } from './api/auth'
+import { authClient } from '~/lib/auth-client'
 
 export const Route = createFileRoute('/signup')({
   component: Signup,
@@ -28,7 +28,10 @@ function Signup() {
     defaultValues: signupFormDefaults as SignupFormData,
     onSubmit: async ({ value }) => {
       try {
-        await signUp({ data: value })
+        const res = await authClient.signUp.email(value)
+        if (res.error) {
+          throw res.error
+        }
         // Redirect to home page after successful signup
         navigate({ to: '/', replace: true })
       } catch (error) {

@@ -3,8 +3,9 @@ import { withCloudflare } from 'better-auth-cloudflare'
 import { reactStartCookies } from 'better-auth/react-start'
 import schema from 'db/schema'
 import { drizzle } from 'drizzle-orm/d1'
+import { env } from 'cloudflare:workers'
 
-const createAuth = (env?: Env) => {
+const createAuth = () => {
   const db = env
     ? drizzle(env.DB, { schema: schema, logger: true })
     : ({} as any)
@@ -63,6 +64,7 @@ const createAuth = (env?: Env) => {
         emailAndPassword: {
           enabled: true,
         },
+        trustedOrigins: ['http://localhost:3000', 'http://localhost:8787'],
         // Social OAuth providers
         // socialProviders: {
         //   google: {
