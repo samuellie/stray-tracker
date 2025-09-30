@@ -15,6 +15,7 @@ import { Separator } from '~/components/ui/separator'
 import { Link } from '@tanstack/react-router'
 
 import { type SignupFormData, signupFormDefaults } from '~/form-config'
+import { signUp } from './api/auth'
 
 export const Route = createFileRoute('/signup')({
   component: Signup,
@@ -27,23 +28,7 @@ function Signup() {
     defaultValues: signupFormDefaults as SignupFormData,
     onSubmit: async ({ value }) => {
       try {
-        const response = await fetch('/api/auth/sign-up', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            name: value.name,
-            email: value.email,
-            password: value.password,
-          }),
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          throw new Error((errorData as any).message || 'Signup failed')
-        }
-
+        await signUp({ data: value })
         // Redirect to home page after successful signup
         navigate({ to: '/', replace: true })
       } catch (error) {
@@ -215,9 +200,7 @@ function Signup() {
               name="password"
               validators={{
                 onChange: ({ value }) =>
-                  !value ||
-                  !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value) ||
-                  value.length < 8
+                  !value || value.length < 8
                     ? 'Password must be at least 8 characters with uppercase, lowercase, and number'
                     : undefined,
               }}

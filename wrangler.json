@@ -11,7 +11,8 @@
     {
       "binding": "DB",
       "database_name": "stray-tracker",
-      "database_id": "stray-tracker"
+      "database_id": "92933811-a98c-4b39-afc9-ceeb8dfd71c8",
+      "migrations_dir": "drizzle/"
     }
   ],
   "kv_namespaces": [
@@ -21,20 +22,13 @@
     }
   ],
   "vars": {
-    "NODE_ENV": "production",
-    "BASE_URL": "https://stray-tracker.pages.dev"
-  },
-  "security": {
-    "cross-origin-embedder-policy": "credentialless",
-    "cross-origin-opener-policy": "same-origin",
-    "cross-origin-resource-policy": "cross-origin",
-    "content-security-policy": {
-      "default-src": "'self'",
-      "script-src": "'self' 'unsafe-inline'",
-      "style-src": "'self' 'unsafe-inline'",
-      "img-src": "'self' data: https:",
-      "connect-src": "'self'",
-      "frame-ancestors": "'none'"
-    }
+    "BASE_URL": "https://stray-tracker.pages.dev",
+    "GOOGLE_CLIENT_ID": "your_google_client_id_here",
+    "GOOGLE_CLIENT_SECRET": "your_google_client_secret_here",
+    "FACEBOOK_CLIENT_ID": "your_facebook_client_id_here",
+    "FACEBOOK_CLIENT_SECRET": "your_facebook_client_secret_here",
+    "INSTAGRAM_CLIENT_ID": "your_instagram_client_id_here",
+    "INSTAGRAM_CLIENT_SECRET": "your_instagram_client_secret_here",
+    "CF_PAGES_URL": "https://stray-tracker.pages.dev"
   }
 }

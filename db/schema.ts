@@ -1,0 +1,452 @@
+import { sqliteTable, text, integer, real, blob } from 'drizzle-orm/sqlite-core'
+import { sql } from 'drizzle-orm'
+import * as authSchema from './auth.schema'
+
+export * from './auth.schema'
+
+// Stray table - detailed stray profiles
+export const strays = sqliteTable('strays', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name'),
+  species: text('species', { enum: ['cat', 'dog', 'other'] }).notNull(),
+  breed: text('breed'),
+  age: text('age', { enum: ['puppy', 'young', 'adult', 'senior'] }),
+  size: text('size', { enum: ['small', 'medium', 'large'] }).notNull(),
+  colors: blob('colors', { mode: 'json' }).$type<string[]>(),
+  markings: blob('markings', { mode: 'json' }).$type<string[]>(),
+  status: text('status', {
+    enum: ['spotted', 'being_cared_for', 'adopted', 'deceased'],
+  })
+    .notNull()
+    .default('spotted'),
+  description: text('description'),
+  healthNotes: text('health_notes'),
+  careRequirements: text('care_requirements'),
+  // Primary location stored as JSON
+  primaryLocation: blob('primary_location', { mode: 'json' }).$type<{
+    lat: number
+    lng: number
+    address?: string
+    neighborhood?: string
+  }>(),
+  // Sighting history stored as JSON for derived data
+  sightingHistory: blob('sighting_history', { mode: 'json' }).$type<any[]>(),
+  caretakerId: integer('caretaker_id').references(() => authSchema.users.id),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+// Sightings table - stray sighting reports
+export const sightings = sqliteTable('sightings', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  strayId: integer('stray_id')
+    .references(() => strays.id)
+    .notNull(),
+  userId: integer('user_id')
+    .references(() => authSchema.users.id)
+    .notNull(),
+  // Location data as JSON for consistency
+  location: blob('location', { mode: 'json' }).$type<{
+    lat: number
+    lng: number
+    address?: string
+    neighborhood?: string
+  }>(),
+  description: text('description'),
+  // Additional sighting metadata
+  sightingTime: integer('sighting_time', { mode: 'timestamp' }),
+  weatherCondition: text('weather_condition'),
+  confidence: integer('confidence'), // 1-10 scale
+  notes: text('notes'),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+// stray photos table - photos of strays
+export const strayPhotos = sqliteTable('stray_photos', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  strayId: integer('stray_id')
+    .references(() => strays.id)
+    .notNull(),
+  userId: integer('user_id')
+    .references(() => authSchema.users.id)
+    .notNull(),
+  url: text('url').notNull(),
+  fileName: text('file_name'),
+  fileSize: integer('file_size'),
+  mimeType: text('mime_type'),
+  description: text('description'),
+  // Whether this is the primary photo for the stray
+  isPrimary: integer('is_primary', { mode: 'boolean' }).default(false),
+  uploadedAt: integer('uploaded_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+// Sighting photos table - photos from sightings
+export const sightingPhotos = sqliteTable('sighting_photos', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  sightingId: integer('sighting_id')
+    .references(() => sightings.id)
+    .notNull(),
+  userId: integer('user_id')
+    .references(() => authSchema.users.id)
+    .notNull(),
+  url: text('url').notNull(),
+  fileName: text('file_name'),
+  fileSize: integer('file_size'),
+  mimeType: text('mime_type'),
+  caption: text('caption'),
+  uploadedAt: integer('uploaded_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+// stray subscriptions table - user subscriptions to strays or locations
+export const straySubscriptions = sqliteTable('stray_subscriptions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id')
+    .references(() => authSchema.users.id)
+    .notNull(),
+  strayId: integer('stray_id').references(() => strays.id),
+  // Location-based subscription stored as JSON
+  location: blob('location', { mode: 'json' }).$type<{
+    lat: number
+    lng: number
+    radius: number // km
+  }>(),
+  // Notification preferences as JSON
+  notificationPreferences: blob('notification_preferences', {
+    mode: 'json',
+  }).$type<{
+    immediate: boolean
+    email: boolean
+    push: boolean
+    digest: 'daily' | 'weekly' | 'never'
+  }>(),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+// Naming suggestions table - community naming suggestions for strays
+export const namingSuggestions = sqliteTable('naming_suggestions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  strayId: integer('stray_id')
+    .references(() => strays.id)
+    .notNull(),
+  userId: integer('user_id')
+    .references(() => authSchema.users.id)
+    .notNull(),
+  name: text('name', { length: 50 }).notNull(),
+  description: text('description'),
+  isSelected: integer('is_selected', { mode: 'boolean' }).default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+// Naming votes table - votes for naming suggestions
+export const namingVotes = sqliteTable('naming_votes', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  namingSuggestionId: integer('naming_suggestion_id')
+    .references(() => namingSuggestions.id)
+    .notNull(),
+  userId: integer('user_id')
+    .references(() => authSchema.users.id)
+    .notNull(),
+  vote: integer('vote').notNull(), // 1 for upvote, -1 for downvote
+  votedAt: integer('voted_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+// Bounties table - requests for community help tracking locations
+export const bounties = sqliteTable('bounties', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id')
+    .references(() => authSchema.users.id)
+    .notNull(),
+  title: text('title', { length: 200 }).notNull(),
+  description: text('description').notNull(),
+  // Target location for tracking
+  targetLocation: blob('target_location', { mode: 'json' }).$type<{
+    lat: number
+    lng: number
+    address?: string
+    neighborhood?: string
+  }>(),
+  // Area type requested (neighborhood, streets, specific area)
+  areaType: text('area_type', {
+    enum: ['neighborhood', 'streets', 'specific'],
+  }),
+  status: text('status', {
+    enum: ['open', 'in_progress', 'completed', 'cancelled'],
+  }).default('open'),
+  priority: text('priority', {
+    enum: ['low', 'medium', 'high', 'urgent'],
+  }).default('medium'),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+// Volunteer assignments table - assignments of volunteers to bounties
+export const bountyAssignments = sqliteTable('bounty_assignments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  trackingRequestId: integer('tracking_request_id')
+    .references(() => bounties.id)
+    .notNull(),
+  userId: integer('user_id')
+    .references(() => authSchema.users.id)
+    .notNull(),
+  status: text('status', {
+    enum: ['assigned', 'accepted', 'completed', 'cancelled'],
+  }).default('assigned'),
+  assignedAt: integer('assigned_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+// Community posts table - community feed posts
+export const communityPosts = sqliteTable('community_posts', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  authorId: integer('author_id')
+    .references(() => authSchema.users.id)
+    .notNull(),
+  title: text('title', { length: 200 }),
+  content: text('content').notNull(),
+  // Post type for different content categories
+  postType: text('post_type', {
+    enum: ['story', 'announcement', 'help', 'general'],
+  }).default('general'),
+  // Related entities
+  strayId: integer('stray_id').references(() => strays.id),
+  sightingId: integer('sighting_id').references(() => sightings.id),
+  // Location context
+  location: blob('location', { mode: 'json' }).$type<{
+    lat: number
+    lng: number
+    address?: string
+    neighborhood?: string
+  }>(),
+  // Images or media
+  media: blob('media', { mode: 'json' }).$type<string[]>(),
+  // Engagement metrics
+  likeCount: integer('like_count').default(0),
+  commentCount: integer('comment_count').default(0),
+  shareCount: integer('share_count').default(0),
+  isPublished: integer('is_published', { mode: 'boolean' }).default(true),
+  publishedAt: integer('published_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+// Post comments table - comments on community posts
+export const postComments = sqliteTable('post_comments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  postId: integer('post_id')
+    .references(() => communityPosts.id)
+    .notNull(),
+  authorId: integer('author_id')
+    .references(() => authSchema.users.id)
+    .notNull(),
+  parentId: integer('parent_id'), // For threaded comments - nullable without reference for now
+  content: text('content').notNull(),
+  likeCount: integer('like_count').default(0),
+  isEdited: integer('is_edited', { mode: 'boolean' }).default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+// Post reactions table - likes and reactions to posts
+export const postReactions = sqliteTable('post_reactions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  postId: integer('post_id')
+    .references(() => communityPosts.id)
+    .notNull(),
+  userId: integer('user_id')
+    .references(() => authSchema.users.id)
+    .notNull(),
+  reactionType: text('reaction_type', {
+    enum: ['like', 'love', 'care', 'laugh', 'celebrate'],
+  }).default('like'),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+// Medical records table (legacy compatibility) - stray medical records
+export const medicalRecords = sqliteTable('medical_records', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  strayId: integer('stray_id')
+    .references(() => strays.id)
+    .notNull(),
+  recordType: text('record_type', {
+    enum: ['vaccination', 'treatment', 'checkup', 'surgery'],
+  }).notNull(),
+  description: text('description').notNull(),
+  veterinarian: text('veterinarian'),
+  cost: real('cost'),
+  recordDate: integer('record_date', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  createdBy: integer('created_by')
+    .references(() => authSchema.users.id)
+    .notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+// Care records table - general care activities for strays
+export const careRecords = sqliteTable('care_records', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  strayId: integer('stray_id')
+    .references(() => strays.id)
+    .notNull(),
+  userId: integer('user_id')
+    .references(() => authSchema.users.id)
+    .notNull(),
+  careType: text('care_type', {
+    enum: [
+      'feeding',
+      'watering',
+      'shelter',
+      'medical',
+      'cleaning',
+      'monitoring',
+      'other',
+    ],
+  }).notNull(),
+  description: text('description').notNull(),
+  location: blob('location', { mode: 'json' }).$type<{
+    lat: number
+    lng: number
+    address?: string
+  }>(),
+  // Photos documenting the care
+  photos: blob('photos', { mode: 'json' }).$type<string[]>(),
+  careDate: integer('care_date', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+// Indexes for better performance
+export const indexes = {
+  // strays indexes
+  idxstraysSpecies: sql`CREATE INDEX strays_species ON strays(species)`,
+  idxstraysStatus: sql`CREATE INDEX strays_status ON strays(status)`,
+  idxstraysUpdatedAt: sql`CREATE INDEX strays_updated_at ON strays(updated_at)`,
+
+  // Sightings indexes
+  idxSightingsstrayId: sql`CREATE INDEX sightings_stray_id ON sightings(stray_id)`,
+  idxSightingsUserId: sql`CREATE INDEX sightings_user_id ON sightings(user_id)`,
+  idxSightingsCreatedAt: sql`CREATE INDEX sightings_created_at ON sightings(created_at)`,
+
+  // Subscriptions indexes
+  idxSubscriptionsUserId: sql`CREATE INDEX subscriptions_user_id ON stray_subscriptions(user_id)`,
+  idxSubscriptionsstrayId: sql`CREATE INDEX subscriptions_stray_id ON stray_subscriptions(stray_id)`,
+
+  // Naming indexes
+  idxNamingSuggestionsstrayId: sql`CREATE INDEX naming_suggestions_stray_id ON naming_suggestions(stray_id)`,
+  idxNamingVotesSuggestionId: sql`CREATE INDEX naming_votes_suggestion_id ON naming_votes(naming_suggestion_id)`,
+
+  // Community indexes
+  idxCommunityPostsAuthorId: sql`CREATE INDEX community_posts_author_id ON community_posts(author_id)`,
+  idxCommunityPostsType: sql`CREATE INDEX community_posts_type ON community_posts(post_type)`,
+  idxCommunityPostsPublishedAt: sql`CREATE INDEX community_posts_published_at ON community_posts(published_at)`,
+
+  // Tracking indexes
+  idxTrackingRequestsStatus: sql`CREATE INDEX tracking_requests_status ON tracking_requests(status)`,
+
+  // Media indexes
+  idxstrayPhotosstrayId: sql`CREATE INDEX stray_photos_stray_id ON stray_photos(stray_id)`,
+  idxSightingPhotosSightingId: sql`CREATE INDEX sighting_photos_sighting_id ON sighting_photos(sighting_id)`,
+
+  // Achievements indexes
+  idxUserAchievementsUserId: sql`CREATE INDEX user_achievements_user_id ON user_achievements(user_id)`,
+} as const
+
+export default {
+  ...authSchema,
+  strays,
+  sightings,
+  strayPhotos,
+  sightingPhotos,
+  straySubscriptions,
+  namingSuggestions,
+  namingVotes,
+  bounties,
+  bountyAssignments,
+  communityPosts,
+  postComments,
+  postReactions,
+  medicalRecords,
+  careRecords,
+} as const
+
+// Type exports for use in other files
+export type Stray = typeof strays.$inferSelect
+export type InsertStray = typeof strays.$inferInsert
+
+export type Sighting = typeof sightings.$inferSelect
+export type InsertSighting = typeof sightings.$inferInsert
+
+export type StrayPhoto = typeof strayPhotos.$inferSelect
+export type InsertStrayPhoto = typeof strayPhotos.$inferInsert
+
+export type SightingPhoto = typeof sightingPhotos.$inferSelect
+export type InsertSightingPhoto = typeof sightingPhotos.$inferInsert
+
+export type StraySubscription = typeof straySubscriptions.$inferSelect
+export type InsertStraySubscription = typeof straySubscriptions.$inferInsert
+
+export type NamingSuggestion = typeof namingSuggestions.$inferSelect
+export type InsertNamingSuggestion = typeof namingSuggestions.$inferInsert
+
+export type NamingVote = typeof namingVotes.$inferSelect
+export type InsertNamingVote = typeof namingVotes.$inferInsert
+
+export type Bounty = typeof bounties.$inferSelect
+export type InsertBounty = typeof bounties.$inferInsert
+
+export type BountyAssignment = typeof bountyAssignments.$inferSelect
+export type InsertBountyAssignment = typeof bountyAssignments.$inferInsert
+
+export type CommunityPost = typeof communityPosts.$inferSelect
+export type InsertCommunityPost = typeof communityPosts.$inferInsert
+
+export type PostComment = typeof postComments.$inferSelect
+export type InsertPostComment = typeof postComments.$inferInsert
+
+export type PostReaction = typeof postReactions.$inferSelect
+export type InsertPostReaction = typeof postReactions.$inferInsert
+
+export type MedicalRecord = typeof medicalRecords.$inferSelect
+export type InsertMedicalRecord = typeof medicalRecords.$inferInsert
+
+export type CareRecord = typeof careRecords.$inferSelect
+export type InsertCareRecord = typeof careRecords.$inferInsert

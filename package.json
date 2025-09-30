@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "dev:backend": "wrangler dev",
+    "dev:wrangler": "wrangler dev",
+    "dev:d1studio": "npx d1s",
     "build": "vite build && tsc --noEmit",
     "preview": "vite preview",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
@@ -14,11 +15,9 @@
     "start": "node .output/server/index.mjs",
     "deploy": "npm run build && wrangler deploy",
     "cf-typegen": "wrangler types --env-interface Env",
-    "local:init": "wrangler d1 execute stray-tracker --file=./db/schema.sql --local",
-    "local:load": "wrangler d1 execute stray-tracker --file=./db/data.sql --local",
-    "remote:new": "wrangler d1 create stray-tracker",
-    "remote:init": "wrangler d1 execute stray-tracker --remote --file=./db/schema.sql",
-    "remote:load": "wrangler d1 execute stray-tracker --remote --file=./db/data-big.sql"
+    "d1:new": "wrangler d1 create stray-tracker",
+    "d1:generate": "drizzle-kit generate",
+    "d1:apply": "wrangler d1 migrations apply stray-tracker --local"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.13.7",
@@ -53,6 +52,7 @@
     "better-auth-cloudflare": "^0.2.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "drizzle-orm": "^0.44.5",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.544.0",
     "react": "^19.0.0",
@@ -72,6 +72,7 @@
     "@typescript-eslint/parser": "^8.44.1",
     "@vitejs/plugin-react": "^4.6.0",
     "autoprefixer": "^10.4.20",
+    "drizzle-kit": "^0.31.5",
     "eslint": "^9.36.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",

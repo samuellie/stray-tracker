@@ -16,7 +16,7 @@ import { seo } from '~/utils/seo'
 // Service Worker Registration Hook
 function useServiceWorker() {
   React.useEffect(() => {
-    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+    if ('serviceWorker' in navigator && !import.meta.env.DEV) {
       navigator.serviceWorker
         .register('/sw.js', { scope: '/' })
         .then(registration => {
@@ -160,7 +160,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <main className="flex-1">{children}</main>
 
         {/* Development Tools */}
-        {process.env.NODE_ENV === 'development' && (
+        {import.meta.env.DEV && (
           <TanStackRouterDevtools position="bottom-right" />
         )}
 

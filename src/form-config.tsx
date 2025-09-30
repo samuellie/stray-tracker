@@ -102,14 +102,13 @@ export const signupFormSchema = loginFormSchema
       .string()
       .min(2, 'Name must be at least 2 characters')
       .max(50, 'Name must be less than 50 characters'),
+    email: z.string().email(),
     confirmPassword: z.string().min(1, 'Please confirm your password'),
-    password: z
-      .string()
-      .min(8, 'Password must be at least 8 characters')
-      .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        'Password must contain at least one lowercase letter, one uppercase letter, and one number'
-      ),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    // .regex(
+    //   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+    //   'Password must contain at least one lowercase letter, one uppercase letter, and one number'
+    // ),
   })
   .refine(data => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -165,10 +164,10 @@ export const sightingFormDefaults: Partial<SightingFormData> = {
 }
 
 export const signupFormDefaults: Partial<SignupFormData> = {
-  name: '',
-  email: '',
-  password: '',
-  confirmPassword: '',
+  name: 'samuel',
+  email: 'user@email.com',
+  password: 'password',
+  confirmPassword: 'password',
 }
 
 export const loginFormDefaults: Partial<LoginFormData> = {

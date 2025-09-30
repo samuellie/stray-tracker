@@ -1,9 +1,9 @@
-import { auth } from '../../lib/auth'
+import { signupFormSchema } from '~/form-config'
+import { createAuth } from '../../lib/auth'
+import { createServerFn } from '@tanstack/react-start'
 
-export async function loader({ request }: { request: Request }) {
-  return auth.handler(request)
-}
-
-export async function action({ request }: { request: Request }) {
-  return auth.handler(request)
-}
+export const signUp = createServerFn({ method: 'POST' })
+  .inputValidator(signupFormSchema)
+  .handler(async ({ data, context }) => {
+    return createAuth(context.env).api.signUpEmail({ body: data })
+  })

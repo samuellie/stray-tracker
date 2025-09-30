@@ -1,59 +1,79 @@
 import { betterAuth } from 'better-auth'
 import { withCloudflare } from 'better-auth-cloudflare'
 import { reactStartCookies } from 'better-auth/react-start'
+import schema from 'db/schema'
+import { drizzle } from 'drizzle-orm/d1'
 
-export const auth = betterAuth(
-  withCloudflare(
-    {
-      // Configure KV for session storage
-      kv: {
-        bindEnv: 'CACHE',
+const createAuth = (env?: Env) => {
+  const db = env
+    ? drizzle(env.DB, { schema: schema, logger: true })
+    : ({} as any)
+
+  return betterAuth(
+    withCloudflare(
+      {
+        geolocationTracking: false,
+        autoDetectIpAddress: false,
+        // Configure KV for session storage
+        d1: {
+          db,
+          options: {
+            usePlural: true,
+            debugLogs: true,
+          },
+        },
+        kv: {
+          bindEnv: 'CACHE',
+        },
+        // Note: D1 configuration will be set up in the actual handler with runtime env
       },
-      // Note: D1 configuration will be set up in the actual handler with runtime env
-    },
-    {
-      // Better Auth main configuration
-      // Base URL for production
-      baseURL:
-        process.env.NODE_ENV === 'development'
+      {
+        // Better Auth main configuration
+        // Base URL for production
+        baseURL: import.meta.env.DEV
           ? 'http://localhost:8787'
-          : process.env.CF_PAGES_URL || 'https://stray-tracker.pages.dev',
-      plugins: [
-        reactStartCookies(), // Cookies integration for TanStack Start
-      ],
-      // Rate limiting for Cloudflare
-      rateLimit: {
-        enabled: true,
-        window: 60, // time window in seconds
-        max: 100, // max requests in the window
-      },
-      // Email and password authentication
-      emailAndPassword: {
-        enabled: true,
-      },
-      // Social OAuth providers
-      socialProviders: {
-        google: {
-          clientId: process.env.GOOGLE_CLIENT_ID || '',
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+          : env?.CF_PAGES_URL || 'https://stray-tracker.pages.dev',
+        plugins: [
+          reactStartCookies(), // Cookies integration for TanStack Start
+        ],
+        // Rate limiting for Cloudflare
+        rateLimit: {
+          enabled: true,
+          window: 60, // time window in seconds
+          max: 100, // max requests in the window
         },
-        facebook: {
-          clientId: process.env.FACEBOOK_CLIENT_ID || '',
-          clientSecret: process.env.FACEBOOK_CLIENT_SECRET || '',
+        // Email and password authentication
+        emailAndPassword: {
+          enabled: true,
         },
-        instagram: {
-          clientId: process.env.INSTAGRAM_CLIENT_ID || '',
-          clientSecret: process.env.INSTAGRAM_CLIENT_SECRET || '',
+        // Social OAuth providers
+        // socialProviders: {
+        //   google: {
+        //     clientId: process.env.GOOGLE_CLIENT_ID || '',
+        //     clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+        //   },
+        //   facebook: {
+        //     clientId: process.env.FACEBOOK_CLIENT_ID || '',
+        //     clientSecret: process.env.FACEBOOK_CLIENT_SECRET || '',
+        //   },
+        //   instagram: {
+        //     clientId: process.env.INSTAGRAM_CLIENT_ID || '',
+        //     clientSecret: process.env.INSTAGRAM_CLIENT_SECRET || '',
+        //   },
+        // },
+        // // IP address detection for rate limiting in Cloudflare
+        advanced: {
+          ipAddress: {
+            ipAddressHeaders: ['cf-connecting-ip'],
+          },
         },
-      },
-      // IP address detection for rate limiting in Cloudflare
-      advanced: {
-        ipAddress: {
-          ipAddressHeaders: ['cf-connecting-ip'],
-        },
-      },
-    }
+      }
+    )
   )
-)
+}
 
-export type Auth = typeof auth
+// Export for CLI schema generation
+export const auth = createAuth()
+
+// Export for runtime usage
+export { createAuth }
