@@ -18,7 +18,6 @@ import { Route as AppAppLayoutRouteImport } from './routes/app/_appLayout'
 import { Route as ApiUsersRouteImport } from './routes/api/users'
 import { Route as AppAppLayoutIndexRouteImport } from './routes/app/_appLayout.index'
 import { Route as AppAppLayoutShadcnTestRouteImport } from './routes/app/_appLayout.shadcn-test'
-import { Route as AppAppLayoutReportRouteImport } from './routes/app/_appLayout.report'
 import { Route as AppAppLayoutProfileRouteImport } from './routes/app/_appLayout.profile'
 import { Route as AppAppLayoutAnimalsRouteImport } from './routes/app/_appLayout.animals'
 import { Route as ApiUsersUserIdRouteImport } from './routes/api/users.$userId'
@@ -65,11 +64,6 @@ const AppAppLayoutShadcnTestRoute = AppAppLayoutShadcnTestRouteImport.update({
   path: '/shadcn-test',
   getParentRoute: () => AppAppLayoutRoute,
 } as any)
-const AppAppLayoutReportRoute = AppAppLayoutReportRouteImport.update({
-  id: '/report',
-  path: '/report',
-  getParentRoute: () => AppAppLayoutRoute,
-} as any)
 const AppAppLayoutProfileRoute = AppAppLayoutProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -101,7 +95,6 @@ export interface FileRoutesByFullPath {
   '/api/users/$userId': typeof ApiUsersUserIdRoute
   '/app/animals': typeof AppAppLayoutAnimalsRoute
   '/app/profile': typeof AppAppLayoutProfileRoute
-  '/app/report': typeof AppAppLayoutReportRoute
   '/app/shadcn-test': typeof AppAppLayoutShadcnTestRoute
   '/app/': typeof AppAppLayoutIndexRoute
 }
@@ -115,7 +108,6 @@ export interface FileRoutesByTo {
   '/api/users/$userId': typeof ApiUsersUserIdRoute
   '/app/animals': typeof AppAppLayoutAnimalsRoute
   '/app/profile': typeof AppAppLayoutProfileRoute
-  '/app/report': typeof AppAppLayoutReportRoute
   '/app/shadcn-test': typeof AppAppLayoutShadcnTestRoute
 }
 export interface FileRoutesById {
@@ -130,7 +122,6 @@ export interface FileRoutesById {
   '/api/users/$userId': typeof ApiUsersUserIdRoute
   '/app/_appLayout/animals': typeof AppAppLayoutAnimalsRoute
   '/app/_appLayout/profile': typeof AppAppLayoutProfileRoute
-  '/app/_appLayout/report': typeof AppAppLayoutReportRoute
   '/app/_appLayout/shadcn-test': typeof AppAppLayoutShadcnTestRoute
   '/app/_appLayout/': typeof AppAppLayoutIndexRoute
 }
@@ -146,7 +137,6 @@ export interface FileRouteTypes {
     | '/api/users/$userId'
     | '/app/animals'
     | '/app/profile'
-    | '/app/report'
     | '/app/shadcn-test'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
@@ -160,7 +150,6 @@ export interface FileRouteTypes {
     | '/api/users/$userId'
     | '/app/animals'
     | '/app/profile'
-    | '/app/report'
     | '/app/shadcn-test'
   id:
     | '__root__'
@@ -174,7 +163,6 @@ export interface FileRouteTypes {
     | '/api/users/$userId'
     | '/app/_appLayout/animals'
     | '/app/_appLayout/profile'
-    | '/app/_appLayout/report'
     | '/app/_appLayout/shadcn-test'
     | '/app/_appLayout/'
   fileRoutesById: FileRoutesById
@@ -246,13 +234,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppLayoutShadcnTestRouteImport
       parentRoute: typeof AppAppLayoutRoute
     }
-    '/app/_appLayout/report': {
-      id: '/app/_appLayout/report'
-      path: '/report'
-      fullPath: '/app/report'
-      preLoaderRoute: typeof AppAppLayoutReportRouteImport
-      parentRoute: typeof AppAppLayoutRoute
-    }
     '/app/_appLayout/profile': {
       id: '/app/_appLayout/profile'
       path: '/profile'
@@ -299,7 +280,6 @@ const ApiUsersRouteWithChildren = ApiUsersRoute._addFileChildren(
 interface AppAppLayoutRouteChildren {
   AppAppLayoutAnimalsRoute: typeof AppAppLayoutAnimalsRoute
   AppAppLayoutProfileRoute: typeof AppAppLayoutProfileRoute
-  AppAppLayoutReportRoute: typeof AppAppLayoutReportRoute
   AppAppLayoutShadcnTestRoute: typeof AppAppLayoutShadcnTestRoute
   AppAppLayoutIndexRoute: typeof AppAppLayoutIndexRoute
 }
@@ -307,7 +287,6 @@ interface AppAppLayoutRouteChildren {
 const AppAppLayoutRouteChildren: AppAppLayoutRouteChildren = {
   AppAppLayoutAnimalsRoute: AppAppLayoutAnimalsRoute,
   AppAppLayoutProfileRoute: AppAppLayoutProfileRoute,
-  AppAppLayoutReportRoute: AppAppLayoutReportRoute,
   AppAppLayoutShadcnTestRoute: AppAppLayoutShadcnTestRoute,
   AppAppLayoutIndexRoute: AppAppLayoutIndexRoute,
 }

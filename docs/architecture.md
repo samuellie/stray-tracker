@@ -163,7 +163,7 @@ sequenceDiagram
 
 - Animal cards with photo galleries and status tracking
 - User profiles with social integration and activity history
-- Sighting forms with location services and media upload
+- Sighting forms with location services and media upload (popover-based UI)
 - Community feed with real-time updates and engagement features
 
 **UI Components**

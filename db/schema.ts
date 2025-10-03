@@ -46,7 +46,7 @@ export const sightings = sqliteTable('sightings', {
   strayId: integer('stray_id')
     .references(() => strays.id)
     .notNull(),
-  userId: integer('user_id')
+  userId: text('user_id')
     .references(() => authSchema.users.id)
     .notNull(),
   // Location data as JSON for consistency
@@ -73,7 +73,7 @@ export const strayPhotos = sqliteTable('stray_photos', {
   strayId: integer('stray_id')
     .references(() => strays.id)
     .notNull(),
-  userId: integer('user_id')
+  userId: text('user_id')
     .references(() => authSchema.users.id)
     .notNull(),
   url: text('url').notNull(),
@@ -94,7 +94,7 @@ export const sightingPhotos = sqliteTable('sighting_photos', {
   sightingId: integer('sighting_id')
     .references(() => sightings.id)
     .notNull(),
-  userId: integer('user_id')
+  userId: text('user_id')
     .references(() => authSchema.users.id)
     .notNull(),
   url: text('url').notNull(),
@@ -110,7 +110,7 @@ export const sightingPhotos = sqliteTable('sighting_photos', {
 // stray subscriptions table - user subscriptions to strays or locations
 export const straySubscriptions = sqliteTable('stray_subscriptions', {
   id: integer('id').primaryKey({ autoIncrement: true }),
-  userId: integer('user_id')
+  userId: text('user_id')
     .references(() => authSchema.users.id)
     .notNull(),
   strayId: integer('stray_id').references(() => strays.id),
@@ -141,7 +141,7 @@ export const namingSuggestions = sqliteTable('naming_suggestions', {
   strayId: integer('stray_id')
     .references(() => strays.id)
     .notNull(),
-  userId: integer('user_id')
+  userId: text('user_id')
     .references(() => authSchema.users.id)
     .notNull(),
   name: text('name', { length: 50 }).notNull(),
@@ -158,7 +158,7 @@ export const namingVotes = sqliteTable('naming_votes', {
   namingSuggestionId: integer('naming_suggestion_id')
     .references(() => namingSuggestions.id)
     .notNull(),
-  userId: integer('user_id')
+  userId: text('user_id')
     .references(() => authSchema.users.id)
     .notNull(),
   vote: integer('vote').notNull(), // 1 for upvote, -1 for downvote
@@ -170,7 +170,7 @@ export const namingVotes = sqliteTable('naming_votes', {
 // Bounties table - requests for community help tracking locations
 export const bounties = sqliteTable('bounties', {
   id: integer('id').primaryKey({ autoIncrement: true }),
-  userId: integer('user_id')
+  userId: text('user_id')
     .references(() => authSchema.users.id)
     .notNull(),
   title: text('title', { length: 200 }).notNull(),
@@ -206,7 +206,7 @@ export const bountyAssignments = sqliteTable('bounty_assignments', {
   trackingRequestId: integer('tracking_request_id')
     .references(() => bounties.id)
     .notNull(),
-  userId: integer('user_id')
+  userId: text('user_id')
     .references(() => authSchema.users.id)
     .notNull(),
   status: text('status', {
@@ -284,7 +284,7 @@ export const postReactions = sqliteTable('post_reactions', {
   postId: integer('post_id')
     .references(() => communityPosts.id)
     .notNull(),
-  userId: integer('user_id')
+  userId: text('user_id')
     .references(() => authSchema.users.id)
     .notNull(),
   reactionType: text('reaction_type', {
@@ -324,7 +324,7 @@ export const careRecords = sqliteTable('care_records', {
   strayId: integer('stray_id')
     .references(() => strays.id)
     .notNull(),
-  userId: integer('user_id')
+  userId: text('user_id')
     .references(() => authSchema.users.id)
     .notNull(),
   careType: text('care_type', {

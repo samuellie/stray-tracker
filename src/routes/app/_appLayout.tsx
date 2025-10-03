@@ -19,9 +19,8 @@ function AppLayout() {
     error, //error object
     refetch, //refetch the session
   } = authClient.useSession()
-  console.log(session)
   return (
-    <div>
+    <div className="flex flex-col h-screen">
       <header className="border-b bg-white shadow-sm">
         <nav className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
@@ -50,15 +49,6 @@ function AppLayout() {
                 }}
               >
                 Animals
-              </Link>
-              <Link
-                to="/app/report"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-                activeProps={{
-                  className: 'text-blue-600 font-medium',
-                }}
-              >
-                Report
               </Link>
               <Link
                 to="/app/shadcn-test"
