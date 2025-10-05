@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { createFileRoute } from '@tanstack/react-router'
+import { toast } from 'sonner'
 import { Button } from '~/components/ui/button'
 import {
   Card,
@@ -53,6 +54,27 @@ import {
   HoverCardTrigger,
 } from '~/components/ui/hover-card'
 import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '~/components/ui/sheet'
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarTrigger,
+  SidebarInset,
+} from '~/components/ui/sidebar'
+import { Toaster } from '~/components/ui/sonner'
+import { Spinner } from '~/components/ui/spinner'
+import {
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
@@ -103,6 +125,7 @@ import {
   TableHeader,
   TableRow,
 } from '~/components/ui/table'
+import { ScrollArea } from '@radix-ui/react-scroll-area'
 
 export const Route = createFileRoute('/app/_appLayout/shadcn-test')({
   component: ShadcnTestComponent,
@@ -122,6 +145,7 @@ function ShadcnTestComponent() {
   const [selectValue, setSelectValue] = React.useState('')
   const [radioValue, setRadioValue] = React.useState('option1')
   const [tabValue, setTabValue] = React.useState('tab1')
+  const [sheetOpen, setSheetOpen] = React.useState(false)
 
   const handleCheckboxChange = (option: keyof typeof checkboxes) => {
     setCheckboxes(prev => ({
@@ -575,6 +599,157 @@ function ShadcnTestComponent() {
                   </div>
                 </CardContent>
               </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Sheet</CardTitle>
+                  <CardDescription>Slide-out panel component</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+                    <SheetTrigger asChild>
+                      <Button variant="outline">Open Sheet</Button>
+                    </SheetTrigger>
+                    <SheetContent>
+                      <SheetHeader>
+                        <SheetTitle>Sheet Title</SheetTitle>
+                        <SheetDescription>
+                          This is a sheet component that slides in from the
+                          side.
+                        </SheetDescription>
+                      </SheetHeader>
+                      <div className="py-4">
+                        <p>Sheet content goes here.</p>
+                        <Button
+                          className="mt-4"
+                          onClick={() => setSheetOpen(false)}
+                        >
+                          Close Sheet
+                        </Button>
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Sidebar</CardTitle>
+                  <CardDescription>
+                    Collapsible sidebar component
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64 border rounded-lg overflow-hidden">
+                    <SidebarProvider defaultOpen={false}>
+                      <Sidebar collapsible="none">
+                        <SidebarHeader>
+                          <div className="px-2 py-1">
+                            <h3 className="text-sm font-semibold">Sidebar</h3>
+                          </div>
+                        </SidebarHeader>
+                        <SidebarContent>
+                          <SidebarMenu>
+                            <SidebarMenuItem>
+                              <SidebarMenuButton>Home</SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                              <SidebarMenuButton>Settings</SidebarMenuButton>
+                            </SidebarMenuItem>
+                          </SidebarMenu>
+                        </SidebarContent>
+                      </Sidebar>
+                      <SidebarInset>
+                        <header className="flex h-12 items-center gap-2 px-4">
+                          <SidebarTrigger />
+                          <div className="flex-1">
+                            <h4 className="text-sm font-semibold">
+                              Main Content
+                            </h4>
+                          </div>
+                        </header>
+                        <div className="flex-1 p-4">
+                          <p>
+                            Sidebar content area. Use the trigger to
+                            collapse/expand.
+                          </p>
+                        </div>
+                      </SidebarInset>
+                    </SidebarProvider>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Sonner Toasts</CardTitle>
+                  <CardDescription>Toast notification examples</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex gap-2 flex-wrap">
+                    <Button
+                      variant="outline"
+                      onClick={() => toast('This is a basic toast message!')}
+                    >
+                      Basic Toast
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        toast.success('Success! Operation completed.')
+                      }
+                    >
+                      Success Toast
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        toast.error('Error! Something went wrong.')
+                      }
+                    >
+                      Error Toast
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        toast('Custom toast', {
+                          description: 'This has a description',
+                          action: {
+                            label: 'Action',
+                            onClick: () => console.log('Action clicked'),
+                          },
+                        })
+                      }
+                    >
+                      Custom Toast
+                    </Button>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Click buttons to see different toast types
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Spinner</CardTitle>
+                  <CardDescription>Loading spinner component</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <Spinner />
+                    <span className="text-sm">Loading...</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Spinner className="h-8 w-8" />
+                    <span className="text-sm">Large spinner</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Spinner className="h-6 w-6 text-blue-500" />
+                    <span className="text-sm">Custom color spinner</span>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Navigation Components */}
@@ -725,6 +900,7 @@ function ShadcnTestComponent() {
           </div>
         </div>
       </div>
+      <Toaster />
     </TooltipProvider>
   )
 }

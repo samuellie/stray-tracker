@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Stray Tracker is a community-driven Progressive Web App for tracking and helping stray animals. This document outlines the comprehensive development roadmap, current status, and detailed task breakdown.
+Stray Tracker is a mobile-first Progressive Web App with web compatibility for tracking and helping stray animals. This document outlines the comprehensive development roadmap, current status, and detailed task breakdown.
 
 ## Current Project Status
 
@@ -91,7 +91,7 @@ Stray Tracker is a community-driven Progressive Web App for tracking and helping
 
 ### Phase 2: Core API & Data Layer Development
 
-**Status**: In Progress | **Priority**: High | **Estimated Effort**: 4-5 weeks | **Progress**: ~25% Complete
+**Status**: In Progress | **Priority**: High | **Estimated Effort**: 4-5 weeks | **Progress**: ~35% Complete
 
 #### 2.1 RESTful API Architecture
 
@@ -122,6 +122,8 @@ Stray Tracker is a community-driven Progressive Web App for tracking and helping
 - [ ] Create animal status tracking with comprehensive history logging
 - [ ] Add animal attribute filtering and search capabilities
 - [ ] Implement animal profile versioning and audit trails
+- [ ] Integrate third-party breed APIs (The Cat API, The Dog API) for dynamic breed selection
+- [ ] Add color selection system with predefined color options
 
 #### 2.3 User Interface Foundation with TanStack Ecosystem
 
@@ -132,6 +134,8 @@ Stray Tracker is a community-driven Progressive Web App for tracking and helping
 - [ ] Create PWA install prompts and offline indicators
 - [x] Build reusable UI component library following atomic design principles (shadcn/ui integrated)
 - [x] Implement responsive design patterns for mobile-first experience (Tailwind configured)
+- [x] Create comprehensive landing page with hero section, features, and CTAs
+- [x] Implement authentication redirect from app layout to home screen
 - [ ] Add accessibility features (ARIA labels, keyboard navigation, screen reader support)
 - [ ] Configure dark mode support with system preference detection
 
@@ -355,6 +359,8 @@ Stray Tracker is a community-driven Progressive Web App for tracking and helping
 
 **Third-Party Services**
 
+- **The Cat API** (`https://thecatapi.com/`): Free REST API for cat breed information with images
+- **The Dog API** (`https://thedogapi.com/`): Free REST API for dog breed information with images
 - Email service provider (for notifications and digests)
 - Analytics platform for user behavior tracking
 - Error monitoring service (for production error tracking)

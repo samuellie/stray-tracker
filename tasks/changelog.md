@@ -10,6 +10,9 @@
 - **Cloud Infrastructure**: Cloudflare Workers, D1 database, R2 storage configuration
 - **Authentication Enhancement**: R2 bucket integration for user profile uploads with file validation
 - **Task Management**: Detailed development roadmap and active context tracking
+- **UI Enhancement**: Converted report sighting form from full page to popover component triggered by FAB
+- **Map Integration**: Added MapComponent for location-based sightings with interactive features
+- **Component Architecture**: Implemented ReportSightingForm component with type-safe form handling
 
 ### Changed
 

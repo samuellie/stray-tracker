@@ -1,4 +1,9 @@
-import { createFileRoute, Link, Outlet, redirect } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  useNavigate,
+} from '@tanstack/react-router'
 import { authClient } from '~/lib/auth-client'
 import { Button } from '~/components/ui/button'
 import {
@@ -7,18 +12,113 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
-import { User } from 'lucide-react'
+import { Sheet, SheetContent, SheetTrigger } from '~/components/ui/sheet'
+import { User, Menu } from 'lucide-react'
+import { useIsMobile } from '~/hooks/use-mobile'
+import { useState, useEffect } from 'react'
+import { LoadingPage } from '~/components/LoadingPage'
 
 export const Route = createFileRoute('/app/_appLayout')({
   component: AppLayout,
 })
 function AppLayout() {
+  const isMobile = useIsMobile()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const navigate = useNavigate()
   const {
     data: session,
     isPending, //loading state
     error, //error object
     refetch, //refetch the session
   } = authClient.useSession()
+
+  useEffect(() => {
+    if (!isPending && !session) {
+      navigate({ to: '/', search: {} })
+    }
+  }, [isPending, session, navigate])
+
+  const NavigationLinks = () => (
+    <>
+      <Link
+        to="/app"
+        className={`${isMobile ? 'block py-3 px-4 text-base' : 'text-gray-600 hover:text-gray-900 transition-colors'}`}
+        activeProps={{
+          className: isMobile
+            ? 'text-blue-600 bg-blue-50 font-medium'
+            : 'text-blue-600 font-medium',
+        }}
+        activeOptions={{ exact: true }}
+        onClick={() => isMobile && setMobileMenuOpen(false)}
+      >
+        Home
+      </Link>
+      <Link
+        to="/app/animals"
+        className={`${isMobile ? 'block py-3 px-4 text-base' : 'text-gray-600 hover:text-gray-900 transition-colors'}`}
+        activeProps={{
+          className: isMobile
+            ? 'text-blue-600 bg-blue-50 font-medium'
+            : 'text-blue-600 font-medium',
+        }}
+        onClick={() => isMobile && setMobileMenuOpen(false)}
+      >
+        Animals
+      </Link>
+      <Link
+        to="/app/shadcn-test"
+        className={`${isMobile ? 'block py-3 px-4 text-base' : 'text-gray-600 hover:text-gray-900 transition-colors'}`}
+        activeProps={{
+          className: isMobile
+            ? 'text-blue-600 bg-blue-50 font-medium'
+            : 'text-blue-600 font-medium',
+        }}
+        onClick={() => isMobile && setMobileMenuOpen(false)}
+      >
+        UI Test
+      </Link>
+    </>
+  )
+
+  const UserMenu = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size={isMobile ? 'default' : 'icon'}
+          className={isMobile ? 'w-full justify-start px-4 py-3' : ''}
+        >
+          <User className="h-5 w-5 mr-2" />
+          {isMobile && <span>Account</span>}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align={isMobile ? 'start' : 'end'}
+        className={isMobile ? 'w-full' : ''}
+      >
+        <DropdownMenuItem asChild>
+          <Link
+            to="/app/profile"
+            onClick={() => isMobile && setMobileMenuOpen(false)}
+          >
+            Profile
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => authClient.signOut()}>
+          Sign Out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+
+  if (isPending) {
+    return <LoadingPage />
+  }
+
+  if (!session) {
+    return null // Redirect will happen via useEffect
+  }
+
   return (
     <div className="flex flex-col h-screen">
       <header className="border-b bg-white shadow-sm">
@@ -30,55 +130,39 @@ function AppLayout() {
             >
               🐾 Stray Tracker
             </Link>
-            <div className="flex items-center gap-6">
-              <Link
-                to="/app"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-                activeProps={{
-                  className: 'text-blue-600 font-medium',
-                }}
-                activeOptions={{ exact: true }}
-              >
-                Home
-              </Link>
-              <Link
-                to="/app/animals"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-                activeProps={{
-                  className: 'text-blue-600 font-medium',
-                }}
-              >
-                Animals
-              </Link>
-              <Link
-                to="/app/shadcn-test"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-                activeProps={{
-                  className: 'text-blue-600 font-medium',
-                }}
-              >
-                UI Test
-              </Link>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+
+            {/* Desktop Navigation */}
+            {!isMobile && (
+              <div className="flex items-center gap-6">
+                <NavigationLinks />
+                <UserMenu />
+              </div>
+            )}
+
+            {/* Mobile Navigation */}
+            {isMobile && (
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
                   <Button variant="ghost" size="icon">
-                    <User className="h-5 w-5" />
+                    <Menu className="h-5 w-5" />
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link to="/app/profile">Profile</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => authClient.signOut()}>
-                    Sign Out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-64">
+                  <div className="flex flex-col gap-2 mt-6">
+                    <NavigationLinks />
+                    <div className="border-t pt-4 mt-4">
+                      <UserMenu />
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            )}
           </div>
         </nav>
       </header>
-      <main className="flex-1">{session ? <Outlet /> : 'unauth'}</main>
+      <main className="flex-1 overflow-y-auto">
+        <Outlet />
+      </main>
     </div>
   )
 }

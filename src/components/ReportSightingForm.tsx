@@ -1,43 +1,48 @@
 import { useForm } from '@tanstack/react-form'
-import { useState } from 'react'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card'
+import { useState, useCallback } from 'react'
 import { Button } from '~/components/ui/button'
-import { Input } from '~/components/ui/input'
-import { Label } from '~/components/ui/label'
-import { Textarea } from '~/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '~/components/ui/select'
-import { Checkbox } from '~/components/ui/checkbox'
 import { toast } from 'sonner'
 import { createSighting } from '~/routes/api/sightings'
 import { authClient } from '~/lib/auth-client'
 import { sightingFormDefaults } from '~/form-config'
+import {
+  Stepper,
+  StepperNav,
+  StepperItem,
+  StepperTrigger,
+  StepperIndicator,
+  StepperTitle,
+  StepperSeparator,
+  StepperContent,
+} from '~/components/ui/stepper'
+import { ImageLocationStep } from '~/components/sighting-form-steps/ImageLocationStep'
+import { AnimalTypeStep } from '~/components/sighting-form-steps/AnimalTypeStep'
+import { ObservationStep } from '~/components/sighting-form-steps/ObservationStep'
+import { AdditionalInfoStep } from '~/components/sighting-form-steps/AdditionalInfoStep'
+import { ImageManagerDialog } from '~/components/ImageManagerDialog'
 
 interface ReportSightingFormProps {
   onSuccess?: () => void
 }
 
 export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
-  const [currentLocation, setCurrentLocation] = useState<{
-    lat: number
-    lng: number
-  } | null>(null)
-  const [locationLoading, setLocationLoading] = useState(false)
-  const [getUserLocation, setGetUserLocation] = useState(false)
   const [reportingNewAnimal, setReportingNewAnimal] = useState(false)
+  const [images, setImages] = useState<File[]>([])
+  const [isImageManagerOpen, setIsImageManagerOpen] = useState(false)
 
-  const { data: session, isPending } = authClient.useSession()
+  const steps = [
+    { id: 'images-location', title: 'Pictures' },
+    {
+      id: 'animal-type',
+      title: 'Matching',
+    },
+    {
+      id: 'observation-additional',
+      title: 'Details',
+    },
+  ]
+
+  const { data: session } = authClient.useSession()
 
   const form = useForm({
     defaultValues: sightingFormDefaults,
@@ -48,22 +53,26 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
           throw new Error('You must be logged in to report a sighting')
         }
 
+        // Construct location data if coordinates are available
+        const location =
+          value.latitude && value.longitude
+            ? {
+                lat: value.latitude,
+                lng: value.longitude,
+                address: value.location || 'Current location',
+              }
+            : null
+
         const sightingData = {
           strayId: value.strayId,
           userId: session.user.id,
           description: value.description,
-          location:
-            value.location || (value.latitude && value.longitude)
-              ? {
-                  lat: value.latitude!,
-                  lng: value.longitude!,
-                  address: value.location || 'Current location',
-                }
-              : null,
+          location,
           sightingTime: value.date ? new Date(value.date) : new Date(),
           notes: value.notes,
           weatherCondition: value.weatherCondition,
           confidence: value.confidence,
+          images: images,
           ...(reportingNewAnimal && {
             species: value.species,
             animalSize: value.animalSize,
@@ -84,448 +93,149 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
     },
   })
 
-  const handleGetCurrentLocation = () => {
-    setLocationLoading(true)
-    if (!navigator.geolocation) {
-      toast.error('Geolocation is not supported by this browser')
-      setLocationLoading(false)
-      return
-    }
+  const [currentStep, setCurrentStep] = useState(1)
 
-    navigator.geolocation.getCurrentPosition(
-      position => {
-        const { latitude, longitude } = position.coords
-        setCurrentLocation({ lat: latitude, lng: longitude })
-        form.setFieldValue('latitude', latitude)
-        form.setFieldValue('longitude', longitude)
-        toast.success('Location collected successfully')
-        setLocationLoading(false)
-      },
-      error => {
-        console.error('Error getting location:', error)
-        toast.error('Failed to get your location. Please enter it manually.')
-        setLocationLoading(false)
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000, // 5 minutes
-      }
-    )
-  }
+  const handleImagesUpdate = useCallback((newImages: File[]) => {
+    setImages(newImages)
+  }, [])
 
-  const handleLocationCheckboxChange = (checked: boolean) => {
-    setGetUserLocation(checked)
-    if (checked && !currentLocation) {
-      handleGetCurrentLocation()
-    } else if (checked && currentLocation) {
-      form.setFieldValue('latitude', currentLocation.lat)
-      form.setFieldValue('longitude', currentLocation.lng)
-    }
-  }
+  const handleMarkerDragEnd = useCallback(
+    (position: { lat: number; lng: number }) => {
+      form.setFieldValue('latitude', position.lat)
+      form.setFieldValue('longitude', position.lng)
+    },
+    [form]
+  )
+
+  const handleNext = useCallback(() => {
+    setCurrentStep(prev => Math.min(prev + 1, steps.length))
+  }, [steps.length])
+
+  const handlePrevious = useCallback(() => {
+    setCurrentStep(prev => Math.max(prev - 1, 1))
+  }, [])
+
+  const removeImage = useCallback((index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index))
+  }, [])
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4 space-y-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">Report a Sighting</h1>
-        <p className="text-gray-600 text-sm">
-          Help reunite lost pets by reporting when you've seen stray animals.
-          Your reports help track animal movements and aid rescue efforts.
-        </p>
-      </div>
+    <div className="w-full max-w-2xl mx-auto p-2 pb-24">
+      <h1 className="text-2xl font-bold">New Sighting</h1>
+      <form
+        onSubmit={e => {
+          e.preventDefault()
+          e.stopPropagation()
+          form.handleSubmit()
+        }}
+        className="mt-4"
+      >
+        <Stepper
+          className="space-y-4"
+          value={currentStep}
+          onValueChange={setCurrentStep}
+        >
+          <StepperNav className="align-middle">
+            {steps.map((step, index) => (
+              <StepperItem className="flex-grow" key={step.id} step={index + 1}>
+                <StepperTrigger className="flex flex-col gap-2.5">
+                  <StepperIndicator>{index + 1}</StepperIndicator>
+                  <StepperTitle>{step.title}</StepperTitle>
+                </StepperTrigger>
+                {index < steps.length - 1 && <StepperSeparator />}
+              </StepperItem>
+            ))}
+          </StepperNav>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Sighting Details</CardTitle>
-          <CardDescription>
-            Fill in the details of the stray animal you observed. Be as
-            descriptive as possible to help others identify and locate the
-            animal.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form
-            onSubmit={e => {
-              e.preventDefault()
-              e.stopPropagation()
-              form.handleSubmit()
-            }}
-            className="space-y-6"
+          <StepperContent value={1}>
+            <ImageLocationStep
+              images={images}
+              onImagesUpdate={handleImagesUpdate}
+              onMarkerDragEnd={handleMarkerDragEnd}
+            />
+          </StepperContent>
+
+          <StepperContent value={2}>
+            <AnimalTypeStep
+              reportingNewAnimal={reportingNewAnimal}
+              onReportingNewAnimalChange={setReportingNewAnimal}
+              strayId={form.state.values.strayId}
+              onStrayIdChange={value => form.setFieldValue('strayId', value)}
+              species={form.state.values.species}
+              onSpeciesChange={value => form.setFieldValue('species', value)}
+              animalSize={form.state.values.animalSize}
+              onAnimalSizeChange={value =>
+                form.setFieldValue('animalSize', value)
+              }
+              strayIdError={form.state.fieldMeta.strayId?.errors?.[0]}
+              speciesError={form.state.fieldMeta.species?.errors?.[0]}
+              animalSizeError={form.state.fieldMeta.animalSize?.errors?.[0]}
+            />
+          </StepperContent>
+
+          <StepperContent value={3}>
+            <ObservationStep
+              description={form.state.values.description || ''}
+              onDescriptionChange={value =>
+                form.setFieldValue('description', value)
+              }
+              descriptionError={form.state.fieldMeta.description?.errors?.[0]}
+              date={form.state.values.date || ''}
+              onDateChange={value => form.setFieldValue('date', value)}
+              dateError={form.state.fieldMeta.date?.errors?.[0]}
+            />
+            <AdditionalInfoStep
+              weatherCondition={form.state.values.weatherCondition}
+              onWeatherConditionChange={value =>
+                form.setFieldValue('weatherCondition', value as any)
+              }
+              confidence={form.state.values.confidence}
+              onConfidenceChange={value =>
+                form.setFieldValue('confidence', value)
+              }
+              notes={form.state.values.notes || ''}
+              onNotesChange={value => form.setFieldValue('notes', value)}
+              contactInfo={form.state.values.contactInfo || ''}
+              onContactInfoChange={value =>
+                form.setFieldValue('contactInfo', value)
+              }
+            />
+          </StepperContent>
+        </Stepper>
+
+        <div className="fixed bottom-4 left-auto right-auto flex justify-between bg-white/95 backdrop-blur-sm shadow-lg rounded-lg p-4 z-50 max-w-md w-full">
+          <Button
+            type="button"
+            onClick={handlePrevious}
+            disabled={currentStep === 1}
+            variant="outline"
           >
-            {/* Animal Type Selection */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="reporting-new-animal"
-                  checked={reportingNewAnimal}
-                  onCheckedChange={checked =>
-                    setReportingNewAnimal(checked === true)
-                  }
-                />
-                <Label htmlFor="reporting-new-animal">
-                  I'm reporting a new animal not in the system yet
-                </Label>
-              </div>
+            Previous
+          </Button>
 
-              {reportingNewAnimal ? (
-                <>
-                  {/* Species Selection */}
-                  <form.Field
-                    name="species"
-                    validators={{
-                      onChange: ({ value }) =>
-                        !value
-                          ? 'Species is required for new animals'
-                          : undefined,
-                    }}
-                    children={field => (
-                      <div className="space-y-2">
-                        <Label htmlFor={field.name}>Species *</Label>
-                        <Select
-                          value={field.state.value}
-                          onValueChange={value =>
-                            field.setValue(value as 'cat' | 'dog' | 'other')
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select species" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="cat">Cat</SelectItem>
-                            <SelectItem value="dog">Dog</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {field.state.meta.errors ? (
-                          <p className="text-sm text-red-600">
-                            {field.state.meta.errors.join(', ')}
-                          </p>
-                        ) : null}
-                      </div>
-                    )}
-                  />
-
-                  {/* Size Selection */}
-                  <form.Field
-                    name="animalSize"
-                    validators={{
-                      onChange: ({ value }) =>
-                        !value ? 'Size is required for new animals' : undefined,
-                    }}
-                    children={field => (
-                      <div className="space-y-2">
-                        <Label htmlFor={field.name}>Size *</Label>
-                        <Select
-                          value={field.state.value}
-                          onValueChange={value =>
-                            field.setValue(
-                              value as 'small' | 'medium' | 'large'
-                            )
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select size" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="small">Small</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="large">Large</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {field.state.meta.errors ? (
-                          <p className="text-sm text-red-600">
-                            {field.state.meta.errors.join(', ')}
-                          </p>
-                        ) : null}
-                      </div>
-                    )}
-                  />
-                </>
-              ) : (
-                /* Stray Linkage */
-                <form.Field
-                  name="strayId"
-                  children={field => (
-                    <div className="space-y-2">
-                      <Label htmlFor={field.name}>Stray Animal ID</Label>
-                      <Input
-                        id={field.name}
-                        name={field.name}
-                        type="text"
-                        value={field.state.value?.toString()}
-                        onBlur={field.handleBlur}
-                        onChange={e =>
-                          field.handleChange(
-                            e.target.value ? Number(e.target.value) : undefined
-                          )
-                        }
-                        placeholder="Enter the ID of the stray animal you observed"
-                      />
-                      <p className="text-sm text-gray-500">
-                        Leave empty if you're reporting a new animal not in the
-                        system. You can find the stray ID on the animal's
-                        profile page or from previous listings.
-                      </p>
-                      {field.state.meta.errors ? (
-                        <p className="text-sm text-red-600">
-                          {field.state.meta.errors.join(', ')}
-                        </p>
-                      ) : null}
-                    </div>
-                  )}
-                />
-              )}
-            </div>
-
-            {/* Location Section */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="use-location"
-                  checked={getUserLocation}
-                  onCheckedChange={handleLocationCheckboxChange}
-                />
-                <Label htmlFor="use-location">Use my current location</Label>
-                {getUserLocation && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleGetCurrentLocation}
-                    disabled={locationLoading}
-                  >
-                    {locationLoading
-                      ? 'Getting location...'
-                      : 'Refresh location'}
-                  </Button>
-                )}
-              </div>
-
-              {getUserLocation && currentLocation && (
-                <div className="bg-blue-50 p-3 rounded-md">
-                  <p className="text-sm text-blue-800">
-                    Location captured: {currentLocation.lat.toFixed(6)},{' '}
-                    {currentLocation.lng.toFixed(6)}
-                  </p>
-                </div>
-              )}
-
-              <form.Field
-                name="location"
-                children={field => (
-                  <div className="space-y-2">
-                    <Label htmlFor={field.name}>
-                      Address/Location Description
-                    </Label>
-                    <Input
-                      id={field.name}
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={e => field.handleChange(e.target.value)}
-                      placeholder="Street address, cross streets, or landmark"
-                    />
-                    {!getUserLocation && (
-                      <p className="text-sm text-gray-500">
-                        Please provide an address since location sharing is
-                        disabled
-                      </p>
-                    )}
-                  </div>
-                )}
-              />
-            </div>
-
-            {/* Description */}
-            <form.Field
-              name="description"
-              validators={{
-                onChange: ({ value }) =>
-                  !value || value.length < 10
-                    ? 'Description must be at least 10 characters'
-                    : undefined,
-              }}
-              children={field => (
-                <div className="space-y-2">
-                  <Label htmlFor={field.name}>Detailed Description *</Label>
-                  <Textarea
-                    id={field.name}
-                    name={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={e => field.handleChange(e.target.value)}
-                    placeholder="Describe what you observed: behavior, condition, any unusual markings, injuries, or other notable details..."
-                    rows={4}
-                  />
-                  <p className="text-sm text-gray-500">
-                    Helpful details include: animal behavior, health condition,
-                    specific markings, notable colors, or distinctive features.
-                  </p>
-                  {field.state.meta.errors ? (
-                    <p className="text-sm text-red-600">
-                      {field.state.meta.errors.join(', ')}
-                    </p>
-                  ) : null}
-                </div>
+          {currentStep === steps.length ? (
+            <form.Subscribe
+              selector={state => [state.canSubmit, state.isSubmitting]}
+              children={([canSubmit, isSubmitting]) => (
+                <Button type="submit" disabled={!canSubmit} size="lg">
+                  {isSubmitting ? 'Reporting Sighting...' : 'Report Sighting'}
+                </Button>
               )}
             />
+          ) : (
+            <Button type="button" onClick={handleNext}>
+              Next
+            </Button>
+          )}
+        </div>
+      </form>
 
-            {/* Date and Time */}
-            <form.Field
-              name="date"
-              validators={{
-                onChange: ({ value }) => {
-                  if (!value) return 'Date is required'
-                  const date = new Date(value)
-                  if (isNaN(date.getTime())) return 'Invalid date format'
-                  if (date > new Date()) return 'Cannot report future sightings'
-                  return undefined
-                },
-              }}
-              children={field => (
-                <div className="space-y-2">
-                  <Label htmlFor={field.name}>
-                    When did you see the animal? *
-                  </Label>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    type="datetime-local"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={e => field.handleChange(e.target.value)}
-                  />
-                  {field.state.meta.errors ? (
-                    <p className="text-sm text-red-600">
-                      {field.state.meta.errors.join(', ')}
-                    </p>
-                  ) : null}
-                </div>
-              )}
-            />
-
-            {/* Optional Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <form.Field
-                name="weatherCondition"
-                children={field => (
-                  <div className="space-y-2">
-                    <Label htmlFor={field.name}>Weather Conditions</Label>
-                    <Select
-                      value={field.state.value}
-                      onValueChange={value => field.setValue(value as any)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select weather condition" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sunny">Sunny</SelectItem>
-                        <SelectItem value="cloudy">Cloudy</SelectItem>
-                        <SelectItem value="rainy">Rainy</SelectItem>
-                        <SelectItem value="snowy">Snowy</SelectItem>
-                        <SelectItem value="windy">Windy</SelectItem>
-                        <SelectItem value="foggy">Foggy</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              />
-
-              <form.Field
-                name="confidence"
-                children={field => (
-                  <div className="space-y-2">
-                    <Label htmlFor={field.name}>Confidence Level</Label>
-                    <Select
-                      value={field.state.value?.toString()}
-                      onValueChange={value => field.setValue(Number(value))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="How sure are you about the identification?" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">Very Unsure</SelectItem>
-                        <SelectItem value="2">Unsure</SelectItem>
-                        <SelectItem value="3">Somewhat Sure</SelectItem>
-                        <SelectItem value="4">Confident</SelectItem>
-                        <SelectItem value="5">Very Confident</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              />
-            </div>
-
-            {/* Notes */}
-            <form.Field
-              name="notes"
-              children={field => (
-                <div className="space-y-2">
-                  <Label htmlFor={field.name}>Additional Notes</Label>
-                  <Textarea
-                    id={field.name}
-                    name={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={e => field.handleChange(e.target.value)}
-                    placeholder="Any additional information that might be helpful for animal care or identification..."
-                    rows={3}
-                  />
-                </div>
-              )}
-            />
-
-            {/* Contact Info */}
-            <form.Field
-              name="contactInfo"
-              children={field => (
-                <div className="space-y-2">
-                  <Label htmlFor={field.name}>
-                    Contact Information (Optional)
-                  </Label>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={e => field.handleChange(e.target.value)}
-                    placeholder="Phone number or preferred contact method for follow-up"
-                  />
-                  <p className="text-sm text-gray-500">
-                    Only provide if you're willing to be contacted about this
-                    sighting.
-                  </p>
-                </div>
-              )}
-            />
-
-            {/* Submit Button */}
-            <div className="pt-4">
-              <form.Subscribe
-                selector={state => [state.canSubmit, state.isSubmitting]}
-                children={([canSubmit, isSubmitting]) => (
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={!canSubmit}
-                    size="lg"
-                  >
-                    {isSubmitting ? 'Reporting Sighting...' : 'Report Sighting'}
-                  </Button>
-                )}
-              />
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      <div className="text-center">
-        <p className="text-sm text-gray-500">
-          By reporting this sighting, you're helping reunite lost pets with
-          their owners. All information is handled confidentially and used
-          solely for animal welfare purposes.
-        </p>
-      </div>
+      <ImageManagerDialog
+        images={images}
+        onRemoveImage={removeImage}
+        open={isImageManagerOpen}
+        onOpenChange={setIsImageManagerOpen}
+      />
     </div>
   )
 }

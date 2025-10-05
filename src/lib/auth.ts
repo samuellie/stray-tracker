@@ -9,7 +9,6 @@ const createAuth = () => {
   const db = env
     ? drizzle(env.DB, { schema: schema, logger: true })
     : ({} as any)
-
   return betterAuth(
     withCloudflare(
       {

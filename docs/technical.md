@@ -22,6 +22,223 @@
 - **Zustand**: Lightweight state management for client-side state (maintained by TanStack team)
 - **@tanstack/react-form**: Type-safe, performant forms with integrated validation
 
+#### TanStack Query Implementation Example
+
+Here's how to implement API queries as custom hooks using TanStack Query:
+
+```typescript
+// src/hooks/useSightings.ts
+import { useQuery } from '@tanstack/react-query'
+import { getSightings } from '~/routes/api/sightings'
+
+// Custom hook for fetching all sightings
+export function useSightings() {
+  return useQuery({
+    queryKey: ['sightings'],
+    queryFn: () => getSightings(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
+}
+```
+
+Usage in a React component with comprehensive error and loading handling:
+
+```tsx
+// In a component
+function SightingList() {
+  const {
+    data: sightings,
+    isLoading,
+    error,
+    isError,
+    refetch,
+    isFetching,
+  } = useSightings()
+
+  // Loading state with skeleton
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  // Error state with retry functionality
+  if (isError) {
+    return (
+      <div className="text-center p-4">
+        <div className="text-red-600 mb-2">
+          Failed to load sightings: {error?.message || 'Unknown error'}
+        </div>
+        <button
+          onClick={() => refetch()}
+          disabled={isFetching}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+        >
+          {isFetching ? 'Retrying...' : 'Try Again'}
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative">
+      {isFetching && !isLoading && (
+        <div className="absolute top-0 right-0 text-sm text-gray-500">
+          Refreshing...
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {sightings?.map(sighting => (
+          <div key={sighting.id} className="p-4 border rounded">
+            <div className="font-medium">
+              {sighting.stray?.species} sighted at {sighting.location}
+            </div>
+            {sighting.description && (
+              <div className="text-sm text-gray-600 mt-1">
+                {sighting.description}
+              </div>
+            )}
+          </div>
+        ))}
+
+        {sightings?.length === 0 && (
+          <div className="text-center text-gray-500 py-8">
+            No sightings reported yet.
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+```
+
+#### TanStack Query Mutation Example
+
+Here's how to implement API mutations using TanStack Query for creating new sightings:
+
+```typescript
+// src/hooks/useCreateSighting.ts
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { createSighting } from '~/routes/api/sightings'
+
+// Custom hook for creating a new sighting
+export function useCreateSighting() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: {
+      latitude: number
+      longitude: number
+      description?: string
+      images?: string[]
+      strayId?: number
+      species?: string
+      animalSize?: string
+    }) => createSighting(data),
+    onSuccess: () => {
+      // Invalidate and refetch sightings data
+      queryClient.invalidateQueries({ queryKey: ['sightings'] })
+    },
+  })
+}
+```
+
+Usage in a React component with comprehensive error and loading handling:
+
+```tsx
+// In a component
+function ReportSightingForm() {
+  const [successMessage, setSuccessMessage] = useState('')
+  const createSighting = useCreateSighting()
+
+  const handleSubmit = async (formData: SightingFormData) => {
+    setSuccessMessage('')
+
+    try {
+      await createSighting.mutateAsync({
+        latitude: formData.location.lat,
+        longitude: formData.location.lng,
+        description: formData.description,
+        images: formData.images,
+        species: formData.species,
+        animalSize: formData.size,
+      })
+
+      // Handle success
+      setSuccessMessage('Sighting reported successfully!')
+      // Reset form or redirect as needed
+    } catch (error) {
+      // Error is automatically handled by the mutation
+      console.error('Failed to report sighting:', error)
+    }
+  }
+
+  return (
+    <div className="max-w-md mx-auto">
+      {successMessage && (
+        <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+          {successMessage}
+        </div>
+      )}
+
+      {createSighting.isError && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          <strong>Error:</strong>{' '}
+          {createSighting.error?.message || 'Failed to report sighting'}
+          <button
+            onClick={() => createSighting.reset()}
+            className="ml-2 text-sm underline hover:no-underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Form fields would go here */}
+        <div>
+          <label className="block text-sm font-medium mb-1">Description</label>
+          <textarea
+            name="description"
+            className="w-full p-2 border rounded"
+            disabled={createSighting.isPending}
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={createSighting.isPending}
+          className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {createSighting.isPending ? (
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Reporting Sighting...
+            </div>
+          ) : (
+            'Report Sighting'
+          )}
+        </button>
+      </form>
+
+      {createSighting.isSuccess && !successMessage && (
+        <div className="mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+          Sighting has been reported successfully!
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
 **Routing & Navigation**
 
 - **TanStack Router**: Type-safe routing with file-based route generation
@@ -167,8 +384,9 @@ stray-tracker/
 - **Global performance**: Edge locations worldwide
 - **Reduced complexity**: No server provisioning or management
 
-**Progressive Web App (PWA)**
+**Mobile-first Progressive Web App (PWA)**
 
+- **Mobile-first design**: Optimized for mobile devices with web compatibility
 - **Cross-platform compatibility**: Works on mobile, tablet, and desktop
 - **Offline functionality**: Core features work without internet connection
 - **App-like experience**: Native installation and push notifications
@@ -395,6 +613,62 @@ interface ErrorResponse {
 - `404`: Not Found
 - `429`: Too Many Requests
 - `500`: Internal Server Error
+
+## External API Integrations
+
+### Breed & Color API Services
+
+**Service Architecture**
+
+Stray Tracker integrates with third-party APIs to provide comprehensive breed and color data for cats and dogs. The system uses an abstraction layer for easy API switching and future extensibility.
+
+**Breed APIs**
+
+- **The Cat API** (`https://thecatapi.com/`): Free REST API providing cat breed information with images and characteristics
+- **The Dog API** (`https://thedogapi.com/`): Free REST API providing dog breed list with images
+
+**Implementation Pattern**
+
+```typescript
+interface BreedService {
+  getBreeds(species: 'cat' | 'dog'): Promise<Breed[]>
+  getBreed(id: string): Promise<Breed | null>
+}
+
+interface Breed {
+  id: string
+  name: string
+  species: 'cat' | 'dog'
+}
+```
+
+**Color Data Management**
+
+Since breed APIs don't provide color information, the system uses predefined color options managed through a static service:
+
+```typescript
+interface ColorService {
+  getColors(): Promise<Color[]>
+}
+
+interface Color {
+  id: string
+  name: string
+  hexCode?: string
+}
+```
+
+**API Endpoints**
+
+- `GET /api/breeds?species=cat|dog` - Returns breed data for selected species
+- `GET /api/colors` - Returns available color options for animal identification
+
+**Error Handling & Fallbacks**
+
+- Graceful degradation if external APIs are unavailable
+- Client-side caching to reduce API calls
+- Fallback to basic options if API requests fail
+- Rate limiting and retry logic for API reliability
 
 ## Testing Strategy
 

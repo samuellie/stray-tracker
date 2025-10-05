@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the comprehensive architecture for the Stray Tracker application, a community-driven platform for tracking and caring for stray animals. The system leverages modern web technologies and cloud infrastructure to provide a scalable, real-time solution for animal welfare tracking.
+This document outlines the comprehensive architecture for the Stray Tracker application, a mobile-first Progressive Web App with web compatibility, designed as a community-driven platform for tracking and caring for stray animals. The system leverages modern web technologies and cloud infrastructure to provide a scalable, real-time solution for animal welfare tracking, prioritizing mobile experience while maintaining full desktop functionality.
 
 ## System Architecture
 
@@ -20,7 +20,7 @@ graph TB
     %% Framework Layer
     subgraph "Framework Layer"
         B --> E[TanStack Router]
-        B --> F[React Query + TanStack Query]
+        B --> F[TanStack Query (React Query)]
         F --> G[API State Management]
     end
 
@@ -189,7 +189,7 @@ sequenceDiagram
 
 #### State Management
 
-- **React Query**: Server state management and caching
+- **TanStack Query (React Query)**: Server state management and caching
 - **Zustand**: Client state for UI preferences and temporary data
 - **Local Storage**: Persistent user preferences and offline data
 

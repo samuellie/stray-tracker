@@ -10,7 +10,7 @@ Every day, countless stray animals roam streets without proper care, food, or me
 
 ## Solution
 
-A modern, engaging Progressive Web App that enables communities to:
+A mobile-first Progressive Web App with web compatibility that enables communities to:
 
 - Track and monitor stray animals in their area
 - Share information and coordinate care efforts
@@ -61,7 +61,7 @@ A modern, engaging Progressive Web App that enables communities to:
 
 #### Performance
 
-- Mobile-responsive design accessible from any device
+- Mobile-first design with web compatibility
 - Fast loading times with global CDN distribution
 - Real-time updates and notifications
 - Scalable architecture to handle traffic spikes
@@ -105,7 +105,7 @@ A modern, engaging Progressive Web App that enables communities to:
 4. **Animal Profiles** - Core functionality for tracking individual animals
 5. **Community Feed** - Enables information sharing and coordination
 6. **Search & Filter** - Helps users find relevant information
-7. **Mobile Responsive PWA** - Progressive Web App for mobile and desktop
+7. **Mobile-first Progressive Web App** - Optimized for mobile with full web compatibility
 8. **Real-time Updates** - Keeps community informed and engaged
 
 ### Community Engagement Features
