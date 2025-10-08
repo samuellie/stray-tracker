@@ -8,10 +8,11 @@ export function useCreateSighting() {
 
   return useMutation({
     mutationFn: (
-      data: Omit<InsertSighting, 'strayId'> & {
+      data: Omit<InsertSighting, 'strayId' | 'userId'> & {
         strayId?: number
         species?: string
         animalSize?: string
+        location?: InsertSighting['location'] | null
       }
     ) => createSighting({ data }),
     onSuccess: () => {

@@ -1,5 +1,5 @@
 import { sqliteTable, text, integer, real, blob } from 'drizzle-orm/sqlite-core'
-import { sql } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 import * as authSchema from './auth.schema'
 
 export * from './auth.schema'
@@ -12,8 +12,8 @@ export const strays = sqliteTable('strays', {
   breed: text('breed'),
   age: text('age', { enum: ['puppy', 'young', 'adult', 'senior'] }),
   size: text('size', { enum: ['small', 'medium', 'large'] }).notNull(),
-  colors: blob('colors', { mode: 'json' }).$type<string[]>(),
-  markings: blob('markings', { mode: 'json' }).$type<string[]>(),
+  colors: text('colors'),
+  markings: text('markings'),
   status: text('status', {
     enum: ['spotted', 'being_cared_for', 'adopted', 'deceased'],
   })
@@ -29,8 +29,6 @@ export const strays = sqliteTable('strays', {
     address?: string
     neighborhood?: string
   }>(),
-  // Sighting history stored as JSON for derived data
-  sightingHistory: blob('sighting_history', { mode: 'json' }).$type<any[]>(),
   caretakerId: integer('caretaker_id').references(() => authSchema.users.id),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
@@ -39,6 +37,19 @@ export const strays = sqliteTable('strays', {
     .notNull()
     .default(sql`(unixepoch())`),
 })
+export const straysRelations = relations(strays, ({ one, many }) => ({
+  caretaker: one(authSchema.users, {
+    fields: [strays.caretakerId],
+    references: [authSchema.users.id],
+  }),
+  sightings: many(sightings),
+  strayPhotos: many(strayPhotos),
+  straySubscriptions: many(straySubscriptions),
+  namingSuggestions: many(namingSuggestions),
+  communityPosts: many(communityPosts),
+  medicalRecords: many(medicalRecords),
+  careRecords: many(careRecords),
+}))
 
 // Sightings table - stray sighting reports
 export const sightings = sqliteTable('sightings', {
@@ -49,16 +60,22 @@ export const sightings = sqliteTable('sightings', {
   userId: text('user_id')
     .references(() => authSchema.users.id)
     .notNull(),
-  // Location data as JSON for consistency
+  // Separate lat/lng fields for easier querying
+  lat: real('lat').notNull(),
+  lng: real('lng').notNull(),
+  // Location data as JSON for display
   location: blob('location', { mode: 'json' }).$type<{
-    lat: number
-    lng: number
-    address?: string
-    neighborhood?: string
+    address1?: string
+    address2?: string
+    city?: string
+    postcode?: string
+    country?: string
   }>(),
   description: text('description'),
   // Additional sighting metadata
-  sightingTime: integer('sighting_time', { mode: 'timestamp' }),
+  sightingTime: integer('sighting_time', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
   weatherCondition: text('weather_condition'),
   confidence: integer('confidence'), // 1-10 scale
   notes: text('notes'),
@@ -66,6 +83,18 @@ export const sightings = sqliteTable('sightings', {
     .notNull()
     .default(sql`(unixepoch())`),
 })
+
+export const sightingsRelations = relations(sightings, ({ one, many }) => ({
+  stray: one(strays, {
+    fields: [sightings.strayId],
+    references: [strays.id],
+  }),
+  user: one(authSchema.users, {
+    fields: [sightings.userId],
+    references: [authSchema.users.id],
+  }),
+  sightingPhotos: many(sightingPhotos),
+}))
 
 // stray photos table - photos of strays
 export const strayPhotos = sqliteTable('stray_photos', {
@@ -88,6 +117,17 @@ export const strayPhotos = sqliteTable('stray_photos', {
     .default(sql`(unixepoch())`),
 })
 
+export const strayPhotosRelations = relations(strayPhotos, ({ one }) => ({
+  stray: one(strays, {
+    fields: [strayPhotos.strayId],
+    references: [strays.id],
+  }),
+  user: one(authSchema.users, {
+    fields: [strayPhotos.userId],
+    references: [authSchema.users.id],
+  }),
+}))
+
 // Sighting photos table - photos from sightings
 export const sightingPhotos = sqliteTable('sighting_photos', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -106,6 +146,17 @@ export const sightingPhotos = sqliteTable('sighting_photos', {
     .notNull()
     .default(sql`(unixepoch())`),
 })
+
+export const sightingPhotosRelations = relations(sightingPhotos, ({ one }) => ({
+  sighting: one(sightings, {
+    fields: [sightingPhotos.sightingId],
+    references: [sightings.id],
+  }),
+  user: one(authSchema.users, {
+    fields: [sightingPhotos.userId],
+    references: [authSchema.users.id],
+  }),
+}))
 
 // stray subscriptions table - user subscriptions to strays or locations
 export const straySubscriptions = sqliteTable('stray_subscriptions', {
@@ -135,6 +186,20 @@ export const straySubscriptions = sqliteTable('stray_subscriptions', {
     .default(sql`(unixepoch())`),
 })
 
+export const straySubscriptionsRelations = relations(
+  straySubscriptions,
+  ({ one }) => ({
+    user: one(authSchema.users, {
+      fields: [straySubscriptions.userId],
+      references: [authSchema.users.id],
+    }),
+    stray: one(strays, {
+      fields: [straySubscriptions.strayId],
+      references: [strays.id],
+    }),
+  })
+)
+
 // Naming suggestions table - community naming suggestions for strays
 export const namingSuggestions = sqliteTable('naming_suggestions', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -152,6 +217,21 @@ export const namingSuggestions = sqliteTable('naming_suggestions', {
     .default(sql`(unixepoch())`),
 })
 
+export const namingSuggestionsRelations = relations(
+  namingSuggestions,
+  ({ one, many }) => ({
+    stray: one(strays, {
+      fields: [namingSuggestions.strayId],
+      references: [strays.id],
+    }),
+    user: one(authSchema.users, {
+      fields: [namingSuggestions.userId],
+      references: [authSchema.users.id],
+    }),
+    namingVotes: many(namingVotes),
+  })
+)
+
 // Naming votes table - votes for naming suggestions
 export const namingVotes = sqliteTable('naming_votes', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -166,6 +246,17 @@ export const namingVotes = sqliteTable('naming_votes', {
     .notNull()
     .default(sql`(unixepoch())`),
 })
+
+export const namingVotesRelations = relations(namingVotes, ({ one }) => ({
+  namingSuggestion: one(namingSuggestions, {
+    fields: [namingVotes.namingSuggestionId],
+    references: [namingSuggestions.id],
+  }),
+  user: one(authSchema.users, {
+    fields: [namingVotes.userId],
+    references: [authSchema.users.id],
+  }),
+}))
 
 // Bounties table - requests for community help tracking locations
 export const bounties = sqliteTable('bounties', {
@@ -200,6 +291,14 @@ export const bounties = sqliteTable('bounties', {
     .default(sql`(unixepoch())`),
 })
 
+export const bountiesRelations = relations(bounties, ({ one, many }) => ({
+  user: one(authSchema.users, {
+    fields: [bounties.userId],
+    references: [authSchema.users.id],
+  }),
+  bountyAssignments: many(bountyAssignments),
+}))
+
 // Volunteer assignments table - assignments of volunteers to bounties
 export const bountyAssignments = sqliteTable('bounty_assignments', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -219,6 +318,20 @@ export const bountyAssignments = sqliteTable('bounty_assignments', {
     .notNull()
     .default(sql`(unixepoch())`),
 })
+
+export const bountyAssignmentsRelations = relations(
+  bountyAssignments,
+  ({ one }) => ({
+    bounty: one(bounties, {
+      fields: [bountyAssignments.trackingRequestId],
+      references: [bounties.id],
+    }),
+    user: one(authSchema.users, {
+      fields: [bountyAssignments.userId],
+      references: [authSchema.users.id],
+    }),
+  })
+)
 
 // Community posts table - community feed posts
 export const communityPosts = sqliteTable('community_posts', {
@@ -257,6 +370,26 @@ export const communityPosts = sqliteTable('community_posts', {
     .default(sql`(unixepoch())`),
 })
 
+export const communityPostsRelations = relations(
+  communityPosts,
+  ({ one, many }) => ({
+    author: one(authSchema.users, {
+      fields: [communityPosts.authorId],
+      references: [authSchema.users.id],
+    }),
+    stray: one(strays, {
+      fields: [communityPosts.strayId],
+      references: [strays.id],
+    }),
+    sighting: one(sightings, {
+      fields: [communityPosts.sightingId],
+      references: [sightings.id],
+    }),
+    postComments: many(postComments),
+    postReactions: many(postReactions),
+  })
+)
+
 // Post comments table - comments on community posts
 export const postComments = sqliteTable('post_comments', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -278,6 +411,25 @@ export const postComments = sqliteTable('post_comments', {
     .default(sql`(unixepoch())`),
 })
 
+export const postCommentsRelations = relations(
+  postComments,
+  ({ one, many }) => ({
+    post: one(communityPosts, {
+      fields: [postComments.postId],
+      references: [communityPosts.id],
+    }),
+    author: one(authSchema.users, {
+      fields: [postComments.authorId],
+      references: [authSchema.users.id],
+    }),
+    parent: one(postComments, {
+      fields: [postComments.parentId],
+      references: [postComments.id],
+    }),
+    replies: many(postComments),
+  })
+)
+
 // Post reactions table - likes and reactions to posts
 export const postReactions = sqliteTable('post_reactions', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -294,6 +446,17 @@ export const postReactions = sqliteTable('post_reactions', {
     .notNull()
     .default(sql`(unixepoch())`),
 })
+
+export const postReactionsRelations = relations(postReactions, ({ one }) => ({
+  post: one(communityPosts, {
+    fields: [postReactions.postId],
+    references: [communityPosts.id],
+  }),
+  user: one(authSchema.users, {
+    fields: [postReactions.userId],
+    references: [authSchema.users.id],
+  }),
+}))
 
 // Medical records table (legacy compatibility) - stray medical records
 export const medicalRecords = sqliteTable('medical_records', {
@@ -317,6 +480,17 @@ export const medicalRecords = sqliteTable('medical_records', {
     .notNull()
     .default(sql`(unixepoch())`),
 })
+
+export const medicalRecordsRelations = relations(medicalRecords, ({ one }) => ({
+  stray: one(strays, {
+    fields: [medicalRecords.strayId],
+    references: [strays.id],
+  }),
+  createdBy: one(authSchema.users, {
+    fields: [medicalRecords.createdBy],
+    references: [authSchema.users.id],
+  }),
+}))
 
 // Care records table - general care activities for strays
 export const careRecords = sqliteTable('care_records', {
@@ -353,6 +527,17 @@ export const careRecords = sqliteTable('care_records', {
     .notNull()
     .default(sql`(unixepoch())`),
 })
+
+export const careRecordsRelations = relations(careRecords, ({ one }) => ({
+  stray: one(strays, {
+    fields: [careRecords.strayId],
+    references: [strays.id],
+  }),
+  user: one(authSchema.users, {
+    fields: [careRecords.userId],
+    references: [authSchema.users.id],
+  }),
+}))
 
 // Indexes for better performance
 export const indexes = {
@@ -406,6 +591,21 @@ export default {
   postReactions,
   medicalRecords,
   careRecords,
+  // Relations
+  straysRelations,
+  sightingsRelations,
+  strayPhotosRelations,
+  sightingPhotosRelations,
+  straySubscriptionsRelations,
+  namingSuggestionsRelations,
+  namingVotesRelations,
+  bountiesRelations,
+  bountyAssignmentsRelations,
+  communityPostsRelations,
+  postCommentsRelations,
+  postReactionsRelations,
+  medicalRecordsRelations,
+  careRecordsRelations,
 } as const
 
 // Type exports for use in other files

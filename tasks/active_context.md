@@ -30,7 +30,7 @@
 - ✅ **UI Framework**: Tailwind CSS and shadcn/ui components integrated
 - ✅ **Cloud Infrastructure**: Cloudflare Workers, D1 database, R2 storage, KV configured
 - ✅ **Database Schema**: Complete entity models with relationships and indexes (15+ tables)
-- ✅ **Sightings API**: Full CRUD operations with TanStack Query integration
+- ✅ **Sightings API**: Full CRUD operations with TanStack Query integration and location-based filtering
 - ✅ **Form System**: Type-safe forms with Zod validation schemas for all entities
 - ✅ **Authentication Enhancement**: R2 bucket integration for user profile uploads with file validation
 - ✅ **Code Quality**: Enhanced authentication configuration and code cleanup
@@ -41,7 +41,7 @@
 - ✅ **Camera Integration**: Added camera dialog component for mobile photo capture in sighting reports
 - ✅ **Gallery Selection**: Created ImageGallerySelector component for selecting images from device gallery on mobile devices
 - ✅ **TanStack Ecosystem**: Full integration of Query, Router, Form, Table, and Virtual packages
-- ✅ **Sightings Hooks**: Created useSightings and useCreateSighting hooks for query and mutation operations
+- ✅ **Sightings Hooks**: Created useSightings (with location filtering) and useCreateSighting hooks for query and mutation operations
 - ✅ **Authentication Flow**: Implemented redirect for unauthenticated users from app layout to home screen
 - ✅ **Landing Page**: Created comprehensive home page with hero section, features, CTAs, and community stats
 - ✅ **UI Enhancement**: Made next and previous buttons floating in the sighting report form for better UX

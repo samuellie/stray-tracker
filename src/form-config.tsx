@@ -69,32 +69,27 @@ export const sightingFormSchema = z
     latitude: z
       .number()
       .min(-90, 'Invalid latitude')
-      .max(90, 'Invalid latitude')
-      .optional(),
+      .max(90, 'Invalid latitude'),
     longitude: z
       .number()
       .min(-180, 'Invalid longitude')
-      .max(180, 'Invalid longitude')
-      .optional(),
+      .max(180, 'Invalid longitude'),
     date: z.string().refine(value => {
       const date = new Date(value)
       return !isNaN(date.getTime()) && date <= new Date()
     }, 'Date cannot be in the future'),
     weatherCondition: z
-      .enum(['sunny', 'cloudy', 'rainy', 'snowy', 'windy', 'foggy'])
+      .string()
+      .max(50, 'Weather condition must be less than 50 characters')
       .optional(),
     confidence: z
       .number()
       .min(1, 'Confidence must be at least 1')
-      .max(5, 'Confidence must be at most 5')
+      .max(10, 'Confidence must be at most 10')
       .optional(),
     notes: z
       .string()
       .max(1000, 'Notes must be less than 1000 characters')
-      .optional(),
-    contactInfo: z
-      .string()
-      .max(200, 'Contact info must be less than 200 characters')
       .optional(),
   })
   .refine(
@@ -186,17 +181,16 @@ export const animalFormDefaults: Partial<AnimalFormData> = {
 
 export const sightingFormDefaults: Partial<SightingFormData> = {
   strayId: undefined,
-  species: undefined,
-  animalSize: undefined,
+  species: 'cat',
+  animalSize: 'small',
   description: '',
   location: '',
-  latitude: undefined,
-  longitude: undefined,
+  latitude: 3.1072086999999984,
+  longitude: 101.67908995767199,
   date: new Date().toISOString().split('T')[0],
   weatherCondition: undefined,
   confidence: undefined,
   notes: '',
-  contactInfo: '',
   images: [],
 }
 

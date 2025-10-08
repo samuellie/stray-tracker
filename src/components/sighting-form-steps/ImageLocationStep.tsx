@@ -95,7 +95,7 @@ export function ImageLocationStep({
         <h2 className="text-lg font-semibold">Set Location</h2>
 
         <div className="space-y-4">
-          <div className="h-36">
+          <div className="h-44">
             <MapComponent
               draggable
               className="h-full"

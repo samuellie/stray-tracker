@@ -33,7 +33,6 @@ import {
   SelectValue,
 } from '~/components/ui/select'
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group'
-import { Separator } from '~/components/ui/separator'
 import { Skeleton } from '~/components/ui/skeleton'
 import {
   Tooltip,
@@ -72,7 +71,6 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from '~/components/ui/sidebar'
-import { Toaster } from '~/components/ui/sonner'
 import { Spinner } from '~/components/ui/spinner'
 import {
   NavigationMenu,
@@ -81,7 +79,6 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from '~/components/ui/navigation-menu'
 import {
   Menubar,
@@ -89,7 +86,6 @@ import {
   MenubarItem,
   MenubarMenu,
   MenubarSeparator,
-  MenubarShortcut,
   MenubarTrigger,
 } from '~/components/ui/menubar'
 import {
@@ -101,15 +97,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '~/components/ui/pagination'
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '~/components/ui/form'
 import {
   InputOTP,
   InputOTPGroup,
@@ -125,7 +112,6 @@ import {
   TableHeader,
   TableRow,
 } from '~/components/ui/table'
-import { ScrollArea } from '@radix-ui/react-scroll-area'
 
 export const Route = createFileRoute('/app/_appLayout/shadcn-test')({
   component: ShadcnTestComponent,
@@ -900,7 +886,6 @@ function ShadcnTestComponent() {
           </div>
         </div>
       </div>
-      <Toaster />
     </TooltipProvider>
   )
 }

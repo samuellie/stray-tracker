@@ -1,9 +1,9 @@
 import { useForm } from '@tanstack/react-form'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Button } from '~/components/ui/button'
 import { toast } from 'sonner'
-import { createSighting } from '~/routes/api/sightings'
 import { authClient } from '~/lib/auth-client'
+import { useCreateSighting } from '~/hooks/server/useCreateSighting'
 import { sightingFormDefaults } from '~/form-config'
 import {
   Stepper,
@@ -44,30 +44,47 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
 
   const { data: session } = authClient.useSession()
 
+  const createSightingMutation = useCreateSighting()
+
+  // Handle mutation errors with toast
+  useEffect(() => {
+    if (createSightingMutation.isError && createSightingMutation.error) {
+      toast.error(
+        createSightingMutation.error?.message || 'Failed to report sighting'
+      )
+      createSightingMutation.reset()
+    }
+  }, [
+    createSightingMutation.isError,
+    createSightingMutation.error,
+    createSightingMutation,
+  ])
+
   const form = useForm({
     defaultValues: sightingFormDefaults,
     onSubmit: async ({ value }) => {
       try {
-        // Check if user is logged in
-        if (!session?.user?.id) {
-          throw new Error('You must be logged in to report a sighting')
-        }
-
         // Construct location data if coordinates are available
         const location =
           value.latitude && value.longitude
             ? {
                 lat: value.latitude,
                 lng: value.longitude,
-                address: value.location || 'Current location',
+                address: value.location,
               }
             : null
 
+        if (!location) {
+          toast.error('Location coordinates are required')
+          return
+        }
+
         const sightingData = {
           strayId: value.strayId,
-          userId: session.user.id,
           description: value.description,
-          location,
+          lat: value.latitude!,
+          lng: value.longitude!,
+          location: { address1: value.location },
           sightingTime: value.date ? new Date(value.date) : new Date(),
           notes: value.notes,
           weatherCondition: value.weatherCondition,
@@ -79,15 +96,14 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
           }),
         }
 
-        await createSighting({ data: sightingData })
+        console.log(sightingData)
+
+        await createSightingMutation.mutateAsync(sightingData)
         toast.success('Sighting reported successfully!')
         form.reset()
         onSuccess?.()
       } catch (error) {
         console.error('Failed to report sighting:', error)
-        toast.error(
-          error instanceof Error ? error.message : 'Failed to report sighting'
-        )
         throw error
       }
     },
@@ -187,7 +203,7 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
             <AdditionalInfoStep
               weatherCondition={form.state.values.weatherCondition}
               onWeatherConditionChange={value =>
-                form.setFieldValue('weatherCondition', value as any)
+                form.setFieldValue('weatherCondition', value)
               }
               confidence={form.state.values.confidence}
               onConfidenceChange={value =>
@@ -195,15 +211,11 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
               }
               notes={form.state.values.notes || ''}
               onNotesChange={value => form.setFieldValue('notes', value)}
-              contactInfo={form.state.values.contactInfo || ''}
-              onContactInfoChange={value =>
-                form.setFieldValue('contactInfo', value)
-              }
             />
           </StepperContent>
         </Stepper>
 
-        <div className="fixed bottom-4 left-auto right-auto flex justify-between bg-white/95 backdrop-blur-sm shadow-lg rounded-lg p-4 z-50 max-w-md w-full">
+        <div className="fixed bottom-0 left-0 right-0 flex justify-between z-50 bg-white/95 rounded-lg p-4 w-full">
           <Button
             type="button"
             onClick={handlePrevious}
@@ -217,8 +229,14 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
             <form.Subscribe
               selector={state => [state.canSubmit, state.isSubmitting]}
               children={([canSubmit, isSubmitting]) => (
-                <Button type="submit" disabled={!canSubmit} size="lg">
-                  {isSubmitting ? 'Reporting Sighting...' : 'Report Sighting'}
+                <Button
+                  type="submit"
+                  disabled={!canSubmit || createSightingMutation.isPending}
+                  size="lg"
+                >
+                  {isSubmitting || createSightingMutation.isPending
+                    ? 'Reporting Sighting...'
+                    : 'Report Sighting'}
                 </Button>
               )}
             />

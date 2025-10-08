@@ -1,18 +1,35 @@
 import { sightings, strays } from 'db/schema'
-import { eq, desc, asc } from 'drizzle-orm'
+import { eq, desc, asc, sql } from 'drizzle-orm'
 import { getDb } from 'db'
 import { createServerFn } from '@tanstack/react-start'
 import type { InsertSighting, Sighting } from 'db/schema'
 
-// Get all sightings with stray information
-export const getSightings = createServerFn({ method: 'GET' })
-  .inputValidator(() => null)
-  .handler(async () => {
+// Get sightings within a certain radius of a lat/lng coordinate
+export const getNearbySightings = createServerFn({ method: 'GET' })
+  .inputValidator((input: { lat: number; lng: number; radius?: number }) => {
+    if (typeof input.lat !== 'number' || typeof input.lng !== 'number') {
+      throw new Error('lat and lng must be numbers')
+    }
+    if (
+      input.radius !== undefined &&
+      (typeof input.radius !== 'number' || input.radius <= 0)
+    ) {
+      throw new Error('radius must be a positive number')
+    }
+    return input
+  })
+  .handler(async ({ data: { lat, lng, radius = 5 } }) => {
     const db = await getDb()
+
+    // Use haversine formula to calculate distance in kilometers
+    // Earth's radius is approximately 6371 km
+    // Convert degrees to radians: degrees * π / 180
     const result = await db.query.sightings.findMany({
+      where: sql`(6371 * acos(cos(${lat} * 3.141592653589793 / 180) * cos(${sightings.lat} * 3.141592653589793 / 180) * cos((${sightings.lng} * 3.141592653589793 / 180) - (${lng} * 3.141592653589793 / 180)) + sin(${lat} * 3.141592653589793 / 180) * sin(${sightings.lat} * 3.141592653589793 / 180))) < ${radius}`,
       with: {
         stray: true,
       },
+      orderBy: [desc(sightings.sightingTime || sightings.createdAt)],
     })
 
     return result
@@ -41,36 +58,25 @@ export const getSighting = createServerFn({ method: 'GET' })
 export const createSighting = createServerFn({ method: 'POST' })
   .inputValidator(
     (
-      data: Omit<InsertSighting, 'strayId'> & {
+      data: Omit<InsertSighting, 'strayId' | 'userId'> & {
         strayId?: number
         species?: string
         animalSize?: string
+        location?: InsertSighting['location'] | null
       }
     ) => data
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const db = await getDb()
+    const userId = context.session?.user.id
+    if (!userId) {
+      throw new Error('User not authenticated')
+    }
 
     let strayId = data.strayId
 
     // If no strayId provided, create a new stray
     if (!strayId) {
-      if (!data.species || !data.animalSize) {
-        throw new Error(
-          'Species and size are required when reporting a new animal'
-        )
-      }
-
-      // Validate species enum
-      if (!['cat', 'dog', 'other'].includes(data.species)) {
-        throw new Error('Invalid species. Must be cat, dog, or other')
-      }
-
-      // Validate size enum
-      if (!['small', 'medium', 'large'].includes(data.animalSize)) {
-        throw new Error('Invalid size. Must be small, medium, or large')
-      }
-
       const newStray = await db
         .insert(strays)
         .values({
@@ -92,13 +98,14 @@ export const createSighting = createServerFn({ method: 'POST' })
       }
     }
 
-    const result = await db
-      .insert(sightings)
-      .values({
-        ...data,
-        strayId,
-      })
-      .returning()
+    const insertData: InsertSighting = {
+      ...data,
+      userId,
+      strayId,
+      location: data.location!, // Assert it's not null since form should provide it
+    }
+
+    const result = await db.insert(sightings).values(insertData).returning()
 
     return result[0]
   })

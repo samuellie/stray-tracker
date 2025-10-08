@@ -16,8 +16,6 @@ interface AdditionalInfoStepProps {
   onConfidenceChange: (value: number) => void
   notes: string
   onNotesChange: (value: string) => void
-  contactInfo: string
-  onContactInfoChange: (value: string) => void
 }
 
 export function AdditionalInfoStep({
@@ -27,8 +25,6 @@ export function AdditionalInfoStep({
   onConfidenceChange,
   notes,
   onNotesChange,
-  contactInfo,
-  onContactInfoChange,
 }: AdditionalInfoStepProps) {
   return (
     <div className="space-y-4">
@@ -42,22 +38,12 @@ export function AdditionalInfoStep({
         {/* Weather Conditions */}
         <div className="space-y-2">
           <Label htmlFor="weatherCondition">Weather Conditions</Label>
-          <Select
-            value={weatherCondition}
-            onValueChange={onWeatherConditionChange}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select weather condition" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="sunny">Sunny</SelectItem>
-              <SelectItem value="cloudy">Cloudy</SelectItem>
-              <SelectItem value="rainy">Rainy</SelectItem>
-              <SelectItem value="snowy">Snowy</SelectItem>
-              <SelectItem value="windy">Windy</SelectItem>
-              <SelectItem value="foggy">Foggy</SelectItem>
-            </SelectContent>
-          </Select>
+          <Input
+            id="weatherCondition"
+            value={weatherCondition || ''}
+            onChange={e => onWeatherConditionChange(e.target.value)}
+            placeholder="e.g. sunny, cloudy, rainy"
+          />
         </div>
 
         {/* Confidence Level */}
@@ -71,11 +57,16 @@ export function AdditionalInfoStep({
               <SelectValue placeholder="How sure are you about the identification?" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">Very Unsure</SelectItem>
-              <SelectItem value="2">Unsure</SelectItem>
-              <SelectItem value="3">Somewhat Sure</SelectItem>
-              <SelectItem value="4">Confident</SelectItem>
-              <SelectItem value="5">Very Confident</SelectItem>
+              <SelectItem value="1">1 - Very Unsure</SelectItem>
+              <SelectItem value="2">2</SelectItem>
+              <SelectItem value="3">3</SelectItem>
+              <SelectItem value="4">4</SelectItem>
+              <SelectItem value="5">5</SelectItem>
+              <SelectItem value="6">6</SelectItem>
+              <SelectItem value="7">7</SelectItem>
+              <SelectItem value="8">8</SelectItem>
+              <SelectItem value="9">9</SelectItem>
+              <SelectItem value="10">10 - Very Confident</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -90,20 +81,6 @@ export function AdditionalInfoStep({
             placeholder="Any additional information that might be helpful for animal care or identification..."
             rows={3}
           />
-        </div>
-
-        {/* Contact Info */}
-        <div className="space-y-2">
-          <Label htmlFor="contactInfo">Contact Information (Optional)</Label>
-          <Input
-            id="contactInfo"
-            value={contactInfo}
-            onChange={e => onContactInfoChange(e.target.value)}
-            placeholder="Phone number or preferred contact method for follow-up"
-          />
-          <p className="text-sm text-muted-foreground">
-            Only provide if you're willing to be contacted about this sighting.
-          </p>
         </div>
       </div>
     </div>

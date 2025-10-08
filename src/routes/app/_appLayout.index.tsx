@@ -19,12 +19,11 @@ export const Route = createFileRoute('/app/_appLayout/')({
 function Home() {
   const isMobile = useIsMobile()
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
-
   return (
     <div className="h-full bg-gradient-to-br from-blue-50 to-indigo-100 ">
       {/* Map Container - Full Screen */}
       <div className="h-full w-full">
-        <MapComponent defaultShowCurrentLocation />
+        <MapComponent defaultShowCurrentLocation showNearbySightings />
       </div>
 
       {/* Floating Action Button */}
@@ -59,7 +58,7 @@ function Home() {
               </Button>
             </PopoverTrigger>
             <PopoverContent
-              className="w-96 p-0 max-h-[80vh] overflow-y-auto"
+              className="min-w-96 max-h-[80vh] overflow-y-auto"
               side="top"
               align="center"
             >

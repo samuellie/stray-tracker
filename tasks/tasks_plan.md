@@ -99,7 +99,7 @@ Stray Tracker is a mobile-first Progressive Web App with web compatibility for t
   - `/api/auth` - Authentication endpoints (Better Auth integrated)
   - `/api/users` - User management
   - `/api/animals` - Animal profiles and management
-  - `/api/sightings` - Animal sighting reports (fully implemented)
+  - `/api/sightings` - Animal sighting reports with location-based filtering (fully implemented)
   - `/api/subscriptions` - User subscriptions
   - `/api/naming` - Collaborative naming
   - `/api/community` - Community features
