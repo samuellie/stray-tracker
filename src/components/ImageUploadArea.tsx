@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
@@ -9,6 +9,8 @@ interface ImageUploadAreaProps {
 }
 
 export function ImageUploadArea({ onFilesSelected }: ImageUploadAreaProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
   }, [])
@@ -22,17 +24,22 @@ export function ImageUploadArea({ onFilesSelected }: ImageUploadAreaProps) {
     [onFilesSelected]
   )
 
+  const handleClick = useCallback(() => {
+    inputRef.current?.click()
+  }, [])
+
   return (
     <div
-      className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors"
+      className="border-4 border-dashed border-gray-300 rounded-xl p-4 text-center hover:border-gray-400 transition-colors hover:cursor-pointer"
       onDragOver={handleDragOver}
       onDrop={handleDrop}
+      onClick={handleClick}
     >
-      <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-      <p className="text-lg font-medium text-gray-900 mb-2">
-        Drag and drop a photo here
+      <Upload className="mx-auto h-12 w-12 text-gray-400" />
+      <p className="text-lg font-medium text-gray-900 ">
+        Drag and drop photos here
       </p>
-      <p className="text-sm text-gray-500 mb-4">or click to select a file</p>
+      <p className="text-sm text-gray-500">or click to select a file</p>
       <Input
         type="file"
         accept="image/*"
@@ -40,12 +47,8 @@ export function ImageUploadArea({ onFilesSelected }: ImageUploadAreaProps) {
         onChange={e => onFilesSelected(e.target.files)}
         className="hidden"
         id="file-upload"
+        ref={inputRef}
       />
-      <Label htmlFor="file-upload">
-        <Button variant="outline" type="button">
-          Choose File
-        </Button>
-      </Label>
     </div>
   )
 }

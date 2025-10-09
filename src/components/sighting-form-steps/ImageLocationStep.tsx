@@ -1,23 +1,21 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { useIsMobile } from '~/hooks/use-mobile'
+import { useProcessImages } from '~/hooks/useProcessImages'
 import { CameraDialog } from '~/components/CameraDialog'
 import { ImageGallerySelector } from '~/components/ImageGallerySelector'
 import { ImageUploadArea } from '~/components/ImageUploadArea'
 import { MapComponent } from '~/components/MapComponent'
-import { Button } from '~/components/ui/button'
-import { Input } from '~/components/ui/input'
-import { Label } from '~/components/ui/label'
-import { Checkbox } from '~/components/ui/checkbox'
+import { ImagePreviewGallery } from '~/components/ImagePreviewGallery'
 
 interface ImageLocationStepProps {
-  images: File[]
   onImagesUpdate: (images: File[]) => void
+  onThumbnailsUpdate: (thumbnails: File[]) => void
   onMarkerDragEnd: (position: { lat: number; lng: number }) => void
 }
 
 export function ImageLocationStep({
-  images,
   onImagesUpdate,
+  onThumbnailsUpdate,
   onMarkerDragEnd,
 }: ImageLocationStepProps) {
   const isMobile = useIsMobile()
@@ -25,9 +23,21 @@ export function ImageLocationStep({
     lat: number
     lng: number
   } | null>()
+  const {
+    images,
+    thumbnails,
+    progress: imageProgress,
+    addImages,
+    removeImage,
+  } = useProcessImages()
+
+  useEffect(() => {
+    onImagesUpdate(images)
+    onThumbnailsUpdate(thumbnails)
+  }, [images, thumbnails, onImagesUpdate, onThumbnailsUpdate])
 
   const handleCapturedImages = useCallback(
-    (imageDataUrls: string[]) => {
+    async (imageDataUrls: string[]) => {
       // Convert base64 data URLs to File objects
       const newFiles = imageDataUrls.map((dataUrl, index) => {
         const [mimeInfo, base64] = dataUrl.split(',')
@@ -40,19 +50,19 @@ export function ImageLocationStep({
           type: mimeType,
         })
       })
-      onImagesUpdate(newFiles)
+      await addImages(newFiles)
     },
-    [onImagesUpdate]
+    [addImages]
   )
 
   const handleFileUpload = useCallback(
-    (files: FileList | null) => {
+    async (files: FileList | null) => {
       if (files) {
         const fileArray = Array.from(files)
-        onImagesUpdate(fileArray)
+        await addImages(fileArray)
       }
     },
-    [onImagesUpdate]
+    [addImages]
   )
 
   const handleMarkerDragEnd = (position: { lat: number; lng: number }) => {
@@ -62,38 +72,8 @@ export function ImageLocationStep({
 
   return (
     <div className="space-y-6">
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Add Images</h2>
-        {images.length > 0 && (
-          <div className="mt-4">
-            <p className="text-sm text-muted-foreground mb-2">
-              {images.length} image{images.length > 1 ? 's' : ''} selected
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              {images.map((image, index) => (
-                <img
-                  key={index}
-                  src={URL.createObjectURL(image)}
-                  alt={`Selected image ${index + 1}`}
-                  className="w-20 h-20 object-cover rounded"
-                />
-              ))}
-            </div>
-          </div>
-        )}
-        {isMobile ? (
-          <div className="space-y-4">
-            <CameraDialog onCapturedImages={handleCapturedImages} />
-            <ImageGallerySelector onFilesSelected={handleFileUpload} />
-          </div>
-        ) : (
-          <ImageUploadArea onFilesSelected={handleFileUpload} />
-        )}
-      </div>
-
-      <div className="space-y-4">
+      <div className="space-y-2">
         <h2 className="text-lg font-semibold">Set Location</h2>
-
         <div className="space-y-4">
           <div className="h-44">
             <MapComponent
@@ -106,6 +86,22 @@ export function ImageLocationStep({
             />
           </div>
         </div>
+      </div>
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold">Add Images</h2>
+        <ImagePreviewGallery
+          thumbnails={images}
+          imageProgress={imageProgress}
+          onRemove={removeImage}
+        />
+        {isMobile ? (
+          <div className="space-y-4">
+            <CameraDialog onCapturedImages={handleCapturedImages} />
+            <ImageGallerySelector onFilesSelected={handleFileUpload} />
+          </div>
+        ) : (
+          <ImageUploadArea onFilesSelected={handleFileUpload} />
+        )}
       </div>
     </div>
   )

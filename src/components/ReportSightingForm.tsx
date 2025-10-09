@@ -28,6 +28,7 @@ interface ReportSightingFormProps {
 export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
   const [reportingNewAnimal, setReportingNewAnimal] = useState(false)
   const [images, setImages] = useState<File[]>([])
+  const [thumbnails, setThumbnails] = useState<File[]>([])
   const [isImageManagerOpen, setIsImageManagerOpen] = useState(false)
 
   const steps = [
@@ -115,6 +116,10 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
     setImages(newImages)
   }, [])
 
+  const handleThumbnailsUpdate = useCallback((newThumbnails: File[]) => {
+    setThumbnails(newThumbnails)
+  }, [])
+
   const handleMarkerDragEnd = useCallback(
     (position: { lat: number; lng: number }) => {
       form.setFieldValue('latitude', position.lat)
@@ -133,6 +138,7 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
 
   const removeImage = useCallback((index: number) => {
     setImages(prev => prev.filter((_, i) => i !== index))
+    setThumbnails(prev => prev.filter((_, i) => i !== index))
   }, [])
 
   return (
@@ -165,8 +171,8 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
 
           <StepperContent value={1}>
             <ImageLocationStep
-              images={images}
               onImagesUpdate={handleImagesUpdate}
+              onThumbnailsUpdate={handleThumbnailsUpdate}
               onMarkerDragEnd={handleMarkerDragEnd}
             />
           </StepperContent>
