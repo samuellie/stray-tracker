@@ -2,7 +2,7 @@
 
 ## Current Development Status
 
-**Last Updated**: October 9, 2025
+**Last Updated**: October 11, 2025
 **Development Phase**: Foundation Setup (Phase 1) - Nearly Complete
 **Current Sprint**: Sprint 1 - Foundation Completion
 **Overall Progress**: ~70% Complete (Phase 1: 70%, Phase 2: 25% Started)
@@ -29,7 +29,7 @@
 - ✅ **Build Tools**: TypeScript, Vite, and development environment configured
 - ✅ **UI Framework**: Tailwind CSS and shadcn/ui components integrated
 - ✅ **Cloud Infrastructure**: Cloudflare Workers, D1 database, R2 storage, KV configured
-- ✅ **Database Schema**: Complete entity models with relationships and indexes (15+ tables)
+- ✅ **Database Schema**: Complete entity models with relationships and indexes (15+ tables), optimized JSON fields using text columns
 - ✅ **Sightings API**: Full CRUD operations with TanStack Query integration and location-based filtering
 - ✅ **Form System**: Type-safe forms with Zod validation schemas for all entities
 - ✅ **Authentication Enhancement**: R2 bucket integration for user profile uploads with file validation
@@ -46,10 +46,18 @@
 - ✅ **Landing Page**: Created comprehensive home page with hero section, features, CTAs, and community stats
 - ✅ **UI Enhancement**: Made next and previous buttons floating in the sighting report form for better UX
 - ✅ **Image Compression Pipeline**: Implemented asynchronous image compression using browser-image-compression with configurable concurrency control, progress tracking, and visual progress bars under each image preview
-- ✅ **Thumbnail Generation**: Added thumbnail compression for efficient image previews, creating smaller versions (300px max) alongside full-size compressed images (1920px max) for optimal performance
+- ✅ **Thumbnail Generation**: Added thumbnail compression for efficient image previews, creating smaller versions (300px max) alongside full-size compressed images (1920px max) for optimal performance, with standardized naming convention `<filename>_thumbnail.webp`
 - ✅ **Image Processing Hook**: Refactored image compression logic into useProcessImages hook for centralized state management, improved reusability, and cleaner component code
 - ✅ **Image Delete Functionality**: Added hover delete button to image preview gallery with state synchronization in useProcessImages hook for user-friendly image management
 - ✅ **Gallery Animation**: Added smooth enter/exit animations to image preview gallery using Framer Motion for enhanced user experience
+- ✅ **Sighting Image Upload Strategy Documentation**: Updated technical.md with comprehensive documentation of the new image upload workflow including direct upload to sighting folders, database relation creation, and orphaned file cleanup using Cloudflare R2 bucket `stray-tracker-animal-photos`
+- ✅ **Direct Upload System**: Implemented API endpoint for generating signed upload URLs for direct image storage in permanent sighting folders in R2 bucket
+- ✅ **File Cleanup System**: Created automated cleanup functionality for orphaned files with database comparison and cron job integration in server.ts
+- ✅ **R2 Utility Functions**: Enhanced r2.ts with comprehensive file management utilities for permanent sighting storage
+- ✅ **Cleanup API Endpoints**: Added manual cleanup endpoints for testing and administrative purposes
+- ✅ **WebP Image Conversion**: Updated image compression to convert all images to WebP format for better performance and smaller file sizes
+- ✅ **Database Schema Optimization**: Changed JSON fields from blob to text columns for better compatibility and performance
+- ✅ **Seed Database UI**: Added "Seed Database" button in app layout user menu for easy database seeding during development
 
 ## Development Environment Status
 
@@ -157,7 +165,7 @@
 - [x] Basic API endpoints responding correctly (sightings API complete)
 - [x] Core UI components rendering properly (forms, maps, popover)
 - [x] Development environment stable and reproducible
-- [ ] Database schema deployed and tested with migrations
+- [x] Database schema deployed and tested with migrations (including JSON field optimization)
 - [ ] User authentication working with at least one provider
 - [ ] Testing framework implemented and basic tests passing
 

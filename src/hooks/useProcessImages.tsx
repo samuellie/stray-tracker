@@ -1,10 +1,19 @@
 import { useState, useCallback } from 'react'
 import imageCompression from 'browser-image-compression'
+import { generateSessionKey, uploadSightingPhoto } from '~/routes/api/files'
+import { file } from 'better-auth'
+import { getBaseFileName } from '~/lib/utils'
+
+export interface ProcessedImage {
+  file: File
+  thumbnail?: File
+  key?: string
+}
 
 export function useProcessImages() {
-  const [images, setImages] = useState<File[]>([])
-  const [thumbnails, setThumbnails] = useState<File[]>([])
+  const [images, setImages] = useState<ProcessedImage[]>([])
   const [progress, setProgress] = useState<number[]>([])
+  const [sessionId, setSessionId] = useState<string | undefined>(undefined)
   const maxConcurrentCompressions = 1
 
   const compressImages = useCallback(
@@ -25,14 +34,34 @@ export function useProcessImages() {
               const compressedFile = await imageCompression(file, {
                 maxSizeMB: 1,
                 maxWidthOrHeight: 1920,
+                fileType: 'image/webp',
                 useWebWorker: true,
-                onProgress: progress => {
-                  console.log(progress)
-
-                  onProgress?.(actualIndex, progress / 2)
-                }, // Half progress for full size
+                onProgress: progress =>
+                  onProgress?.(actualIndex, progress * 0.375), // Half progress for full size
               })
-              fullSize[actualIndex - startIndex] = compressedFile
+              const fileBaseName = getBaseFileName(file.name)
+              const fullSizeFile = new File(
+                [compressedFile],
+                `${fileBaseName}.webp`,
+                { type: 'image/webp' }
+              )
+              fullSize[actualIndex - startIndex] = fullSizeFile
+              const compressedThumbnail = await imageCompression(file, {
+                maxSizeMB: 0.1,
+                maxWidthOrHeight: 300,
+                fileType: 'image/webp',
+                useWebWorker: true,
+                onProgress: progress =>
+                  onProgress?.(actualIndex, progress * 0.375 + 37.5), // Remaining Half progress for thumbnail size
+              })
+              const thumbnailBaseName = getBaseFileName(file.name)
+              const thumbnailFile = new File(
+                [compressedThumbnail],
+                `${thumbnailBaseName}_thumbnail.webp`,
+                { type: 'image/webp' }
+              )
+              thumbnails[actualIndex - startIndex] = thumbnailFile
+
               onProgress?.(actualIndex, 50) // Set to 50% after full size
             } catch (error) {
               console.error(
@@ -40,36 +69,7 @@ export function useProcessImages() {
                 actualIndex,
                 error
               )
-              // Keep original file if compression fails
-              fullSize[actualIndex - startIndex] = file
-              onProgress?.(actualIndex, 50)
-            }
-          })
-        )
-        // Compress thumbnails
-        await Promise.all(
-          batch.map(async (file, idx) => {
-            const actualIndex = startIndex + i + idx
-            try {
-              const thumbnailFile = await imageCompression(
-                fullSize[actualIndex - startIndex] || file,
-                {
-                  maxSizeMB: 0.1,
-                  maxWidthOrHeight: 300,
-                  useWebWorker: true,
-                }
-              )
-              thumbnails[actualIndex - startIndex] = thumbnailFile
-              onProgress?.(actualIndex, 100) // Set to 100% after thumbnail
-            } catch (error) {
-              console.error(
-                'Thumbnail compression failed for image',
-                actualIndex,
-                error
-              )
-              // Keep original file if compression fails
-              thumbnails[actualIndex - startIndex] = file
-              onProgress?.(actualIndex, 100)
+              onProgress?.(actualIndex, -1) // -1 indicate failure
             }
           })
         )
@@ -79,32 +79,120 @@ export function useProcessImages() {
     [maxConcurrentCompressions]
   )
 
+  const getSessionKey = useCallback(async () => {
+    if (sessionId == undefined) {
+      const sessionKey = await generateSessionKey()
+      setSessionId(sessionKey)
+      return sessionKey
+    }
+    return sessionId
+  }, [sessionId])
+
+  const uploadToTempStorage = useCallback(
+    async (
+      sessionId: string,
+      processedImages: ProcessedImage[],
+
+      onProgress?: (index: number, progress: number) => void
+    ): Promise<ProcessedImage[]> => {
+      try {
+        // Upload files directly to R2
+        const uploadPromises = processedImages.map(async (img, index) => {
+          const fullImageFormData = new FormData()
+          fullImageFormData.append('sessionId', sessionId)
+          fullImageFormData.append('file', img.file)
+          const thumbnailFormData = new FormData()
+          thumbnailFormData.append('sessionId', sessionId)
+          thumbnailFormData.append('file', img.thumbnail!)
+
+          try {
+            const response = await uploadSightingPhoto({
+              data: fullImageFormData,
+            })
+            await uploadSightingPhoto({ data: thumbnailFormData })
+
+            onProgress?.(index, 100)
+
+            return {
+              ...img,
+              key: response.key,
+            }
+          } catch (error) {
+            console.error('Failed to upload image:', error)
+            throw error
+          }
+        })
+
+        return await Promise.all(uploadPromises)
+      } catch (error) {
+        console.error('Failed to get upload URLs:', error)
+        throw error
+      }
+    },
+    []
+  )
+
   const addImages = useCallback(
     async (files: File[]) => {
       const startIndex = images.length
+      const initialImages: ProcessedImage[] = files.map((file, idx) => ({
+        file,
+      }))
+
+      setImages(prev => [...prev, ...initialImages])
       setProgress(prev => [...prev, ...new Array(files.length).fill(1)])
-      setImages(prev => [...prev, ...files])
-      setTimeout(async () => {
-        const { fullSize, thumbnails: newThumbnails } = await compressImages(
-          files,
-          startIndex,
-          (actualIndex, prog) =>
-            setProgress(prev =>
-              prev.map((p, j) => (j === actualIndex ? prog : p))
-            )
-        )
-        // setImages(prev => [...prev, ...fullSize])
-        setThumbnails(prev => [...prev, ...newThumbnails])
-      }, 300)
+      // Get sessionId
+      const sessionId = await getSessionKey()
+
+      // First compress images
+      const { fullSize, thumbnails } = await compressImages(
+        files,
+        startIndex,
+        (actualIndex, prog) =>
+          setProgress(prev =>
+            prev.map((p, j) => (j === actualIndex ? prog : p))
+          )
+      )
+
+      // Create processed images
+      const processedImages: ProcessedImage[] = fullSize.map((file, idx) => ({
+        file,
+        thumbnail: thumbnails[idx],
+      }))
+
+      // Upload to temporary storage
+      const uploadedImages = await uploadToTempStorage(
+        sessionId,
+        processedImages,
+        (index, prog) => {
+          const actualIndex = startIndex + index
+          setProgress(prev =>
+            prev.map((p, j) => (j === actualIndex ? prog : p))
+          )
+        }
+      )
+      setImages(prev => {
+        const newImages = [...prev]
+        for (let i = 0; i < uploadedImages.length; i++) {
+          newImages[startIndex + i] = uploadedImages[i]
+        }
+        return newImages
+      })
     },
-    [images.length, compressImages]
+    [images.length, compressImages, uploadToTempStorage]
   )
 
   const removeImage = useCallback((index: number) => {
     setImages(prev => prev.filter((_, i) => i !== index))
-    setThumbnails(prev => prev.filter((_, i) => i !== index))
     setProgress(prev => prev.filter((_, i) => i !== index))
   }, [])
 
-  return { images, thumbnails, progress, addImages, removeImage }
+  return {
+    images,
+    thumbnails: images.map(img => img.thumbnail),
+    progress,
+    sessionId,
+    addImages,
+    removeImage,
+  }
 }

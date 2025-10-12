@@ -23,7 +23,7 @@ export const strays = sqliteTable('strays', {
   healthNotes: text('health_notes'),
   careRequirements: text('care_requirements'),
   // Primary location stored as JSON
-  primaryLocation: blob('primary_location', { mode: 'json' }).$type<{
+  primaryLocation: text('primary_location', { mode: 'json' }).$type<{
     lat: number
     lng: number
     address?: string
@@ -64,7 +64,7 @@ export const sightings = sqliteTable('sightings', {
   lat: real('lat').notNull(),
   lng: real('lng').notNull(),
   // Location data as JSON for display
-  location: blob('location', { mode: 'json' }).$type<{
+  location: text('location', { mode: 'json' }).$type<{
     address1?: string
     address2?: string
     city?: string
@@ -166,13 +166,13 @@ export const straySubscriptions = sqliteTable('stray_subscriptions', {
     .notNull(),
   strayId: integer('stray_id').references(() => strays.id),
   // Location-based subscription stored as JSON
-  location: blob('location', { mode: 'json' }).$type<{
+  location: text('location', { mode: 'json' }).$type<{
     lat: number
     lng: number
     radius: number // km
   }>(),
   // Notification preferences as JSON
-  notificationPreferences: blob('notification_preferences', {
+  notificationPreferences: text('notification_preferences', {
     mode: 'json',
   }).$type<{
     immediate: boolean
@@ -267,7 +267,7 @@ export const bounties = sqliteTable('bounties', {
   title: text('title', { length: 200 }).notNull(),
   description: text('description').notNull(),
   // Target location for tracking
-  targetLocation: blob('target_location', { mode: 'json' }).$type<{
+  targetLocation: text('target_location', { mode: 'json' }).$type<{
     lat: number
     lng: number
     address?: string
@@ -349,14 +349,14 @@ export const communityPosts = sqliteTable('community_posts', {
   strayId: integer('stray_id').references(() => strays.id),
   sightingId: integer('sighting_id').references(() => sightings.id),
   // Location context
-  location: blob('location', { mode: 'json' }).$type<{
+  location: text('location', { mode: 'json' }).$type<{
     lat: number
     lng: number
     address?: string
     neighborhood?: string
   }>(),
   // Images or media
-  media: blob('media', { mode: 'json' }).$type<string[]>(),
+  media: text('media', { mode: 'json' }).$type<string[]>(),
   // Engagement metrics
   likeCount: integer('like_count').default(0),
   commentCount: integer('comment_count').default(0),
@@ -513,13 +513,13 @@ export const careRecords = sqliteTable('care_records', {
     ],
   }).notNull(),
   description: text('description').notNull(),
-  location: blob('location', { mode: 'json' }).$type<{
+  location: text('location', { mode: 'json' }).$type<{
     lat: number
     lng: number
     address?: string
   }>(),
   // Photos documenting the care
-  photos: blob('photos', { mode: 'json' }).$type<string[]>(),
+  photos: text('photos', { mode: 'json' }).$type<string[]>(),
   careDate: integer('care_date', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),

@@ -9,7 +9,7 @@ import Map, {
   MapRef,
   Marker,
 } from 'react-map-gl/maplibre'
-import { useNearbySightings } from '~/hooks/server/useNearbySightings'
+import { useNearbyStrays } from '~/hooks/server/useNearbyStrays'
 import type { Sighting, Stray } from 'db/schema'
 import { SightingPopup } from './SightingPopup'
 
@@ -47,7 +47,7 @@ export function MapComponent({
     setMarker(markerPosition)
   }, [markerPosition])
 
-  const nearbySightingsQuery = useNearbySightings(
+  const nearbyStraysQuery = useNearbyStrays(
     showNearbySightings ? currentUserPosition?.lat : undefined,
     showNearbySightings ? currentUserPosition?.lng : undefined,
     5
@@ -114,17 +114,19 @@ export function MapComponent({
             <div className="w-6 h-6 bg-red-500 rounded-full border-2 border-white shadow-lg"></div>
           </Marker>
         )}
-        {nearbySightingsQuery?.data?.map(sighting => (
+        {nearbyStraysQuery?.data?.map(stray => (
           <Marker
-            key={sighting.id}
-            longitude={sighting.lng}
-            latitude={sighting.lat}
-            onClick={() => setSelectedSighting(sighting)}
+            key={stray.id}
+            longitude={stray.sightings[0].lng}
+            latitude={stray.sightings[0].lat}
+            onClick={() =>
+              setSelectedSighting({ ...stray.sightings[0], stray })
+            }
           >
             <div className="text-lg cursor-pointer">
-              {sighting.stray.species === 'cat'
+              {stray.species === 'cat'
                 ? '🐱'
-                : sighting.stray.species === 'dog'
+                : stray.species === 'dog'
                   ? '🐶'
                   : '🐾'}
             </div>

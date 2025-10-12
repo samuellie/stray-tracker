@@ -1,7 +1,7 @@
 import { createMiddleware, createStart } from '@tanstack/react-start'
 import { QueryClient } from '@tanstack/react-query'
 import { env } from 'cloudflare:workers'
-import { auth } from './lib/auth'
+import { createAuth } from './lib/auth'
 import { getRequest } from '@tanstack/react-start/server'
 declare module '@tanstack/react-start' {
   interface Register {
@@ -28,7 +28,7 @@ export const fnMw = createMiddleware({ type: 'function' })
   .middleware([serverMw])
   .server(async ({ next, context }) => {
     const { headers } = getRequest()
-    const session = await auth.api.getSession({ headers })
+    const session = await createAuth(env).api.getSession({ headers })
 
     // auth.api.getSession()
     return next({

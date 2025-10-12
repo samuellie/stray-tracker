@@ -36,6 +36,20 @@
       "when": 1759932385414,
       "tag": "0004_parallel_quentin_quire",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1760189983370,
+      "tag": "0005_familiar_falcon",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1760243723447,
+      "tag": "0006_new_puma",
+      "breakpoints": true
     }
   ]
 }

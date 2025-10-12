@@ -108,12 +108,13 @@ sequenceDiagram
     CF-->>W: Render personalized feed
 
     U->>W: Report new animal sighting
+    W->>CF: Upload photos directly to sighting folder
+    CF->>R2: Store photos in permanent sighting location
+    R2-->>CF: Confirm photo storage
     W->>SW: Queue for offline if needed
     SW-->>W: Confirm offline storage
     W->>CF: POST sighting data
-    CF->>D1: Store sighting record
-    CF->>R2: Upload photos/videos
-    R2-->>CF: Confirm storage
+    CF->>D1: Store sighting record and create photo relations
     CF->>KV: Cache for quick access
     CF-->>W: Confirm submission
 
@@ -202,6 +203,9 @@ sequenceDiagram
 - CRUD operations for all core entities
 - Real-time WebSocket connections for live updates
 - Rate-limited endpoints with proper error handling
+- File upload endpoints with temporary storage and cleanup:
+  - `/api/upload-temp` - Generate signed URLs for temporary image uploads
+  - `/api/cleanup-temp` - Manual cleanup of temporary files (admin/testing)
 
 **Authentication Service**
 
@@ -214,6 +218,8 @@ sequenceDiagram
 - Image and video upload to Cloudflare R2
 - CDN optimization with responsive image generation
 - File validation and malicious content scanning
+- Temporary file storage with automated cleanup (24-hour retention)
+- Session-based upload isolation for security
 
 **Notification Service**
 
@@ -392,6 +398,7 @@ graph LR
 - Database migration management
 - Cache invalidation strategies
 - Rollback capabilities for failed deployments
+- Scheduled cron jobs for automated maintenance (temporary file cleanup)
 
 ## Performance Architecture
 

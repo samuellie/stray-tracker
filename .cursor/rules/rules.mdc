@@ -10,7 +10,8 @@ alwaysApply: true
 ---
 These should be respected ALWAYS:
 1. Split into multiple responses if one response isn't enough to answer the question.
-2. IMPROVEMENTS and FURTHER PROGRESSIONS:
+2. When multiple similar edits are needed for the same file, combine them into a single tool call using apply_diff with multiple search/replace blocks to ensure efficiency and consistency
+3. IMPROVEMENTS and FURTHER PROGRESSIONS:
 - S1: Suggest ways to improve code stability or scalability.
 - S2: Offer strategies to enhance performance or security.
 - S3: Recommend methods for improving readability or maintainability.

@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect } from 'react'
 import { useIsMobile } from '~/hooks/use-mobile'
-import { useProcessImages } from '~/hooks/useProcessImages'
+import { ProcessedImage, useProcessImages } from '~/hooks/useProcessImages'
 import { CameraDialog } from '~/components/CameraDialog'
 import { ImageGallerySelector } from '~/components/ImageGallerySelector'
 import { ImageUploadArea } from '~/components/ImageUploadArea'
@@ -8,14 +8,12 @@ import { MapComponent } from '~/components/MapComponent'
 import { ImagePreviewGallery } from '~/components/ImagePreviewGallery'
 
 interface ImageLocationStepProps {
-  onImagesUpdate: (images: File[]) => void
-  onThumbnailsUpdate: (thumbnails: File[]) => void
+  onImagesUpdate?: (images: ProcessedImage[]) => void
   onMarkerDragEnd: (position: { lat: number; lng: number }) => void
 }
 
 export function ImageLocationStep({
   onImagesUpdate,
-  onThumbnailsUpdate,
   onMarkerDragEnd,
 }: ImageLocationStepProps) {
   const isMobile = useIsMobile()
@@ -32,9 +30,8 @@ export function ImageLocationStep({
   } = useProcessImages()
 
   useEffect(() => {
-    onImagesUpdate(images)
-    onThumbnailsUpdate(thumbnails)
-  }, [images, thumbnails, onImagesUpdate, onThumbnailsUpdate])
+    onImagesUpdate?.(images)
+  }, [images, onImagesUpdate])
 
   const handleCapturedImages = useCallback(
     async (imageDataUrls: string[]) => {
@@ -90,7 +87,7 @@ export function ImageLocationStep({
       <div className="space-y-2">
         <h2 className="text-lg font-semibold">Add Images</h2>
         <ImagePreviewGallery
-          thumbnails={images}
+          images={images}
           imageProgress={imageProgress}
           onRemove={removeImage}
         />

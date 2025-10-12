@@ -10,7 +10,7 @@
         "--repository",
         "/Users/samuellie/projects/stray-tracker"
       ],
-      "disabled": true,
+      "disabled": false,
       "alwaysAllow": []
     }
   }

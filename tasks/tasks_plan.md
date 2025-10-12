@@ -68,7 +68,7 @@ Stray Tracker is a mobile-first Progressive Web App with web compatibility for t
 
 #### 1.5 Database Schema & Infrastructure
 
-- [x] Create comprehensive migration scripts for D1 database deployment
+- [x] Create comprehensive migration scripts for D1 database deployment (including JSON field optimization)
 - [x] Implement database connection utilities with connection pooling
 - [x] Set up database seeding scripts for development and testing
 - [x] Add strategic database indexes for query performance optimization
@@ -116,8 +116,8 @@ Stray Tracker is a mobile-first Progressive Web App with web compatibility for t
 
 - [x] Create comprehensive TypeScript data models and interfaces for animals (db/schema.ts complete)
 - [x] Implement full CRUD operations with TanStack Query integration (sightings API complete)
-- [ ] Build secure photo upload system with R2 storage integration
-- [ ] Add automatic image optimization and format conversion
+- [ ] Build secure photo upload system with R2 storage integration (temporary upload URLs, cleanup cron job, R2 utilities)
+- [x] Add automatic image optimization and format conversion
 - [x] Implement GPS coordinate tracking with location validation (form schemas include location)
 - [ ] Create animal status tracking with comprehensive history logging
 - [ ] Add animal attribute filtering and search capabilities

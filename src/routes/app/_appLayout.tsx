@@ -17,6 +17,7 @@ import { User, Menu } from 'lucide-react'
 import { useIsMobile } from '~/hooks/use-mobile'
 import { useState, useEffect } from 'react'
 import { LoadingPage } from '~/components/LoadingPage'
+import { seedDatabase } from '~/routes/api/seed'
 
 export const Route = createFileRoute('/app/_appLayout')({
   component: AppLayout,
@@ -25,6 +26,19 @@ function AppLayout() {
   const isMobile = useIsMobile()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const navigate = useNavigate()
+  const handleSeed = async () => {
+    try {
+      const result = await seedDatabase()
+      alert(result.message || 'Database seeded successfully')
+    } catch (error) {
+      console.log(error)
+
+      alert(
+        'Failed to seed database: ' +
+          (error instanceof Error ? error.message : String(error))
+      )
+    }
+  }
   const {
     data: session,
     isPending, //loading state
@@ -104,6 +118,7 @@ function AppLayout() {
             Profile
           </Link>
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleSeed}>Seed Database</DropdownMenuItem>
         <DropdownMenuItem onClick={() => authClient.signOut()}>
           Sign Out
         </DropdownMenuItem>

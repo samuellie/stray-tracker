@@ -1,11 +1,16 @@
 import { betterAuth } from 'better-auth'
+import { admin } from 'better-auth/plugins'
+import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { withCloudflare } from 'better-auth-cloudflare'
 import { reactStartCookies } from 'better-auth/react-start'
-import schema from 'db/schema'
+import schema from '../../db/schema'
 import { drizzle } from 'drizzle-orm/d1'
-import { env } from 'cloudflare:workers'
+import type {
+  D1Database,
+  IncomingRequestCfProperties,
+} from '@cloudflare/workers-types'
 
-const createAuth = () => {
+const createAuth = (env?: Env, cf?: IncomingRequestCfProperties) => {
   const db = env
     ? drizzle(env.DB, { schema: schema, logger: true })
     : ({} as any)
@@ -15,6 +20,7 @@ const createAuth = () => {
         geolocationTracking: false,
         autoDetectIpAddress: false,
         // Configure KV for session storage
+        cf: cf || {},
         d1: {
           db,
           options: {
@@ -26,16 +32,8 @@ const createAuth = () => {
         r2: env
           ? {
               bucket: env.USER_PROFILE_BUCKET,
-              maxFileSize: 5 * 1024 * 1024, // 5MB
-              allowedTypes: [
-                '.jpg',
-                '.jpeg',
-                '.png',
-                '.gif',
-                '.pdf',
-                '.doc',
-                '.docx',
-              ],
+              maxFileSize: 1 * 1024 * 1024, // 1MB
+              allowedTypes: ['.jpg', '.jpeg', '.png', '.gif'],
               additionalFields: {
                 category: { type: 'string', required: false },
                 isPublic: { type: 'boolean', required: false },
@@ -51,6 +49,7 @@ const createAuth = () => {
           ? 'http://localhost:8787'
           : env?.CF_PAGES_URL || 'https://stray-tracker.pages.dev',
         plugins: [
+          admin(),
           reactStartCookies(), // Cookies integration for TanStack Start
         ],
         // Rate limiting for Cloudflare
@@ -85,6 +84,15 @@ const createAuth = () => {
             ipAddressHeaders: ['cf-connecting-ip'],
           },
         },
+        ...(env
+          ? {}
+          : {
+              database: drizzleAdapter({} as D1Database, {
+                provider: 'sqlite',
+                usePlural: true,
+                debugLogs: true,
+              }),
+            }),
       }
     )
   )

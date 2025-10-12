@@ -23,11 +23,6 @@
   ],
   "r2_buckets": [
     {
-      "binding": "MEDIA_BUCKET",
-      "bucket_name": "stray-tracker-media",
-      "preview_bucket_name": "stray-tracker-media-preview"
-    },
-    {
       "binding": "ANIMAL_PHOTOS_BUCKET",
       "bucket_name": "stray-tracker-animal-photos",
       "preview_bucket_name": "stray-tracker-animal-photos-preview"
@@ -43,6 +38,9 @@
       "preview_bucket_name": "stray-tracker-user-profile-preview"
     }
   ],
+  "triggers": {
+    "crons": ["0 */6 * * *"]
+  },
   "vars": {
     "BASE_URL": "https://stray-tracker.pages.dev",
     "GOOGLE_CLIENT_ID": "your_google_client_id_here",

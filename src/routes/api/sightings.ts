@@ -1,8 +1,11 @@
-import { sightings, strays } from 'db/schema'
+import { sightings, strays, sightingPhotos } from 'db/schema'
 import { eq, desc, asc, sql } from 'drizzle-orm'
 import { getDb } from 'db'
 import { createServerFn } from '@tanstack/react-start'
-import type { InsertSighting, Sighting } from 'db/schema'
+import type { InsertSighting } from 'db/schema'
+import { env } from 'cloudflare:workers'
+
+const BUCKET_BASE_URL = 'https://stray-tracker-animal-photos.pages.dev'
 
 // Get sightings within a certain radius of a lat/lng coordinate
 export const getNearbySightings = createServerFn({ method: 'GET' })
@@ -63,6 +66,7 @@ export const createSighting = createServerFn({ method: 'POST' })
         species?: string
         animalSize?: string
         location?: InsertSighting['location'] | null
+        imageKeys?: string[] // Temporary image keys to finalize
       }
     ) => data
   )
@@ -106,8 +110,46 @@ export const createSighting = createServerFn({ method: 'POST' })
     }
 
     const result = await db.insert(sightings).values(insertData).returning()
+    const sighting = result[0]
+    const bucket = env.ANIMAL_PHOTOS_BUCKET
+    // Finalize image uploads if temp keys provided
+    if (data.imageKeys && data.imageKeys.length > 0) {
+      const sightingPhotoRecords = []
 
-    return result[0]
+      for (let i = 0; i < data.imageKeys.length; i++) {
+        const imagekey = data.imageKeys[i]
+
+        // check if file actually exist
+        const image = await bucket.head(imagekey)
+        if (!image) continue
+
+        try {
+          const fileName = imagekey.split('/').pop() || 'unknown'
+          const mimeType =
+            image.httpMetadata?.contentType || 'application/octet-stream'
+          const url = `${BUCKET_BASE_URL}/${imagekey}`
+
+          sightingPhotoRecords.push({
+            sightingId: sighting.id,
+            userId,
+            url,
+            fileName,
+            fileSize: image.size,
+            mimeType,
+          })
+        } catch (error) {
+          console.error(`Failed to process image ${imagekey}:`, error)
+          // Continue with other images even if one fails
+        }
+      }
+
+      // Insert sighting photo records
+      if (sightingPhotoRecords.length > 0) {
+        await db.insert(sightingPhotos).values(sightingPhotoRecords)
+      }
+    }
+
+    return sighting
   })
 
 // Update a sighting

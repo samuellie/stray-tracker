@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
+    "dev:withd1studio": "concurrently -n app,d1studio -c cyan,green 'pnpm run dev' 'pnpm run dev:d1studio'",
     "dev:wrangler": "wrangler dev",
     "dev:d1studio": "npx d1s",
     "build": "vite build && tsc --noEmit",
@@ -17,7 +18,9 @@
     "cf-typegen": "wrangler types --env-interface Env",
     "d1:new": "wrangler d1 create stray-tracker",
     "d1:generate": "drizzle-kit generate",
-    "d1:apply": "wrangler d1 migrations apply stray-tracker --local"
+    "d1:apply": "wrangler d1 migrations apply stray-tracker --local",
+    "d1:seed": "drizzle-seed",
+    "d1:authGenerate": "npx @better-auth/cli@latest generate"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.13.7",
@@ -49,6 +52,7 @@
     "@tanstack/react-start": "^1.132.19",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.12",
+    "aws4fetch": "^1.0.20",
     "better-auth": "^1.3.23",
     "better-auth-cloudflare": "^0.2.6",
     "browser-image-compression": "^2.0.2",
@@ -79,7 +83,9 @@
     "@typescript-eslint/parser": "^8.44.1",
     "@vitejs/plugin-react": "^4.6.0",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^9.2.1",
     "drizzle-kit": "^0.31.5",
+    "drizzle-seed": "^0.3.1",
     "eslint": "^9.36.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
@@ -93,6 +99,6 @@
     "typescript": "^5.7.2",
     "vite": "^7.1.7",
     "vite-tsconfig-paths": "^5.1.4",
-    "wrangler": "^4.40.2"
+    "wrangler": "^4.42.2"
   }
 }

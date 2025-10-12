@@ -20,6 +20,7 @@ import { AnimalTypeStep } from '~/components/sighting-form-steps/AnimalTypeStep'
 import { ObservationStep } from '~/components/sighting-form-steps/ObservationStep'
 import { AdditionalInfoStep } from '~/components/sighting-form-steps/AdditionalInfoStep'
 import { ImageManagerDialog } from '~/components/ImageManagerDialog'
+import { useProcessImages, type ProcessedImage } from '~/hooks/useProcessImages'
 
 interface ReportSightingFormProps {
   onSuccess?: () => void
@@ -27,10 +28,7 @@ interface ReportSightingFormProps {
 
 export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
   const [reportingNewAnimal, setReportingNewAnimal] = useState(false)
-  const [images, setImages] = useState<File[]>([])
-  const [thumbnails, setThumbnails] = useState<File[]>([])
-  const [isImageManagerOpen, setIsImageManagerOpen] = useState(false)
-
+  const [images, setImages] = useState<ProcessedImage[]>([])
   const steps = [
     { id: 'images-location', title: 'Pictures' },
     {
@@ -90,7 +88,7 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
           notes: value.notes,
           weatherCondition: value.weatherCondition,
           confidence: value.confidence,
-          images: images,
+          imageKeys: images.map(img => img.key).filter(Boolean),
           ...(reportingNewAnimal && {
             species: value.species,
             animalSize: value.animalSize,
@@ -112,14 +110,6 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
 
   const [currentStep, setCurrentStep] = useState(1)
 
-  const handleImagesUpdate = useCallback((newImages: File[]) => {
-    setImages(newImages)
-  }, [])
-
-  const handleThumbnailsUpdate = useCallback((newThumbnails: File[]) => {
-    setThumbnails(newThumbnails)
-  }, [])
-
   const handleMarkerDragEnd = useCallback(
     (position: { lat: number; lng: number }) => {
       form.setFieldValue('latitude', position.lat)
@@ -134,11 +124,6 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
 
   const handlePrevious = useCallback(() => {
     setCurrentStep(prev => Math.max(prev - 1, 1))
-  }, [])
-
-  const removeImage = useCallback((index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index))
-    setThumbnails(prev => prev.filter((_, i) => i !== index))
   }, [])
 
   return (
@@ -171,9 +156,8 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
 
           <StepperContent value={1}>
             <ImageLocationStep
-              onImagesUpdate={handleImagesUpdate}
-              onThumbnailsUpdate={handleThumbnailsUpdate}
               onMarkerDragEnd={handleMarkerDragEnd}
+              onImagesUpdate={setImages}
             />
           </StepperContent>
 
@@ -253,13 +237,6 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
           )}
         </div>
       </form>
-
-      <ImageManagerDialog
-        images={images}
-        onRemoveImage={removeImage}
-        open={isImageManagerOpen}
-        onOpenChange={setIsImageManagerOpen}
-      />
     </div>
   )
 }
