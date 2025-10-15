@@ -58,6 +58,8 @@
 - ✅ **WebP Image Conversion**: Updated image compression to convert all images to WebP format for better performance and smaller file sizes
 - ✅ **Database Schema Optimization**: Changed JSON fields from blob to text columns for better compatibility and performance
 - ✅ **Seed Database UI**: Added "Seed Database" button in app layout user menu for easy database seeding during development
+- ✅ **Search Sightings API**: Created flexible searchSightings endpoint with Zod validation for filtering sightings by strayId, excludeSightingId, userId, and limit
+- ✅ **useFindSighting Hook**: Implemented custom hook for finding sightings with flexible filtering options, following TanStack Query patterns
 
 ## Development Environment Status
 

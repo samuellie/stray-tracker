@@ -1,4 +1,4 @@
-import { strays, sightings } from 'db/schema'
+import { strays, sightings, sightingPhotos } from 'db/schema'
 import { desc, sql } from 'drizzle-orm'
 import { getDb } from 'db'
 import { createServerFn } from '@tanstack/react-start'
@@ -26,9 +26,15 @@ export const getNearbyStrays = createServerFn({ method: 'GET' })
         sightings: {
           orderBy: [desc(sightings.sightingTime)],
           limit: 1,
+          with: {
+            user: true,
+            sightingPhotos: {
+              limit: 1,
+              orderBy: [desc(sightingPhotos.uploadedAt)],
+            },
+          },
         },
       },
     })
-
     return result
   })

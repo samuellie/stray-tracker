@@ -1,9 +1,10 @@
 import { sightings, strays, sightingPhotos } from 'db/schema'
-import { eq, desc, asc, sql } from 'drizzle-orm'
+import { eq, desc, asc, sql, and } from 'drizzle-orm'
 import { getDb } from 'db'
 import { createServerFn } from '@tanstack/react-start'
 import type { InsertSighting } from 'db/schema'
 import { env } from 'cloudflare:workers'
+import z from 'zod'
 
 const BUCKET_BASE_URL = 'https://stray-tracker-animal-photos.pages.dev'
 
@@ -240,3 +241,47 @@ export const getUserSightings = createServerFn({ method: 'GET' })
 
     return result
   })
+
+// Search sightings with flexible filtering options
+export const searchSightings = createServerFn({ method: 'GET' })
+  .inputValidator(
+    z.object({
+      strayId: z.number().optional(),
+      excludeSightingId: z.number().optional(),
+      userId: z.string().optional(),
+      limit: z.number().positive().default(50),
+    })
+  )
+  .handler(
+    async ({ data: { strayId, excludeSightingId, userId, limit = 50 } }) => {
+      const db = await getDb()
+
+      const whereConditions = []
+
+      if (strayId !== undefined) {
+        whereConditions.push(eq(sightings.strayId, strayId))
+      }
+
+      if (excludeSightingId !== undefined) {
+        whereConditions.push(sql`${sightings.id} != ${excludeSightingId}`)
+      }
+
+      if (userId !== undefined) {
+        whereConditions.push(eq(sightings.userId, userId))
+      }
+
+      const whereCondition =
+        whereConditions.length > 0 ? and(...whereConditions) : undefined
+
+      const result = await db.query.sightings.findMany({
+        where: whereCondition,
+        with: {
+          stray: true,
+        },
+        orderBy: [desc(sightings.sightingTime || sightings.createdAt)],
+        limit,
+      })
+
+      return result
+    }
+  )

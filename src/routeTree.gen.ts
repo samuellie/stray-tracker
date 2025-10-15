@@ -15,13 +15,12 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppAppLayoutRouteImport } from './routes/app/_appLayout'
-import { Route as ApiUsersRouteImport } from './routes/api/users'
 import { Route as AppAppLayoutIndexRouteImport } from './routes/app/_appLayout.index'
 import { Route as AppAppLayoutShadcnTestRouteImport } from './routes/app/_appLayout.shadcn-test'
 import { Route as AppAppLayoutProfileRouteImport } from './routes/app/_appLayout.profile'
 import { Route as AppAppLayoutAnimalsRouteImport } from './routes/app/_appLayout.animals'
-import { Route as ApiUsersUserIdRouteImport } from './routes/api/users.$userId'
-import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth.$'
+import { Route as ApiFilesBucketSplatRouteImport } from './routes/api/files.$bucket.$'
 
 const AppRouteImport = createFileRoute('/app')()
 
@@ -49,11 +48,6 @@ const AppAppLayoutRoute = AppAppLayoutRouteImport.update({
   id: '/_appLayout',
   getParentRoute: () => AppRoute,
 } as any)
-const ApiUsersRoute = ApiUsersRouteImport.update({
-  id: '/api/users',
-  path: '/api/users',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AppAppLayoutIndexRoute = AppAppLayoutIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -74,14 +68,14 @@ const AppAppLayoutAnimalsRoute = AppAppLayoutAnimalsRouteImport.update({
   path: '/animals',
   getParentRoute: () => AppAppLayoutRoute,
 } as any)
-const ApiUsersUserIdRoute = ApiUsersUserIdRouteImport.update({
-  id: '/$userId',
-  path: '/$userId',
-  getParentRoute: () => ApiUsersRoute,
-} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFilesBucketSplatRoute = ApiFilesBucketSplatRouteImport.update({
+  id: '/api/files/$bucket/$',
+  path: '/api/files/$bucket/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -89,41 +83,38 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/api/users': typeof ApiUsersRouteWithChildren
   '/app': typeof AppAppLayoutRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/users/$userId': typeof ApiUsersUserIdRoute
   '/app/animals': typeof AppAppLayoutAnimalsRoute
   '/app/profile': typeof AppAppLayoutProfileRoute
   '/app/shadcn-test': typeof AppAppLayoutShadcnTestRoute
   '/app/': typeof AppAppLayoutIndexRoute
+  '/api/files/$bucket/$': typeof ApiFilesBucketSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/api/users': typeof ApiUsersRouteWithChildren
   '/app': typeof AppAppLayoutIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/users/$userId': typeof ApiUsersUserIdRoute
   '/app/animals': typeof AppAppLayoutAnimalsRoute
   '/app/profile': typeof AppAppLayoutProfileRoute
   '/app/shadcn-test': typeof AppAppLayoutShadcnTestRoute
+  '/api/files/$bucket/$': typeof ApiFilesBucketSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/api/users': typeof ApiUsersRouteWithChildren
   '/app': typeof AppRouteWithChildren
   '/app/_appLayout': typeof AppAppLayoutRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/users/$userId': typeof ApiUsersUserIdRoute
   '/app/_appLayout/animals': typeof AppAppLayoutAnimalsRoute
   '/app/_appLayout/profile': typeof AppAppLayoutProfileRoute
   '/app/_appLayout/shadcn-test': typeof AppAppLayoutShadcnTestRoute
   '/app/_appLayout/': typeof AppAppLayoutIndexRoute
+  '/api/files/$bucket/$': typeof ApiFilesBucketSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,49 +122,46 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/signup'
-    | '/api/users'
     | '/app'
     | '/api/auth/$'
-    | '/api/users/$userId'
     | '/app/animals'
     | '/app/profile'
     | '/app/shadcn-test'
     | '/app/'
+    | '/api/files/$bucket/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/signup'
-    | '/api/users'
     | '/app'
     | '/api/auth/$'
-    | '/api/users/$userId'
     | '/app/animals'
     | '/app/profile'
     | '/app/shadcn-test'
+    | '/api/files/$bucket/$'
   id:
     | '__root__'
     | '/'
     | '/login'
     | '/signup'
-    | '/api/users'
     | '/app'
     | '/app/_appLayout'
     | '/api/auth/$'
-    | '/api/users/$userId'
     | '/app/_appLayout/animals'
     | '/app/_appLayout/profile'
     | '/app/_appLayout/shadcn-test'
     | '/app/_appLayout/'
+    | '/api/files/$bucket/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
-  ApiUsersRoute: typeof ApiUsersRouteWithChildren
   AppRoute: typeof AppRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiFilesBucketSplatRoute: typeof ApiFilesBucketSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -213,13 +201,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppLayoutRouteImport
       parentRoute: typeof AppRoute
     }
-    '/api/users': {
-      id: '/api/users'
-      path: '/api/users'
-      fullPath: '/api/users'
-      preLoaderRoute: typeof ApiUsersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/app/_appLayout/': {
       id: '/app/_appLayout/'
       path: '/'
@@ -248,13 +229,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppLayoutAnimalsRouteImport
       parentRoute: typeof AppAppLayoutRoute
     }
-    '/api/users/$userId': {
-      id: '/api/users/$userId'
-      path: '/$userId'
-      fullPath: '/api/users/$userId'
-      preLoaderRoute: typeof ApiUsersUserIdRouteImport
-      parentRoute: typeof ApiUsersRoute
-    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -262,20 +236,15 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/files/$bucket/$': {
+      id: '/api/files/$bucket/$'
+      path: '/api/files/$bucket/$'
+      fullPath: '/api/files/$bucket/$'
+      preLoaderRoute: typeof ApiFilesBucketSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
-
-interface ApiUsersRouteChildren {
-  ApiUsersUserIdRoute: typeof ApiUsersUserIdRoute
-}
-
-const ApiUsersRouteChildren: ApiUsersRouteChildren = {
-  ApiUsersUserIdRoute: ApiUsersUserIdRoute,
-}
-
-const ApiUsersRouteWithChildren = ApiUsersRoute._addFileChildren(
-  ApiUsersRouteChildren,
-)
 
 interface AppAppLayoutRouteChildren {
   AppAppLayoutAnimalsRoute: typeof AppAppLayoutAnimalsRoute
@@ -309,9 +278,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
-  ApiUsersRoute: ApiUsersRouteWithChildren,
   AppRoute: AppRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiFilesBucketSplatRoute: ApiFilesBucketSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
