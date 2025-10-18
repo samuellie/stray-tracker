@@ -264,8 +264,8 @@ function ReportSightingForm() {
 
 **Authentication & Security**
 
-- **Better Auth**: Comprehensive authentication framework with multiple providers and session management
-- **Social OAuth**: Google, Facebook, Instagram, and other social providers
+- **Better Auth**: Comprehensive authentication framework with multiple providers and session management (fully implemented)
+- **Social OAuth**: Google, Facebook, Instagram, and other social providers (login page complete)
 - **Multi-Device Sessions**: Secure session management across devices
 - **Cloudflare Workers Integration**: Optimized for serverless environment
 
@@ -433,10 +433,11 @@ stray-tracker/
 
 **Media Handling**
 
-- **Image optimization**: Automatic resizing and format conversion
+- **Image optimization**: Automatic resizing, WebP conversion, and format optimization (implemented)
 - **Video processing**: Compression and format optimization
 - **File validation**: Security scanning and type verification
 - **CDN delivery**: Global content distribution for fast loading
+- **Direct upload system**: Direct upload to permanent sighting folders with database relation creation
 
 **Sighting Image Upload Strategy**
 
@@ -511,7 +512,7 @@ graph LR
 - **Multi-Provider Support**: Google, Facebook, Instagram, and extensible provider system
 - **Session Management**: Secure, scalable session handling with device management
 - **Cloudflare Workers Optimized**: Designed for serverless environments with edge computing
-- **Role-Based Access Control**: Granular permission system with user roles and permissions
+- **Role-Based Access Control**: Admin plugin enabled for administrative functions
 - **Security Features**: Built-in CSRF protection, rate limiting, and secure token handling
 
 **Data Protection**

@@ -164,7 +164,7 @@ sequenceDiagram
 
 - Animal cards with photo galleries and status tracking
 - User profiles with social integration and activity history
-- Sighting forms with location services and media upload (popover-based UI)
+- Sighting forms with location services and media upload (popover-based UI with floating action button)
 - Community feed with real-time updates and engagement features
 
 **UI Components**
@@ -209,16 +209,17 @@ sequenceDiagram
 
 **Authentication Service**
 
-- Better Auth framework integration with Google, Facebook, and Instagram
+- Better Auth framework integration with Google, Facebook, and Instagram (fully implemented)
 - Better Auth session management with secure token handling
 - Role-based access control (RBAC) with Better Auth's permission system
 
 **File Management Service**
 
-- Image and video upload to Cloudflare R2
-- CDN optimization with responsive image generation
+- Image and video upload to Cloudflare R2 with direct upload to permanent sighting folders
+- CDN optimization with responsive image generation and WebP conversion
 - File validation and malicious content scanning
-- Temporary file storage with automated cleanup (24-hour retention)
+- Direct upload system with database relation creation for sighting photos
+- Automated cleanup of orphaned files with database comparison
 - Session-based upload isolation for security
 
 **Notification Service**
