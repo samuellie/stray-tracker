@@ -98,3 +98,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+.custom-maplibregl-popup {
+  .maplibregl-popup-content {
+    padding: 0;
+  }
+}

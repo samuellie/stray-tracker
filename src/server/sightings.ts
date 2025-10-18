@@ -5,11 +5,13 @@ import { createServerFn } from '@tanstack/react-start'
 import type { InsertSighting } from 'db/schema'
 import { env } from 'cloudflare:workers'
 import z from 'zod'
+import { adminOnlyMw, moderatorMw, userMw } from '../utils/auth-middleware'
 
 const BUCKET_BASE_URL = 'https://stray-tracker-animal-photos.pages.dev'
 
 // Get sightings within a certain radius of a lat/lng coordinate
 export const getNearbySightings = createServerFn({ method: 'GET' })
+  .middleware([userMw])
   .inputValidator((input: { lat: number; lng: number; radius?: number }) => {
     if (typeof input.lat !== 'number' || typeof input.lng !== 'number') {
       throw new Error('lat and lng must be numbers')
@@ -41,6 +43,7 @@ export const getNearbySightings = createServerFn({ method: 'GET' })
 
 // Get a single sighting by ID
 export const getSighting = createServerFn({ method: 'GET' })
+  .middleware([userMw])
   .inputValidator((id: number) => id)
   .handler(async ({ data: id }) => {
     const db = await getDb()
@@ -60,6 +63,7 @@ export const getSighting = createServerFn({ method: 'GET' })
 
 // Create a new sighting
 export const createSighting = createServerFn({ method: 'POST' })
+  .middleware([userMw])
   .inputValidator(
     (
       data: Omit<InsertSighting, 'strayId' | 'userId'> & {
@@ -73,10 +77,7 @@ export const createSighting = createServerFn({ method: 'POST' })
   )
   .handler(async ({ data, context }) => {
     const db = await getDb()
-    const userId = context.session?.user.id
-    if (!userId) {
-      throw new Error('User not authenticated')
-    }
+    const userId = (context.session as any)?.user?.id
 
     let strayId = data.strayId
 
@@ -155,6 +156,7 @@ export const createSighting = createServerFn({ method: 'POST' })
 
 // Update a sighting
 export const updateSighting = createServerFn({ method: 'POST' })
+  .middleware([moderatorMw])
   .inputValidator(
     (input: { id: number; data: Partial<InsertSighting> }) => input
   )
@@ -192,6 +194,7 @@ export const updateSighting = createServerFn({ method: 'POST' })
 
 // Delete a sighting
 export const deleteSighting = createServerFn({ method: 'POST' })
+  .middleware([adminOnlyMw])
   .inputValidator((id: number) => id)
   .handler(async ({ data: id }) => {
     const db = await getDb()
@@ -215,6 +218,7 @@ export const deleteSighting = createServerFn({ method: 'POST' })
 
 // Get sightings for a specific stray
 export const getSightingsForStray = createServerFn({ method: 'GET' })
+  .middleware([userMw])
   .inputValidator((strayId: number) => strayId)
   .handler(async ({ data: strayId }) => {
     const db = await getDb()
@@ -228,6 +232,7 @@ export const getSightingsForStray = createServerFn({ method: 'GET' })
 
 // Get sightings by user
 export const getUserSightings = createServerFn({ method: 'GET' })
+  .middleware([userMw])
   .inputValidator((userId: string) => userId)
   .handler(async ({ data: userId }) => {
     const db = await getDb()
@@ -244,6 +249,7 @@ export const getUserSightings = createServerFn({ method: 'GET' })
 
 // Search sightings with flexible filtering options
 export const searchSightings = createServerFn({ method: 'GET' })
+  .middleware([userMw])
   .inputValidator(
     z.object({
       strayId: z.number().optional(),

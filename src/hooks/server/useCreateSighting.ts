@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createSighting } from '~/routes/api/sightings'
+import { createSighting } from '~/server/sightings'
 import type { InsertSighting } from 'db/schema'
 
 // Custom hook for creating a new sighting

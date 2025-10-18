@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { env } from 'cloudflare:workers'
 import z from 'zod'
+import { userMw } from '~/utils/auth-middleware'
 
 export interface UploadUrl {
   url: string
@@ -11,16 +12,17 @@ export interface UploadUrl {
 /**
  * generate a session key first
  */
-export const generateSessionKey = createServerFn({ method: 'GET' }).handler(
-  async () => {
+export const generateSessionKey = createServerFn({ method: 'GET' })
+  .middleware([userMw])
+  .handler(async () => {
     return crypto.randomUUID()
-  }
-)
+  })
 
 /**
  * Upload api to upload images into R2 sighting bucket temporary path
  */
 export const uploadSightingPhoto = createServerFn({ method: 'POST' })
+  .middleware([userMw])
   .inputValidator(z.instanceof(FormData))
   .handler(async ({ data: formData }) => {
     const file = formData.get('file') as File

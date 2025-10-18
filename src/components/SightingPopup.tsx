@@ -2,15 +2,21 @@ import { Popup } from 'react-map-gl/maplibre'
 import { SightingPhoto, type Sighting, type Stray } from 'db/schema'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
-import { Separator } from '~/components/ui/separator'
 import { Button } from '~/components/ui/button'
 import { formatRelativeDate } from '~/utils/date'
-import { getThumbnailKey } from '~/utils/files'
-import { Expand, X } from 'lucide-react'
+import { getSightingThumbnailUrl } from '~/utils/files'
+import { getPlaceholderImage } from '~/utils/strayImageFallbacks'
+import { X } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+import { User } from 'better-auth'
+import { Img } from 'react-image'
+import { Spinner } from '~/components/ui/spinner'
 
 interface SightingPopupProps {
   selectedSighting:
-    | (Stray & { sighting: Sighting & { sightingPhotos: SightingPhoto[] } })
+    | (Stray & {
+        sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
+      })
     | null
   onClose: () => void
   onOpenDialog?: () => void
@@ -31,8 +37,8 @@ export function SightingPopup({
       longitude={selectedSighting.sighting.lng}
       latitude={selectedSighting.sighting.lat}
       onClose={onClose}
-      closeOnClick={false}
-      className="max-w-2xl m-0"
+      closeOnClick
+      className="custom-maplibregl-popup w-96"
       closeButton={false}
     >
       <Card
@@ -52,17 +58,28 @@ export function SightingPopup({
           <X />
         </Button>
         <CardHeader className="p-0">
-          {primaryPhoto && (
-            <div>
-              <img
-                src={`/api/files/animal-photos/${getThumbnailKey(primaryPhoto.url)}`}
+          <Img
+            src={getSightingThumbnailUrl(primaryPhoto.url)}
+            loader={
+              <div className="w-full h-48 flex items-center justify-center bg-gray-100">
+                <Spinner />
+              </div>
+            }
+            unloader={
+              <Img
+                src={getPlaceholderImage(
+                  primaryPhoto.url,
+                  selectedSighting.species === 'cat' ? 'cats' : 'dogs'
+                )}
                 alt={`${selectedSighting.species} sighting photo`}
-                className="w-full h-48 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                className="w-full h-48 object-cover"
               />
-            </div>
-          )}
-          <div className="p-3 pb-2">
-            <div className="flex items-center gap-3 mb-2">
+            }
+            alt={`${selectedSighting.species} sighting photo`}
+            className="w-full h-48 object-cover"
+          />
+          <div className="px-3">
+            <div className="flex-col items-center gap-3 mb-2">
               <CardTitle className="text-base font-semibold">
                 {selectedSighting.name}
               </CardTitle>
@@ -82,7 +99,26 @@ export function SightingPopup({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="px-3 pb-3">
+        <CardContent className="px-3">
+          <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
+            <Avatar className="w-8 h-8">
+              <AvatarImage src={selectedSighting.sighting.user.image || ''} />
+              <AvatarFallback>
+                {selectedSighting.sighting.user.name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-gray-900">
+                {selectedSighting.sighting.user.name}
+              </p>
+              <p className="text-xs text-gray-500">
+                Sighted{' '}
+                {formatRelativeDate(
+                  Number(selectedSighting.sighting.sightingTime)
+                )}
+              </p>
+            </div>
+          </div>
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <span className="text-xs font-medium text-gray-600">Breed:</span>
@@ -106,50 +142,6 @@ export function SightingPopup({
                 </span>
               </div>
             )}
-          </div>
-
-          {(selectedSighting.description ||
-            selectedSighting.healthNotes ||
-            selectedSighting.careRequirements) && (
-            <>
-              <Separator className="my-2" />
-              <div className="space-y-2">
-                {selectedSighting.description && (
-                  <div>
-                    <p className="text-xs text-gray-700 leading-relaxed">
-                      {selectedSighting.description}
-                    </p>
-                  </div>
-                )}
-                {selectedSighting.healthNotes && (
-                  <div>
-                    <span className="text-xs font-medium text-gray-600">
-                      Health Notes:
-                    </span>
-                    <p className="text-xs text-gray-700 leading-relaxed mt-1">
-                      {selectedSighting.healthNotes}
-                    </p>
-                  </div>
-                )}
-                {selectedSighting.careRequirements && (
-                  <div>
-                    <span className="text-xs font-medium text-gray-600">
-                      Care Requirements:
-                    </span>
-                    <p className="text-xs text-gray-700 leading-relaxed mt-1">
-                      {selectedSighting.careRequirements}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-          <div className="flex justify-between items-center mt-3 pt-2 border-t border-gray-100">
-            <span className="text-xs text-gray-500">
-              {formatRelativeDate(
-                Number(selectedSighting.sighting.sightingTime)
-              )}
-            </span>
           </div>
         </CardContent>
       </Card>

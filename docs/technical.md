@@ -29,7 +29,7 @@ Here's how to implement API queries as custom hooks using TanStack Query:
 ```typescript
 // src/hooks/useSightings.ts
 import { useQuery } from '@tanstack/react-query'
-import { getSightings } from '~/routes/api/sightings'
+import { getSightings } from '~/server/sightings'
 
 // Custom hook for fetching all sightings
 export function useSightings() {
@@ -127,7 +127,7 @@ Here's how to implement API mutations using TanStack Query for creating new sigh
 ```typescript
 // src/hooks/useCreateSighting.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createSighting } from '~/routes/api/sightings'
+import { createSighting } from '~/server/sightings'
 
 // Custom hook for creating a new sighting
 export function useCreateSighting() {

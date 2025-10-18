@@ -1,13 +1,17 @@
 import { createMiddleware, createStart } from '@tanstack/react-start'
 import { QueryClient } from '@tanstack/react-query'
 import { env } from 'cloudflare:workers'
-import { createAuth } from './lib/auth'
+import { auth, createAuth } from './lib/auth'
 import { getRequest } from '@tanstack/react-start/server'
+
+type Session = typeof auth.$Infer.Session
+
 declare module '@tanstack/react-start' {
   interface Register {
     server: {
       requestContext: {
         fromFetch: boolean
+        session?: Session
       }
     }
   }
@@ -30,7 +34,6 @@ export const fnMw = createMiddleware({ type: 'function' })
     const { headers } = getRequest()
     const session = await createAuth(env).api.getSession({ headers })
 
-    // auth.api.getSession()
     return next({
       context: {
         fromFnMw: true,

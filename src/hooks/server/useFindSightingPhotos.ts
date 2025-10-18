@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { getSightingPhotos } from '~/routes/api/sightingsphoto'
+import { getSightingPhotos } from '~/server/sightingsPhoto'
 
 // Custom hook for finding sighting photos for a specific sighting
 export function useFindSightingPhotos(sightingId: number) {

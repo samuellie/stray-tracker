@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { getNearbyStrays } from '~/routes/api/strays'
+import { getNearbyStrays } from '~/server/strays'
 
 // Custom hook for fetching strays near a location based on their latest sighting
 export function useNearbyStrays(

@@ -13,8 +13,10 @@ import {
   CarouselDots,
 } from '~/components/ui/carousel'
 import { useFindSightingPhotos } from '~/hooks/server/useFindSightingPhotos'
-import { getKey } from '~/utils/files'
+import { getSightingFullImageUrl } from '~/utils/files'
 import { User } from 'better-auth'
+import { Img } from 'react-image'
+import { getPlaceholderImage } from '~/utils/strayImageFallbacks'
 
 interface SightingDialogProps {
   selectedSighting:
@@ -46,8 +48,23 @@ export function SightingDialog({
         ) : sightingPhotos && sightingPhotos.length > 0 ? (
           <div>
             {sightingPhotos.length === 1 ? (
-              <img
-                src={`/api/files/animal-photos/${getKey(sightingPhotos[0].url)}`}
+              <Img
+                src={getSightingFullImageUrl(sightingPhotos[0].url)}
+                loader={
+                  <div className="w-full h-96 flex items-center justify-center bg-gray-100">
+                    <Spinner className="size-8" />
+                  </div>
+                }
+                unloader={
+                  <Img
+                    src={getPlaceholderImage(
+                      sightingPhotos[0].url,
+                      selectedSighting.species === 'cat' ? 'cats' : 'dogs'
+                    )}
+                    alt={`${selectedSighting.species} sighting photo`}
+                    className="w-full h-96 object-cover"
+                  />
+                }
                 alt={`${selectedSighting.species} sighting photo`}
                 className="w-full h-96 object-cover"
               />
@@ -56,10 +73,27 @@ export function SightingDialog({
                 <CarouselContent>
                   {sightingPhotos.map((photo, index) => (
                     <CarouselItem key={photo.id}>
-                      <img
-                        src={`/api/files/animal-photos/${getKey(photo.url)}`}
+                      <Img
+                        src={getSightingFullImageUrl(photo.url)}
+                        loader={
+                          <div className="w-full h-96 flex items-center justify-center bg-gray-100">
+                            <Spinner className="size-8" />
+                          </div>
+                        }
+                        unloader={
+                          <Img
+                            src={getPlaceholderImage(
+                              photo.url,
+                              selectedSighting.species === 'cat'
+                                ? 'cats'
+                                : 'dogs'
+                            )}
+                            alt={`${selectedSighting.species} sighting photo ${index + 1}`}
+                            className="w-full h-96 object-cover"
+                          />
+                        }
                         alt={`${selectedSighting.species} sighting photo ${index + 1}`}
-                        className="w-full h-96 object-cover "
+                        className="w-full h-96 object-cover"
                       />
                     </CarouselItem>
                   ))}

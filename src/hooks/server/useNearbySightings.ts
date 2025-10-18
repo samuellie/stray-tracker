@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { getNearbySightings } from '~/routes/api/sightings'
+import { getNearbySightings } from '~/server/sightings'
 
 // Custom hook for fetching sightings near a location
 export function useNearbySightings(

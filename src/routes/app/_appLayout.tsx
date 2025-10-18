@@ -17,7 +17,7 @@ import { User, Menu } from 'lucide-react'
 import { useIsMobile } from '~/hooks/use-mobile'
 import { useState, useEffect } from 'react'
 import { LoadingPage } from '~/components/LoadingPage'
-import { seedDatabase } from '~/routes/api/seed'
+import { seedDatabase } from '~/server/seed'
 
 export const Route = createFileRoute('/app/_appLayout')({
   component: AppLayout,

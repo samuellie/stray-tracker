@@ -148,7 +148,7 @@ export function MapComponent({
                   ...stray,
                   sighting: stray.sightings[0],
                 })
-              }, 500)
+              }, 200)
             }}
           >
             <div className="text-lg cursor-pointer">

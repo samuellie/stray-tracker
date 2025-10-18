@@ -5,10 +5,6 @@ import { withCloudflare } from 'better-auth-cloudflare'
 import { reactStartCookies } from 'better-auth/react-start'
 import schema from '../../db/schema'
 import { drizzle } from 'drizzle-orm/d1'
-import type {
-  D1Database,
-  IncomingRequestCfProperties,
-} from '@cloudflare/workers-types'
 
 const createAuth = (env?: Env, cf?: IncomingRequestCfProperties) => {
   const db = env

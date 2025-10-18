@@ -2,9 +2,11 @@ import { strays, sightings, sightingPhotos } from 'db/schema'
 import { desc, sql } from 'drizzle-orm'
 import { getDb } from 'db'
 import { createServerFn } from '@tanstack/react-start'
+import { userMw } from '~/utils/auth-middleware'
 
 // Get nearby strays based on their latest sighting
 export const getNearbyStrays = createServerFn({ method: 'GET' })
+  .middleware([userMw])
   .inputValidator((input: { lat: number; lng: number; radius?: number }) => {
     if (typeof input.lat !== 'number' || typeof input.lng !== 'number') {
       throw new Error('lat and lng must be numbers')

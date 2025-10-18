@@ -1,12 +1,14 @@
 import { createServerFn } from '@tanstack/react-start'
 import { cleanupOldTempAnimalPhotoFiles } from '~/utils/r2'
+import { userMw } from '~/utils/auth-middleware'
 
 /**
  * Cron job endpoint to cleanup old temporary animal photo files
  * This should be called periodically to remove temporary files older than 24 hours
  */
-export const cleanupTempFiles = createServerFn({ method: 'POST' }).handler(
-  async () => {
+export const cleanupTempFiles = createServerFn({ method: 'POST' })
+  .middleware([userMw])
+  .handler(async () => {
     try {
       const deletedCount = await cleanupOldTempAnimalPhotoFiles(24) // 24 hours
 
@@ -21,14 +23,14 @@ export const cleanupTempFiles = createServerFn({ method: 'POST' }).handler(
       console.error('Failed to cleanup temporary files:', error)
       throw new Error('Failed to cleanup temporary files')
     }
-  }
-)
+  })
 
 /**
  * Manual cleanup endpoint for testing/admin purposes
  * Can be called with custom max age in hours
  */
 export const manualCleanup = createServerFn({ method: 'POST' })
+  .middleware([userMw])
   .inputValidator((input: { maxAgeHours?: number }) => {
     if (
       input.maxAgeHours !== undefined &&

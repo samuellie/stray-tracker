@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { ArrowRight, ArrowRightIcon } from 'lucide-react'
 import { Button } from '~/components/ui/button'
 import {
   Card,
@@ -7,12 +8,38 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card'
+import { authClient } from '~/lib/auth-client'
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const { data: session } = authClient.useSession()
+
+  const AuthButtons = () => {
+    if (session) {
+      return (
+        <Button asChild>
+          <Link to="/app">
+            Go to App <ArrowRight />
+          </Link>
+        </Button>
+      )
+    }
+
+    return (
+      <>
+        <Button asChild variant="ghost">
+          <Link to="/login">Login</Link>
+        </Button>
+        <Button asChild>
+          <Link to="/signup">Sign Up</Link>
+        </Button>
+      </>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
       {/* Navigation */}
@@ -23,12 +50,7 @@ function RouteComponent() {
               🐾 Stray Tracker
             </div>
             <div className="space-x-4">
-              <Button asChild variant="ghost">
-                <Link to="/login">Login</Link>
-              </Button>
-              <Button asChild>
-                <Link to="/signup">Sign Up</Link>
-              </Button>
+              <AuthButtons />
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { searchSightings } from '~/routes/api/sightings'
+import { searchSightings } from '~/server/sightings'
 
 // Custom hook for finding sightings with flexible filtering
 export function useFindSighting(

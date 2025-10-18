@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form'
 import { useNavigate } from '@tanstack/react-router'
+import { useEffect } from 'react'
 import {
   Card,
   CardContent,
@@ -16,26 +17,30 @@ import { Link } from '@tanstack/react-router'
 
 import { authClient } from '~/lib/auth-client'
 import { loginFormDefaults } from '~/form-config'
+import { LoadingPage } from '~/components/LoadingPage'
 
 export const Route = createFileRoute('/login')({
   component: Login,
-  beforeLoad: async ({ context, location }) => {
-    // Check if user is already authenticated on the client side
-    // This is a simplified check - in production you'd use proper session management
-    try {
-      // For now, we'll let the UI handle checking authentication
-      // The actual auth check happens in the middleware
-    } catch (error) {
-      // User not authenticated, continue to login page
-    }
-
-    // If user tries to access login while logged in, redirect
-    // This would need proper session checking in a real implementation
-  },
 })
 
 function Login() {
   const navigate = useNavigate()
+
+  const { data: session, isPending } = authClient.useSession()
+
+  useEffect(() => {
+    if (!isPending && session) {
+      navigate({ to: '/app', replace: true })
+    }
+  }, [isPending, session, navigate])
+
+  if (isPending) {
+    return <LoadingPage />
+  }
+
+  if (session) {
+    return null // Redirect will happen via useEffect
+  }
 
   const form = useForm({
     defaultValues: loginFormDefaults,
