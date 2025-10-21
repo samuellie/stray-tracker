@@ -18,7 +18,7 @@
   "kv_namespaces": [
     {
       "binding": "CACHE",
-      "id": "stray-tracker"
+      "id": "fe855a24fbf6487ba3bd8e7256b2b00c"
     }
   ],
   "r2_buckets": [
@@ -38,9 +38,6 @@
       "preview_bucket_name": "stray-tracker-user-profile-preview"
     }
   ],
-  "triggers": {
-    "crons": ["0 */6 * * *"]
-  },
   "vars": {
     "BASE_URL": "https://stray-tracker.pages.dev",
     "GOOGLE_CLIENT_ID": "your_google_client_id_here",

@@ -1,8 +1,6 @@
-import { drizzle, DrizzleD1Database } from 'drizzle-orm/d1'
-import { eq } from 'drizzle-orm'
+import { DrizzleD1Database } from 'drizzle-orm/d1'
 import * as schema from '../db/schema'
 import type { InsertStray } from '../db/schema'
-import { SQLiteInsertBuilder } from 'drizzle-orm/sqlite-core'
 
 // Helper function to generate random locations around a center point
 function generateRandomLocation(

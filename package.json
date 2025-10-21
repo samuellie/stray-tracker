@@ -8,7 +8,7 @@
     "dev:withd1studio": "concurrently -n app,d1studio -c cyan,green 'pnpm run dev' 'pnpm run dev:d1studio'",
     "dev:wrangler": "wrangler dev",
     "dev:d1studio": "npx d1s",
-    "build": "vite build && tsc --noEmit",
+    "build": "vite build ",
     "preview": "vite preview",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix",

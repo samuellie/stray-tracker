@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
-import { getDb } from '../../../db'
-import seed from '../../../seed/seed'
+import { getDb } from '../../db'
+import seed from '../../seed/seed'
 import { userMw } from '~/utils/auth-middleware'
 
 // Seed the database with sample data
