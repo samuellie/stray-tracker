@@ -249,6 +249,12 @@ function ReportSightingForm() {
 - **@tanstack/react-table**: Headless UI for building powerful tables and data grids
 - **@tanstack/react-virtual**: High-performance virtualization for large datasets
 
+**Form Components & Validation**
+
+- **@tanstack/react-form**: Type-safe, performant forms with integrated validation
+- **Zod**: Runtime type validation and schema definition
+- **Stepper Component**: Multi-step form navigation with floating action buttons
+
 ### Backend & Infrastructure
 
 **Serverless Platform**
@@ -770,5 +776,73 @@ interface Color {
 - **Type Safety**: Full TypeScript support across all TanStack packages
 - **Performance**: Optimized for modern React and edge computing
 - **Developer Experience**: Excellent documentation and community support
+
+## Component Architecture
+
+### Stepper Component System
+
+The application implements a comprehensive stepper component system for multi-step forms, providing an intuitive navigation experience with floating action buttons for enhanced mobile usability.
+
+**Stepper Component Structure**
+
+```typescript
+// src/components/ui/stepper.tsx
+interface StepperProps {
+  value: number
+  onValueChange: (value: number) => void
+  children: React.ReactNode
+  className?: string
+}
+
+interface StepperItemProps {
+  step: number
+  children: React.ReactNode
+  className?: string
+}
+
+interface StepperTriggerProps {
+  children: React.ReactNode
+  className?: string
+}
+
+interface StepperIndicatorProps {
+  children?: React.ReactNode
+  className?: string
+}
+
+interface StepperTitleProps {
+  children: React.ReactNode
+  className?: string
+}
+
+interface StepperSeparatorProps {
+  className?: string
+}
+
+interface StepperContentProps {
+  value: number
+  children: React.ReactNode
+  className?: string
+}
+```
+
+**Usage in Multi-Step Forms**
+
+The stepper system is integrated with TanStack Form to provide seamless multi-step form experiences:
+
+- **Step Navigation**: Visual step indicators with titles and separators
+- **Content Management**: Conditional rendering of step content
+- **Floating Controls**: Fixed bottom navigation with Previous/Next/Submit buttons
+- **Form Validation**: Real-time validation with error display
+- **Mobile Optimization**: Touch-friendly interface with responsive design
+
+**ReportSightingForm Integration**
+
+The ReportSightingForm component demonstrates the stepper system's capabilities:
+
+- **3-Step Process**: Images & Location → Animal Matching → Observation Details
+- **State Management**: Integrated with TanStack Form for type-safe data handling
+- **Error Handling**: Comprehensive error display and user feedback
+- **Responsive Design**: Mobile-first approach with adaptive layouts
 
 This technical documentation serves as a comprehensive guide for developers working on the Stray Tracker platform, ensuring consistent implementation and maintenance of the system according to the defined architecture and requirements.

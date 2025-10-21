@@ -164,8 +164,9 @@ sequenceDiagram
 
 - Animal cards with photo galleries and status tracking
 - User profiles with social integration and activity history
-- Sighting forms with location services and media upload (popover-based UI with floating action button)
+- Sighting forms with location services and media upload (multi-step stepper UI with floating action buttons)
 - Community feed with real-time updates and engagement features
+- Stepper component system for complex multi-step workflows
 
 **UI Components**
 
@@ -173,6 +174,8 @@ sequenceDiagram
 - Search filters with advanced filtering options
 - Voting interfaces for community decisions
 - Interactive maps for location-based features
+- Stepper components for multi-step form navigation
+- Floating action buttons for enhanced mobile UX
 
 **Utility Components**
 
@@ -180,6 +183,8 @@ sequenceDiagram
 - Error handling and fallback interfaces
 - SEO optimization with meta tags and structured data
 - Offline indicators and sync status
+- Stepper navigation system for multi-step workflows
+- Form validation and error display components
 
 **PWA Components**
 
@@ -620,6 +625,14 @@ graph TB
 - Voting system for name selection
 - Name history tracking and community polls
 - Integration with animal profiles and status updates
+
+**Multi-Step Form Workflows**
+
+- Stepper-based navigation for complex form processes
+- Floating action button controls for mobile optimization
+- Progressive form validation with real-time feedback
+- State persistence across form steps
+- Responsive design for mobile and desktop experiences
 
 **Subscription Services**
 
