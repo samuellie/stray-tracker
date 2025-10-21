@@ -23,7 +23,6 @@ export function ImageLocationStep({
   } | null>()
   const {
     images,
-    thumbnails,
     progress: imageProgress,
     addImages,
     removeImage,
@@ -72,12 +71,12 @@ export function ImageLocationStep({
       <div className="space-y-2">
         <h2 className="text-lg font-semibold">Set Location</h2>
         <div className="space-y-4">
-          <div className="h-44">
+          <div className={isMobile ? 'h-96' : 'h-64'}>
             <MapComponent
               draggable
               className="h-full"
               defaultShowCurrentLocation
-              markerPosition={markerPosition}
+              positionInput
               onMarkerDragEnd={handleMarkerDragEnd}
               // showUserLocation={false}
             />

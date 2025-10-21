@@ -207,7 +207,7 @@ export function createSightingColumns(): ColumnDef<Sighting>[] {
             Verified
           </span>
         ) : (
-          <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+          <span className="px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
             Pending
           </span>
         )
@@ -245,7 +245,7 @@ export function createUserColumns(): ColumnDef<User>[] {
         const colors = {
           admin: 'bg-red-100 text-red-800',
           moderator: 'bg-blue-100 text-blue-800',
-          user: 'bg-gray-100 text-gray-800',
+          user: 'bg-muted text-muted-foreground',
         }
         return (
           <span
@@ -337,13 +337,13 @@ export function Table<T>({ table, className = '' }: TableProps<T>) {
   return (
     <div className={`overflow-x-auto ${className}`}>
       <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+        <thead className="bg-muted/50">
           {table.getHeaderGroups().map(headerGroup => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map(header => (
                 <th
                   key={header.id}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                   style={{ width: header.column.getSize() }}
                 >
                   {header.isPlaceholder ? null : (
@@ -370,13 +370,13 @@ export function Table<T>({ table, className = '' }: TableProps<T>) {
             </tr>
           ))}
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-background divide-y divide-border">
           {table.getRowModel().rows.map(row => (
-            <tr key={row.id} className="hover:bg-gray-50">
+            <tr key={row.id} className="hover:bg-muted/50">
               {row.getVisibleCells().map(cell => (
                 <td
                   key={cell.id}
-                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                  className="px-6 py-4 whitespace-nowrap text-sm text-foreground"
                 >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
@@ -398,9 +398,9 @@ export function Pagination({ table }: PaginationProps) {
   if (table.getPageCount() <= 1) return null
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
+    <div className="flex items-center justify-between px-4 py-3 bg-background border-t border-border sm:px-6">
       <div className="flex items-center">
-        <p className="text-sm text-gray-700">
+        <p className="text-sm text-muted-foreground">
           Showing{' '}
           <span className="font-medium">
             {table.getState().pagination.pageIndex *
@@ -424,7 +424,7 @@ export function Pagination({ table }: PaginationProps) {
       </div>
       <div className="flex items-center space-x-2">
         <button
-          className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-1 text-sm font-medium text-muted-foreground bg-background border border-border rounded-md hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
@@ -436,7 +436,7 @@ export function Pagination({ table }: PaginationProps) {
             className={`px-3 py-1 text-sm font-medium border rounded-md ${
               table.getState().pagination.pageIndex === i
                 ? 'text-blue-600 bg-blue-50 border-blue-500'
-                : 'text-gray-500 bg-white border-gray-300 hover:bg-gray-50'
+                : 'text-muted-foreground bg-background border-border hover:bg-muted'
             }`}
             onClick={() => table.setPageIndex(i)}
           >
@@ -447,7 +447,7 @@ export function Pagination({ table }: PaginationProps) {
           table.getState().pagination.pageIndex + 3
         )}
         <button
-          className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-1 text-sm font-medium text-muted-foreground bg-background border border-border rounded-md hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
@@ -480,13 +480,13 @@ export function VirtualizedTable<T extends { id: string }>({
       className="overflow-auto border border-gray-200 rounded"
     >
       <table className="min-w-full">
-        <thead className="bg-gray-50 sticky top-0">
+        <thead className="bg-muted/50 sticky top-0">
           {table.getHeaderGroups().map(headerGroup => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map(header => (
                 <th
                   key={header.id}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200"
+                  className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-gray-200"
                   style={{ width: header.column.getSize() }}
                 >
                   {header.isPlaceholder
@@ -500,13 +500,13 @@ export function VirtualizedTable<T extends { id: string }>({
             </tr>
           ))}
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-background divide-y divide-border">
           {table.getRowModel().rows.map(row => (
-            <tr key={row.id} className="hover:bg-gray-50">
+            <tr key={row.id} className="hover:bg-muted/50">
               {row.getVisibleCells().map(cell => (
                 <td
                   key={cell.id}
-                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 border-b border-gray-200"
+                  className="px-6 py-4 whitespace-nowrap text-sm text-foreground border-b border-gray-200"
                 >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>

@@ -24,6 +24,7 @@ export const getNearbyStrays = createServerFn({ method: 'GET' })
 
     const result = await db.query.strays.findMany({
       where: sql`EXISTS (SELECT 1 FROM sightings s WHERE s.stray_id = strays.id AND s.sighting_time = (SELECT MAX(s2.sighting_time) FROM sightings s2 WHERE s2.stray_id = strays.id) AND (6371 * acos(cos(${lat} * 3.141592653589793 / 180) * cos(s.lat * 3.141592653589793 / 180) * cos((s.lng * 3.141592653589793 / 180) - (${lng} * 3.141592653589793 / 180)) + sin(${lat} * 3.141592653589793 / 180) * sin(s.lat * 3.141592653589793 / 180))) < ${radius})`,
+      orderBy: sql`(6371 * acos(cos(${lat} * 3.141592653589793 / 180) * cos((SELECT s.lat FROM sightings s WHERE s.stray_id = strays.id ORDER BY s.sighting_time DESC LIMIT 1) * 3.141592653589793 / 180) * cos(((SELECT s.lng FROM sightings s WHERE s.stray_id = strays.id ORDER BY s.sighting_time DESC LIMIT 1) * 3.141592653589793 / 180) - (${lng} * 3.141592653589793 / 180)) + sin(${lat} * 3.141592653589793 / 180) * sin((SELECT s.lat FROM sightings s WHERE s.stray_id = strays.id ORDER BY s.sighting_time DESC LIMIT 1) * 3.141592653589793 / 180)))`,
       with: {
         sightings: {
           orderBy: [desc(sightings.sightingTime)],

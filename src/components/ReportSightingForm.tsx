@@ -19,8 +19,8 @@ import { ImageLocationStep } from '~/components/sighting-form-steps/ImageLocatio
 import { AnimalTypeStep } from '~/components/sighting-form-steps/AnimalTypeStep'
 import { ObservationStep } from '~/components/sighting-form-steps/ObservationStep'
 import { AdditionalInfoStep } from '~/components/sighting-form-steps/AdditionalInfoStep'
-import { ImageManagerDialog } from '~/components/ImageManagerDialog'
-import { useProcessImages, type ProcessedImage } from '~/hooks/useProcessImages'
+import { type ProcessedImage } from '~/hooks/useProcessImages'
+import { useIsMobile } from '~/hooks/use-mobile'
 
 interface ReportSightingFormProps {
   onSuccess?: () => void
@@ -29,6 +29,8 @@ interface ReportSightingFormProps {
 export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
   const [reportingNewAnimal, setReportingNewAnimal] = useState(false)
   const [images, setImages] = useState<ProcessedImage[]>([])
+  const isMobile = useIsMobile()
+
   const steps = [
     { id: 'images-location', title: 'Pictures' },
     {
@@ -127,7 +129,9 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
   }, [])
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-2 pb-24">
+    <div
+      className={`w-full max-w-2xl mx-auto pb-16 ${isMobile ? 'p-2' : 'p-0'} `}
+    >
       <h1 className="text-2xl font-bold">New Sighting</h1>
       <form
         onSubmit={e => {
@@ -176,6 +180,8 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
               strayIdError={form.state.fieldMeta.strayId?.errors?.[0]}
               speciesError={form.state.fieldMeta.species?.errors?.[0]}
               animalSizeError={form.state.fieldMeta.animalSize?.errors?.[0]}
+              latitude={form.state.values.latitude}
+              longitude={form.state.values.longitude}
             />
           </StepperContent>
 
@@ -205,15 +211,19 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
           </StepperContent>
         </Stepper>
 
-        <div className="fixed bottom-0 left-0 right-0 flex justify-between z-50 bg-white/95 rounded-lg p-4 w-full">
-          <Button
-            type="button"
-            onClick={handlePrevious}
-            disabled={currentStep === 1}
-            variant="outline"
-          >
-            Previous
-          </Button>
+        <div className="fixed bottom-0 left-0 right-0 flex justify-between z-50 bg-background/95 rounded-lg p-4 w-full">
+          {currentStep !== 1 ? (
+            <Button
+              type="button"
+              onClick={handlePrevious}
+              disabled={currentStep === 1}
+              variant="outline"
+            >
+              Previous
+            </Button>
+          ) : (
+            <div />
+          )}
 
           {currentStep === steps.length ? (
             <form.Subscribe
@@ -222,11 +232,10 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
                 <Button
                   type="submit"
                   disabled={!canSubmit || createSightingMutation.isPending}
-                  size="lg"
                 >
                   {isSubmitting || createSightingMutation.isPending
-                    ? 'Reporting Sighting...'
-                    : 'Report Sighting'}
+                    ? 'Submitting'
+                    : 'Submit'}
                 </Button>
               )}
             />

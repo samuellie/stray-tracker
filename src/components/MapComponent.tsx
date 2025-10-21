@@ -21,7 +21,7 @@ interface MapProps {
   className?: string
   defaultShowCurrentLocation?: boolean
   showUserLocation?: boolean
-  markerPosition?: { lat: number; lng: number } | null
+  positionInput?: boolean
   onMarkerDragEnd?: (position: { lat: number; lng: number }) => void
   draggable?: boolean
   showNearbySightings?: boolean
@@ -31,7 +31,7 @@ export function MapComponent({
   className,
   defaultShowCurrentLocation = false,
   showUserLocation = true,
-  markerPosition,
+  positionInput = false,
   onMarkerDragEnd,
   draggable = false,
   showNearbySightings = false,
@@ -39,7 +39,9 @@ export function MapComponent({
   const isMobile = useIsMobile()
   const MapGeolocateControl = useRef<MaplibreGeolocateControl>(null)
   const MapContainer = useRef<MapRef>(null)
-  const [marker, setMarker] = useState(markerPosition)
+  const [marker, setMarker] = useState<{ lat: number; lng: number } | null>(
+    null
+  )
   const [currentUserPosition, setCurrentUserPosition] = useState<{
     lat: number
     lng: number
@@ -58,10 +60,6 @@ export function MapComponent({
     | null
   >(null)
 
-  useEffect(() => {
-    setMarker(markerPosition)
-  }, [markerPosition])
-
   const { data } = useNearbyStrays(
     showNearbySightings ? currentUserPosition?.lat : undefined,
     showNearbySightings ? currentUserPosition?.lng : undefined,
@@ -72,8 +70,16 @@ export function MapComponent({
     lngLat: { lat: number; lng: number }
   }) => {
     const newPos = { lat: event.lngLat.lat, lng: event.lngLat.lng }
-    setMarker(newPos)
     onMarkerDragEnd?.(newPos)
+    setMarker(newPos)
+  }
+
+  const handleMapClick = (event: { lngLat: { lat: number; lng: number } }) => {
+    if (positionInput) {
+      const newPos = { lat: event.lngLat.lat, lng: event.lngLat.lng }
+      setMarker(newPos)
+      onMarkerDragEnd?.(newPos)
+    }
   }
 
   const handleOnload = () => {
@@ -82,6 +88,10 @@ export function MapComponent({
         'geolocate',
         (e: { coords: { latitude: number; longitude: number } }) => {
           setCurrentUserPosition({
+            lat: e.coords.latitude,
+            lng: e.coords.longitude,
+          })
+          setMarker({
             lat: e.coords.latitude,
             lng: e.coords.longitude,
           })
@@ -95,38 +105,45 @@ export function MapComponent({
 
   return (
     <div
-      className={`relative w-full h-full bg-gray-100 rounded-lg overflow-hidden ${className}`}
+      className={`relative w-full h-full bg-muted rounded-lg overflow-hidden ${className}`}
     >
       <Map
         ref={MapContainer}
         interactive
         initialViewState={{
-          latitude: markerPosition?.lat || 3.1072086999999984,
-          longitude: markerPosition?.lng || 101.67908995767199,
+          latitude: 3.1072086999999984,
+          longitude: 101.67908995767199,
           zoom: 16,
         }}
         style={{ width: '100%', height: '100%' }}
         mapStyle={`https://api.maptiler.com/maps/streets-v2/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY}`}
         onLoad={handleOnload}
+        onClick={handleMapClick}
       >
         <NavigationControl position="top-left" />
         <FullscreenControl position="top-right" />
         <ScaleControl position="bottom-left" />
-        <GeolocateControl
-          ref={MapGeolocateControl}
-          position="bottom-left"
-          showUserLocation={showUserLocation}
-          // onGeolocate={} // when user location updates, update the current location too
-          positionOptions={{ enableHighAccuracy: true }}
-        />
-        {marker && (
+        {showUserLocation && (
+          <GeolocateControl
+            ref={MapGeolocateControl}
+            position="bottom-left"
+            showUserLocation={!positionInput}
+            trackUserLocation={!positionInput}
+            positionOptions={{ enableHighAccuracy: true }}
+          />
+        )}
+        {positionInput && (
           <Marker
-            longitude={marker.lng}
-            latitude={marker.lat}
-            draggable={draggable}
+            latitude={marker?.lat || 3.1072086999999984}
+            longitude={marker?.lng || 101.67908995767199}
+            draggable
             onDragEnd={handleMarkerDragEnd}
           >
-            <div className="w-6 h-6 bg-red-500 rounded-full border-2 border-white shadow-lg"></div>
+            <img
+              src="/icons/location-pin.svg"
+              alt="Location pin"
+              className="w-8 h-8"
+            />
           </Marker>
         )}
         {data?.map(stray => (

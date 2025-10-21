@@ -51,7 +51,7 @@ export function SightingDialog({
               <Img
                 src={getSightingFullImageUrl(sightingPhotos[0].url)}
                 loader={
-                  <div className="w-full h-96 flex items-center justify-center bg-gray-100">
+                  <div className="w-full h-96 flex items-center justify-center bg-muted">
                     <Spinner className="size-8" />
                   </div>
                 }
@@ -76,7 +76,7 @@ export function SightingDialog({
                       <Img
                         src={getSightingFullImageUrl(photo.url)}
                         loader={
-                          <div className="w-full h-96 flex items-center justify-center bg-gray-100">
+                          <div className="w-full h-96 flex items-center justify-center bg-muted">
                             <Spinner className="size-8" />
                           </div>
                         }
@@ -141,16 +141,16 @@ export function SightingDialog({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className="text-xs font-medium text-gray-600">
+              <span className="text-xs font-medium text-muted-foreground">
                 {selectedSighting.sighting.user.name.charAt(0).toUpperCase()}
               </span>
             )}
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-900">
+            <p className="text-sm font-semibold text-foreground">
               {selectedSighting.sighting.user.name}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Sighted{' '}
               {formatRelativeDate(
                 Number(selectedSighting.sighting.sightingTime)
@@ -161,23 +161,23 @@ export function SightingDialog({
 
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-gray-600">Breed:</span>
-            <span className="text-sm text-gray-800">
+            <span className="text-sm font-medium text-muted-foreground">Breed:</span>
+            <span className="text-sm text-foreground">
               {selectedSighting.breed || 'Unknown'}
             </span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-gray-600">Colors:</span>
-            <span className="text-sm text-gray-800">
+            <span className="text-sm font-medium text-muted-foreground">Colors:</span>
+            <span className="text-sm text-foreground">
               {selectedSighting.colors || 'Unknown'}
             </span>
           </div>
           {selectedSighting.markings && (
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium text-gray-600">
+              <span className="text-sm font-medium text-muted-foreground">
                 Markings:
               </span>
-              <span className="text-sm text-gray-800">
+              <span className="text-sm text-foreground">
                 {selectedSighting.markings}
               </span>
             </div>
@@ -192,27 +192,27 @@ export function SightingDialog({
             <div className="space-y-3">
               {selectedSighting.description && (
                 <div>
-                  <p className="text-sm text-gray-700 leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     {selectedSighting.description}
                   </p>
                 </div>
               )}
               {selectedSighting.healthNotes && (
                 <div>
-                  <span className="text-sm font-medium text-gray-600">
+                  <span className="text-sm font-medium text-muted-foreground">
                     Health Notes:
                   </span>
-                  <p className="text-sm text-gray-700 leading-relaxed mt-1">
+                  <p className="text-sm text-muted-foreground leading-relaxed mt-1">
                     {selectedSighting.healthNotes}
                   </p>
                 </div>
               )}
               {selectedSighting.careRequirements && (
                 <div>
-                  <span className="text-sm font-medium text-gray-600">
+                  <span className="text-sm font-medium text-muted-foreground">
                     Care Requirements:
                   </span>
-                  <p className="text-sm text-gray-700 leading-relaxed mt-1">
+                  <p className="text-sm text-muted-foreground leading-relaxed mt-1">
                     {selectedSighting.careRequirements}
                   </p>
                 </div>

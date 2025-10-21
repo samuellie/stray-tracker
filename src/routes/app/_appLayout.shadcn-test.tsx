@@ -174,7 +174,7 @@ function ShadcnTestComponent() {
                     onChange={e => setTextareaValue(e.target.value)}
                   />
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Input: <strong>{inputValue || 'empty'}</strong> | Textarea:{' '}
                   <strong>{textareaValue.length} chars</strong>
                 </p>
@@ -235,7 +235,7 @@ function ShadcnTestComponent() {
                     <Label htmlFor="radio3">Option 3</Label>
                   </div>
                 </RadioGroup>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Selected: <strong>{radioValue}</strong>
                 </p>
               </CardContent>
@@ -255,7 +255,7 @@ function ShadcnTestComponent() {
                   />
                   <Label htmlFor="switch1">Enable feature</Label>
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   State: <strong>{switchOn ? 'ON' : 'OFF'}</strong>
                 </p>
               </CardContent>
@@ -280,7 +280,7 @@ function ShadcnTestComponent() {
                     </SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Selected: <strong>{selectValue || 'none'}</strong>
                 </p>
               </CardContent>
@@ -579,7 +579,7 @@ function ShadcnTestComponent() {
                         <InputOTPSlot index={5} />
                       </InputOTPGroup>
                     </InputOTP>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       Enter the 6-digit code sent to your phone
                     </p>
                   </div>
@@ -710,7 +710,7 @@ function ShadcnTestComponent() {
                       Custom Toast
                     </Button>
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Click buttons to see different toast types
                   </p>
                 </CardContent>

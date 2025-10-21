@@ -43,7 +43,7 @@ function RouteComponent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
       {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-sm border-b">
+      <nav className="bg-background/80 backdrop-blur-sm border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="text-2xl font-bold text-blue-600">
@@ -59,10 +59,10 @@ function RouteComponent() {
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 text-center">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6">
             Help Our Furry Friends Find Their Way Home
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Join our community in tracking, caring for, and reuniting stray cats
             and dogs. Together, we can make a difference in the lives of animals
             in our neighborhoods.
@@ -86,10 +86,10 @@ function RouteComponent() {
       {/* Features Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold text-foreground mb-4">
             How You Can Help
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Our platform empowers communities to take collective action in
             caring for stray animals.
           </p>
@@ -203,10 +203,10 @@ function RouteComponent() {
       {/* CTA Section */}
       <section className="container mx-auto px-4 py-16 text-center">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold text-foreground mb-4">
             Ready to Make a Difference?
           </h2>
-          <p className="text-lg text-gray-600 mb-8">
+          <p className="text-lg text-muted-foreground mb-8">
             Join thousands of animal lovers who are already helping stray
             animals find care and homes. Every sighting report and community
             member makes a real impact.
@@ -223,11 +223,11 @@ function RouteComponent() {
           <div className="text-2xl font-bold text-blue-400 mb-4">
             🐾 Stray Tracker
           </div>
-          <p className="text-gray-400 mb-4">
+          <p className="text-muted-foreground mb-4">
             Building communities that care for stray animals, one neighborhood
             at a time.
           </p>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-muted-foreground">
             © 2025 Stray Tracker. Making a difference in animal welfare through
             community action.
           </div>

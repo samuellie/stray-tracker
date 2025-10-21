@@ -45,7 +45,7 @@ function ProfilePage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-muted-foreground">
               Profile Image
             </label>
             <div className="mt-1 w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
@@ -57,7 +57,7 @@ function ProfilePage() {
                 />
               ) : (
                 <svg
-                  className="w-8 h-8 text-gray-500"
+                  className="w-8 h-8 text-muted-foreground"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -71,13 +71,13 @@ function ProfilePage() {
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700">Email</label>
-            <p className="mt-1 text-sm text-gray-900">{session.user.email}</p>
+            <label className="text-sm font-medium text-muted-foreground">Email</label>
+            <p className="mt-1 text-sm text-foreground">{session.user.email}</p>
           </div>
           {session.user.name && (
             <div>
-              <label className="text-sm font-medium text-gray-700">Name</label>
-              <p className="mt-1 text-sm text-gray-900">{session.user.name}</p>
+              <label className="text-sm font-medium text-muted-foreground">Name</label>
+              <p className="mt-1 text-sm text-foreground">{session.user.name}</p>
             </div>
           )}
 

@@ -33,11 +33,11 @@ export function ImageUploadArea({ onFilesSelected }: ImageUploadAreaProps) {
       onDrop={handleDrop}
       onClick={handleClick}
     >
-      <Upload className="mx-auto h-12 w-12 text-gray-400" />
-      <p className="text-lg font-medium text-gray-900 ">
+      <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+      <p className="text-lg font-medium text-foreground ">
         Drag and drop photos here
       </p>
-      <p className="text-sm text-gray-500">or click to select a file</p>
+      <p className="text-sm text-muted-foreground">or click to select a file</p>
       <Input
         type="file"
         accept="image/*"

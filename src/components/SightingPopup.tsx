@@ -61,7 +61,7 @@ export function SightingPopup({
           <Img
             src={getSightingThumbnailUrl(primaryPhoto.url)}
             loader={
-              <div className="w-full h-48 flex items-center justify-center bg-gray-100">
+              <div className="w-full h-48 flex items-center justify-center bg-muted">
                 <Spinner />
               </div>
             }
@@ -108,10 +108,10 @@ export function SightingPopup({
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-gray-900">
+              <p className="text-sm font-semibold text-foreground">
                 {selectedSighting.sighting.user.name}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Sighted{' '}
                 {formatRelativeDate(
                   Number(selectedSighting.sighting.sightingTime)
@@ -121,23 +121,23 @@ export function SightingPopup({
           </div>
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-xs font-medium text-gray-600">Breed:</span>
-              <span className="text-xs text-gray-800">
+              <span className="text-xs font-medium text-muted-foreground">Breed:</span>
+              <span className="text-xs text-foreground">
                 {selectedSighting.breed || 'Unknown'}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-xs font-medium text-gray-600">Colors:</span>
-              <span className="text-xs text-gray-800">
+              <span className="text-xs font-medium text-muted-foreground">Colors:</span>
+              <span className="text-xs text-foreground">
                 {selectedSighting.colors || 'Unknown'}
               </span>
             </div>
             {selectedSighting.markings && (
               <div className="flex justify-between items-center">
-                <span className="text-xs font-medium text-gray-600">
+                <span className="text-xs font-medium text-muted-foreground">
                   Markings:
                 </span>
-                <span className="text-xs text-gray-800">
+                <span className="text-xs text-foreground">
                   {selectedSighting.markings}
                 </span>
               </div>

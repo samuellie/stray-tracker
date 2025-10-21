@@ -18,6 +18,9 @@ import { useIsMobile } from '~/hooks/use-mobile'
 import { useState, useEffect } from 'react'
 import { LoadingPage } from '~/components/LoadingPage'
 import { seedDatabase } from '~/server/seed'
+import { useTheme } from 'next-themes'
+import { Switch } from '~/components/ui/switch'
+import { Moon, Sun } from 'lucide-react'
 
 export const Route = createFileRoute('/app/_appLayout')({
   component: AppLayout,
@@ -26,6 +29,7 @@ function AppLayout() {
   const isMobile = useIsMobile()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const navigate = useNavigate()
+  const { theme, setTheme } = useTheme()
   const handleSeed = async () => {
     try {
       const result = await seedDatabase()
@@ -56,7 +60,7 @@ function AppLayout() {
     <>
       <Link
         to="/app"
-        className={`${isMobile ? 'block py-3 px-4 text-base' : 'text-gray-600 hover:text-gray-900 transition-colors'}`}
+        className={`${isMobile ? 'block py-3 px-4 text-base' : 'text-muted-foreground hover:text-foreground transition-colors'}`}
         activeProps={{
           className: isMobile
             ? 'text-blue-600 bg-blue-50 font-medium'
@@ -69,7 +73,7 @@ function AppLayout() {
       </Link>
       <Link
         to="/app/animals"
-        className={`${isMobile ? 'block py-3 px-4 text-base' : 'text-gray-600 hover:text-gray-900 transition-colors'}`}
+        className={`${isMobile ? 'block py-3 px-4 text-base' : 'text-muted-foreground hover:text-foreground transition-colors'}`}
         activeProps={{
           className: isMobile
             ? 'text-blue-600 bg-blue-50 font-medium'
@@ -81,7 +85,7 @@ function AppLayout() {
       </Link>
       <Link
         to="/app/shadcn-test"
-        className={`${isMobile ? 'block py-3 px-4 text-base' : 'text-gray-600 hover:text-gray-900 transition-colors'}`}
+        className={`${isMobile ? 'block py-3 px-4 text-base' : 'text-muted-foreground hover:text-foreground transition-colors'}`}
         activeProps={{
           className: isMobile
             ? 'text-blue-600 bg-blue-50 font-medium'
@@ -92,6 +96,18 @@ function AppLayout() {
         UI Test
       </Link>
     </>
+  )
+
+  const ThemeToggle = () => (
+    <div className="flex items-center gap-2">
+      <Sun className="h-4 w-4" />
+      <Switch
+        checked={theme === 'dark'}
+        onCheckedChange={checked => setTheme(checked ? 'dark' : 'light')}
+        aria-label="Toggle theme"
+      />
+      <Moon className="h-4 w-4" />
+    </div>
   )
 
   const UserMenu = () => (
@@ -136,7 +152,7 @@ function AppLayout() {
 
   return (
     <div className="flex flex-col h-screen">
-      <header className="border-b bg-white shadow-sm">
+      <header className="border-b bg-background shadow-sm">
         <nav className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <Link
@@ -150,6 +166,7 @@ function AppLayout() {
             {!isMobile && (
               <div className="flex items-center gap-6">
                 <NavigationLinks />
+                <ThemeToggle />
                 <UserMenu />
               </div>
             )}
@@ -165,7 +182,8 @@ function AppLayout() {
                 <SheetContent side="right" className="w-64">
                   <div className="flex flex-col gap-2 mt-6">
                     <NavigationLinks />
-                    <div className="border-t pt-4 mt-4">
+                    <div className="border-t pt-4 mt-4 space-y-4">
+                      <ThemeToggle />
                       <UserMenu />
                     </div>
                   </div>
@@ -175,7 +193,7 @@ function AppLayout() {
           </div>
         </nav>
       </header>
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto bg-background">
         <Outlet />
       </main>
     </div>
