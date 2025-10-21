@@ -158,14 +158,14 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
             ))}
           </StepperNav>
 
-          <StepperContent value={1}>
+          <StepperContent value={1} forceMount>
             <ImageLocationStep
               onMarkerDragEnd={handleMarkerDragEnd}
               onImagesUpdate={setImages}
             />
           </StepperContent>
 
-          <StepperContent value={2}>
+          <StepperContent value={2} forceMount>
             <AnimalTypeStep
               reportingNewAnimal={reportingNewAnimal}
               onReportingNewAnimalChange={setReportingNewAnimal}
@@ -185,7 +185,7 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
             />
           </StepperContent>
 
-          <StepperContent value={3}>
+          <StepperContent value={3} forceMount>
             <ObservationStep
               description={form.state.values.description || ''}
               onDescriptionChange={value =>

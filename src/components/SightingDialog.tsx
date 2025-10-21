@@ -31,8 +31,6 @@ export function SightingDialog({
   selectedSighting,
   onClose,
 }: SightingDialogProps) {
-  console.log(selectedSighting)
-
   if (!selectedSighting) return null
   selectedSighting.sighting.user
   const { data: sightingPhotos, isLoading } = useFindSightingPhotos(
@@ -108,7 +106,16 @@ export function SightingDialog({
               </Carousel>
             )}
           </div>
-        ) : null}
+        ) : (
+          <Img
+            src={getPlaceholderImage(
+              '',
+              selectedSighting.species === 'cat' ? 'cats' : 'dogs'
+            )}
+            alt={`${selectedSighting.species} sighting photo`}
+            className="w-full h-96 object-cover"
+          />
+        )}
         <div className="p-4 pb-2">
           <div className="flex items-center gap-3 mb-2">
             <CardTitle className="text-lg font-semibold">
@@ -161,13 +168,17 @@ export function SightingDialog({
 
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-muted-foreground">Breed:</span>
+            <span className="text-sm font-medium text-muted-foreground">
+              Breed:
+            </span>
             <span className="text-sm text-foreground">
               {selectedSighting.breed || 'Unknown'}
             </span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-muted-foreground">Colors:</span>
+            <span className="text-sm font-medium text-muted-foreground">
+              Colors:
+            </span>
             <span className="text-sm text-foreground">
               {selectedSighting.colors || 'Unknown'}
             </span>

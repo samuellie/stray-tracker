@@ -31,6 +31,12 @@ export function SightingPopup({
 
   const sightingPhotos = selectedSighting.sighting.sightingPhotos
   const primaryPhoto = sightingPhotos?.[0] // Use first photo as primary
+  const imageSrc = primaryPhoto
+    ? getSightingThumbnailUrl(primaryPhoto.url)
+    : getPlaceholderImage(
+        '',
+        selectedSighting.species === 'cat' ? 'cats' : 'dogs'
+      )
 
   return (
     <Popup
@@ -59,21 +65,32 @@ export function SightingPopup({
         </Button>
         <CardHeader className="p-0">
           <Img
-            src={getSightingThumbnailUrl(primaryPhoto.url)}
+            src={imageSrc}
             loader={
               <div className="w-full h-48 flex items-center justify-center bg-muted">
                 <Spinner />
               </div>
             }
             unloader={
-              <Img
-                src={getPlaceholderImage(
-                  primaryPhoto.url,
-                  selectedSighting.species === 'cat' ? 'cats' : 'dogs'
-                )}
-                alt={`${selectedSighting.species} sighting photo`}
-                className="w-full h-48 object-cover"
-              />
+              primaryPhoto ? (
+                <Img
+                  src={getPlaceholderImage(
+                    primaryPhoto.url,
+                    selectedSighting.species === 'cat' ? 'cats' : 'dogs'
+                  )}
+                  alt={`${selectedSighting.species} sighting photo`}
+                  className="w-full h-48 object-cover"
+                />
+              ) : (
+                <Img
+                  src={getPlaceholderImage(
+                    '',
+                    selectedSighting.species === 'cat' ? 'cats' : 'dogs'
+                  )}
+                  alt={`${selectedSighting.species} sighting photo`}
+                  className="w-full h-48 object-cover"
+                />
+              )
             }
             alt={`${selectedSighting.species} sighting photo`}
             className="w-full h-48 object-cover"
@@ -121,13 +138,17 @@ export function SightingPopup({
           </div>
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-xs font-medium text-muted-foreground">Breed:</span>
+              <span className="text-xs font-medium text-muted-foreground">
+                Breed:
+              </span>
               <span className="text-xs text-foreground">
                 {selectedSighting.breed || 'Unknown'}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-xs font-medium text-muted-foreground">Colors:</span>
+              <span className="text-xs font-medium text-muted-foreground">
+                Colors:
+              </span>
               <span className="text-xs text-foreground">
                 {selectedSighting.colors || 'Unknown'}
               </span>

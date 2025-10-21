@@ -180,18 +180,9 @@ export const animalFormDefaults: Partial<AnimalFormData> = {
 }
 
 export const sightingFormDefaults: Partial<SightingFormData> = {
-  strayId: undefined,
   species: 'cat',
   animalSize: 'small',
-  description: '',
-  location: '',
-  latitude: 3.1072086999999984,
-  longitude: 101.67908995767199,
-  date: new Date().toISOString().split('T')[0],
-  weatherCondition: undefined,
-  confidence: undefined,
-  notes: '',
-  images: [],
+  date: new Date().toISOString(),
 }
 
 export const signupFormDefaults: Partial<SignupFormData> = {
