@@ -14,6 +14,9 @@ export function getRouter() {
     ssr: {
       nonce: getGlobalStartContext()?.nonce,
     },
+    context: {
+      session: undefined!,
+    },
   })
   return router
 }

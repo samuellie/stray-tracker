@@ -12,7 +12,7 @@ import { ReportSightingForm } from '~/components/ReportSightingForm'
 import { useState } from 'react'
 import { useIsMobile } from '~/hooks/use-mobile'
 
-export const Route = createFileRoute('/app/_appLayout/')({
+export const Route = createFileRoute('/app/')({
   component: Home,
 })
 

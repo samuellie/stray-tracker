@@ -31,10 +31,14 @@ function RouteComponent() {
     return (
       <>
         <Button asChild variant="ghost">
-          <Link to="/login">Login</Link>
+          <Link to="/auth/$authView" params={{ authView: 'sign-in' }}>
+            Login
+          </Link>
         </Button>
         <Button asChild>
-          <Link to="/signup">Sign Up</Link>
+          <Link to="/auth/$authView" params={{ authView: 'sign-up' }}>
+            Sign Up
+          </Link>
         </Button>
       </>
     )
@@ -69,7 +73,9 @@ function RouteComponent() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" className="text-lg px-8 py-3">
-              <Link to="/signup">Join the Community</Link>
+              <Link to="/auth/$authView" params={{ authView: 'sign-up' }}>
+                Join the Community
+              </Link>
             </Button>
             <Button
               asChild
@@ -77,7 +83,9 @@ function RouteComponent() {
               size="lg"
               className="text-lg px-8 py-3"
             >
-              <Link to="/login">Sign In</Link>
+              <Link to="/auth/$authView" params={{ authView: 'sign-in' }}>
+                Login
+              </Link>
             </Button>
           </div>
         </div>
@@ -212,7 +220,9 @@ function RouteComponent() {
             member makes a real impact.
           </p>
           <Button asChild size="lg" className="text-lg px-8 py-3">
-            <Link to="/signup">Get Started Today</Link>
+            <Link to="/auth/$authView" params={{ authView: 'sign-up' }}>
+              Get Started Today
+            </Link>
           </Button>
         </div>
       </section>

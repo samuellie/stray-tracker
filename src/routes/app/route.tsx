@@ -1,7 +1,10 @@
+import { useState, useEffect, useMemo } from 'react'
 import {
   createFileRoute,
   Link,
   Outlet,
+  redirect,
+  RouterProvider,
   useNavigate,
 } from '@tanstack/react-router'
 import { authClient } from '~/lib/auth-client'
@@ -15,39 +18,25 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from '~/components/ui/sheet'
 import { User, Menu } from 'lucide-react'
 import { useIsMobile } from '~/hooks/use-mobile'
-import { useState, useEffect } from 'react'
 import { LoadingPage } from '~/components/LoadingPage'
-import { seedDatabase } from '~/server/seed'
 import { useTheme } from 'next-themes'
 import { Switch } from '~/components/ui/switch'
 import { Moon, Sun } from 'lucide-react'
+import { isServer } from '@tanstack/react-query'
+import { getRouter } from '~/router'
 
-export const Route = createFileRoute('/app/_appLayout')({
+export const Route = createFileRoute('/app')({
   component: AppLayout,
 })
+
 function AppLayout() {
   const isMobile = useIsMobile()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const navigate = useNavigate()
   const { theme, setTheme } = useTheme()
-  const handleSeed = async () => {
-    try {
-      const result = await seedDatabase()
-      alert(result.message || 'Database seeded successfully')
-    } catch (error) {
-      console.log(error)
-
-      alert(
-        'Failed to seed database: ' +
-          (error instanceof Error ? error.message : String(error))
-      )
-    }
-  }
+  const navigate = useNavigate()
   const {
     data: session,
     isPending, //loading state
-    error, //error object
-    refetch, //refetch the session
   } = authClient.useSession()
 
   useEffect(() => {
@@ -83,18 +72,20 @@ function AppLayout() {
       >
         Animals
       </Link>
-      <Link
-        to="/app/shadcn-test"
-        className={`${isMobile ? 'block py-3 px-4 text-base' : 'text-muted-foreground hover:text-foreground transition-colors'}`}
-        activeProps={{
-          className: isMobile
-            ? 'text-blue-600 bg-blue-50 font-medium'
-            : 'text-blue-600 font-medium',
-        }}
-        onClick={() => isMobile && setMobileMenuOpen(false)}
-      >
-        UI Test
-      </Link>
+      {(session?.user as any)?.role === 'admin' && (
+        <Link
+          to="/app/shadcn-test"
+          className={`${isMobile ? 'block py-3 px-4 text-base' : 'text-muted-foreground hover:text-foreground transition-colors'}`}
+          activeProps={{
+            className: isMobile
+              ? 'text-blue-600 bg-blue-50 font-medium'
+              : 'text-blue-600 font-medium',
+          }}
+          onClick={() => isMobile && setMobileMenuOpen(false)}
+        >
+          UI Test
+        </Link>
+      )}
     </>
   )
 
@@ -128,13 +119,12 @@ function AppLayout() {
       >
         <DropdownMenuItem asChild>
           <Link
-            to="/app/profile"
+            to="/app/account/{-$accountView}"
             onClick={() => isMobile && setMobileMenuOpen(false)}
           >
             Profile
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleSeed}>Seed Database</DropdownMenuItem>
         <DropdownMenuItem onClick={() => authClient.signOut()}>
           Sign Out
         </DropdownMenuItem>
@@ -149,7 +139,6 @@ function AppLayout() {
   if (!session) {
     return null // Redirect will happen via useEffect
   }
-
   return (
     <div className="flex flex-col h-screen">
       <header className="border-b bg-background shadow-sm">

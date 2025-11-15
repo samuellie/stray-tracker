@@ -69,10 +69,6 @@ const createAuth = (env?: Env, cf?: IncomingRequestCfProperties) => {
         //     clientId: process.env.FACEBOOK_CLIENT_ID || '',
         //     clientSecret: process.env.FACEBOOK_CLIENT_SECRET || '',
         //   },
-        //   instagram: {
-        //     clientId: process.env.INSTAGRAM_CLIENT_ID || '',
-        //     clientSecret: process.env.INSTAGRAM_CLIENT_SECRET || '',
-        //   },
         // },
         // // IP address detection for rate limiting in Cloudflare
         advanced: {
