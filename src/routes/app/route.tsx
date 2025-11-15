@@ -109,7 +109,7 @@ function AppLayout() {
           size={isMobile ? 'default' : 'icon'}
           className={isMobile ? 'w-full justify-start px-4 py-3' : ''}
         >
-          <User className="h-5 w-5 mr-2" />
+          <User className="h-5 w-5" />
           {isMobile && <span>Account</span>}
         </Button>
       </DropdownMenuTrigger>

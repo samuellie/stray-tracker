@@ -15,6 +15,7 @@ import appCss from '~/styles/app.css?url'
 import { seo } from '~/utils/seo'
 import { Toaster } from '~/components/ui/sonner'
 import { ThemeProvider } from 'next-themes'
+import { AuthUIProvider } from '~/components/AuthUIProvider'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -100,10 +101,12 @@ function RootComponent() {
         enableSystem
         disableTransitionOnChange
       >
-        <Toaster richColors />
-        <RootDocument>
-          <Outlet />
-        </RootDocument>
+        <AuthUIProvider>
+          <Toaster richColors />
+          <RootDocument>
+            <Outlet />
+          </RootDocument>
+        </AuthUIProvider>
       </ThemeProvider>
     </QueryClientProvider>
   )
