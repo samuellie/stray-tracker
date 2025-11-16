@@ -13,7 +13,8 @@ import { Route as AppRouteRouteImport } from './routes/app/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AuthAuthViewRouteImport } from './routes/auth.$authView'
-import { Route as AppAnimalsRouteImport } from './routes/app/animals'
+import { Route as AppStraysIndexRouteImport } from './routes/app/strays/index'
+import { Route as AppStraysStrayIdRouteImport } from './routes/app/strays/$strayId'
 import { Route as AppAdminUsersRouteImport } from './routes/app/admin/users'
 import { Route as AppAdminShadcnTestRouteImport } from './routes/app/admin/shadcn-test'
 import { Route as AppAccountChar123AccountViewChar125RouteImport } from './routes/app/account/{-$accountView}'
@@ -40,9 +41,14 @@ const AuthAuthViewRoute = AuthAuthViewRouteImport.update({
   path: '/auth/$authView',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppAnimalsRoute = AppAnimalsRouteImport.update({
-  id: '/animals',
-  path: '/animals',
+const AppStraysIndexRoute = AppStraysIndexRouteImport.update({
+  id: '/strays/',
+  path: '/strays/',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppStraysStrayIdRoute = AppStraysStrayIdRouteImport.update({
+  id: '/strays/$strayId',
+  path: '/strays/$strayId',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
@@ -75,37 +81,40 @@ const ApiFilesBucketSplatRoute = ApiFilesBucketSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteRouteWithChildren
-  '/app/animals': typeof AppAnimalsRoute
   '/auth/$authView': typeof AuthAuthViewRoute
   '/app/': typeof AppIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/app/account/{-$accountView}': typeof AppAccountChar123AccountViewChar125Route
   '/app/admin/shadcn-test': typeof AppAdminShadcnTestRoute
   '/app/admin/users': typeof AppAdminUsersRoute
+  '/app/strays/$strayId': typeof AppStraysStrayIdRoute
+  '/app/strays': typeof AppStraysIndexRoute
   '/api/files/$bucket/$': typeof ApiFilesBucketSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/app/animals': typeof AppAnimalsRoute
   '/auth/$authView': typeof AuthAuthViewRoute
   '/app': typeof AppIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/app/account/{-$accountView}': typeof AppAccountChar123AccountViewChar125Route
   '/app/admin/shadcn-test': typeof AppAdminShadcnTestRoute
   '/app/admin/users': typeof AppAdminUsersRoute
+  '/app/strays/$strayId': typeof AppStraysStrayIdRoute
+  '/app/strays': typeof AppStraysIndexRoute
   '/api/files/$bucket/$': typeof ApiFilesBucketSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteRouteWithChildren
-  '/app/animals': typeof AppAnimalsRoute
   '/auth/$authView': typeof AuthAuthViewRoute
   '/app/': typeof AppIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/app/account/{-$accountView}': typeof AppAccountChar123AccountViewChar125Route
   '/app/admin/shadcn-test': typeof AppAdminShadcnTestRoute
   '/app/admin/users': typeof AppAdminUsersRoute
+  '/app/strays/$strayId': typeof AppStraysStrayIdRoute
+  '/app/strays/': typeof AppStraysIndexRoute
   '/api/files/$bucket/$': typeof ApiFilesBucketSplatRoute
 }
 export interface FileRouteTypes {
@@ -113,36 +122,39 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
-    | '/app/animals'
     | '/auth/$authView'
     | '/app/'
     | '/api/auth/$'
     | '/app/account/{-$accountView}'
     | '/app/admin/shadcn-test'
     | '/app/admin/users'
+    | '/app/strays/$strayId'
+    | '/app/strays'
     | '/api/files/$bucket/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/app/animals'
     | '/auth/$authView'
     | '/app'
     | '/api/auth/$'
     | '/app/account/{-$accountView}'
     | '/app/admin/shadcn-test'
     | '/app/admin/users'
+    | '/app/strays/$strayId'
+    | '/app/strays'
     | '/api/files/$bucket/$'
   id:
     | '__root__'
     | '/'
     | '/app'
-    | '/app/animals'
     | '/auth/$authView'
     | '/app/'
     | '/api/auth/$'
     | '/app/account/{-$accountView}'
     | '/app/admin/shadcn-test'
     | '/app/admin/users'
+    | '/app/strays/$strayId'
+    | '/app/strays/'
     | '/api/files/$bucket/$'
   fileRoutesById: FileRoutesById
 }
@@ -184,11 +196,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthAuthViewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app/animals': {
-      id: '/app/animals'
-      path: '/animals'
-      fullPath: '/app/animals'
-      preLoaderRoute: typeof AppAnimalsRouteImport
+    '/app/strays/': {
+      id: '/app/strays/'
+      path: '/strays'
+      fullPath: '/app/strays'
+      preLoaderRoute: typeof AppStraysIndexRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/strays/$strayId': {
+      id: '/app/strays/$strayId'
+      path: '/strays/$strayId'
+      fullPath: '/app/strays/$strayId'
+      preLoaderRoute: typeof AppStraysStrayIdRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/app/admin/users': {
@@ -230,20 +249,22 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteRouteChildren {
-  AppAnimalsRoute: typeof AppAnimalsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAccountChar123AccountViewChar125Route: typeof AppAccountChar123AccountViewChar125Route
   AppAdminShadcnTestRoute: typeof AppAdminShadcnTestRoute
   AppAdminUsersRoute: typeof AppAdminUsersRoute
+  AppStraysStrayIdRoute: typeof AppStraysStrayIdRoute
+  AppStraysIndexRoute: typeof AppStraysIndexRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
-  AppAnimalsRoute: AppAnimalsRoute,
   AppIndexRoute: AppIndexRoute,
   AppAccountChar123AccountViewChar125Route:
     AppAccountChar123AccountViewChar125Route,
   AppAdminShadcnTestRoute: AppAdminShadcnTestRoute,
   AppAdminUsersRoute: AppAdminUsersRoute,
+  AppStraysStrayIdRoute: AppStraysStrayIdRoute,
+  AppStraysIndexRoute: AppStraysIndexRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(

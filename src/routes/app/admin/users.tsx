@@ -53,7 +53,7 @@ function RouteComponent() {
     error,
     refetch,
   } = useAdminListUsers(
-    100,
+    10,
     debouncedSearchTerm,
     searchField,
     roleFilter,
@@ -233,7 +233,12 @@ function RouteComponent() {
   )
 
   // Create table instance
-  const table = useTable({ data: users, columns })
+  const table = useTable({
+    data: users,
+    columns,
+    enablePagination: true,
+    pageSize: 10,
+  })
 
   return (
     <div className="container mx-auto px-4 py-8">

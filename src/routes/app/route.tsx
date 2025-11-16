@@ -56,20 +56,21 @@ function AppLayout() {
       >
         Home
       </Link>
-      <Link
-        to="/app/animals"
-        className={`${isMobile ? 'block py-3 px-4 text-base' : 'text-muted-foreground hover:text-foreground transition-colors'}`}
-        activeProps={{
-          className: isMobile
-            ? 'text-blue-600 bg-blue-50 font-medium'
-            : 'text-blue-600 font-medium',
-        }}
-        onClick={() => isMobile && setMobileMenuOpen(false)}
-      >
-        Animals
-      </Link>
+
       {(session?.user as any)?.role === 'admin' && (
         <>
+          <Link
+            to="/app/strays"
+            className={`${isMobile ? 'block py-3 px-4 text-base' : 'text-muted-foreground hover:text-foreground transition-colors'}`}
+            activeProps={{
+              className: isMobile
+                ? 'text-blue-600 bg-blue-50 font-medium'
+                : 'text-blue-600 font-medium',
+            }}
+            onClick={() => isMobile && setMobileMenuOpen(false)}
+          >
+            Strays
+          </Link>
           <Link
             to="/app/admin/shadcn-test"
             className={`${isMobile ? 'block py-3 px-4 text-base' : 'text-muted-foreground hover:text-foreground transition-colors'}`}

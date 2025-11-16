@@ -21,6 +21,7 @@ interface UseTableOptions<T> {
   enableSorting?: boolean
   enableFiltering?: boolean
   enablePagination?: boolean
+  onRowClick?: (row: T) => void
 }
 
 export function useTable<T>({
@@ -30,6 +31,7 @@ export function useTable<T>({
   enableSorting = true,
   enableFiltering = true,
   enablePagination = true,
+  onRowClick,
 }: UseTableOptions<T>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -64,9 +66,16 @@ export function useTable<T>({
 interface TableProps<T> {
   table: TanstackTable<T>
   className?: string
+  onRowClick?: (row: T) => void
+  clickableRows?: boolean
 }
 
-export function Table<T>({ table, className = '' }: TableProps<T>) {
+export function Table<T>({
+  table,
+  className = '',
+  onRowClick,
+  clickableRows = false,
+}: TableProps<T>) {
   return (
     <div className={`overflow-x-auto ${className}`}>
       <table className="min-w-full divide-y divide-gray-200">
@@ -105,7 +114,15 @@ export function Table<T>({ table, className = '' }: TableProps<T>) {
         </thead>
         <tbody className="bg-background divide-y divide-border">
           {table.getRowModel().rows.map(row => (
-            <tr key={row.id} className="hover:bg-muted/50">
+            <tr
+              key={row.id}
+              className={`hover:bg-muted/50 ${clickableRows ? 'cursor-pointer' : ''}`}
+              onClick={() => {
+                if (clickableRows && onRowClick && row.original) {
+                  onRowClick(row.original)
+                }
+              }}
+            >
               {row.getVisibleCells().map(cell => (
                 <td
                   key={cell.id}
