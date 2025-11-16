@@ -1,10 +1,9 @@
 /// <reference types="vite/client" />
 import {
   HeadContent,
-  Link,
   Scripts,
-  createRootRoute,
   Outlet,
+  createRootRouteWithContext,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -16,15 +15,7 @@ import { seo } from '~/utils/seo'
 import { Toaster } from '~/components/ui/sonner'
 import { ThemeProvider } from 'next-themes'
 import { AuthUIProvider } from '~/components/AuthUIProvider'
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
-    },
-  },
-})
+import { authClient } from '~/lib/auth-client'
 
 // Service Worker Registration Hook
 function useServiceWorker() {
@@ -42,7 +33,9 @@ function useServiceWorker() {
   }, [])
 }
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{
+  queryClient: QueryClient
+}>()({
   beforeLoad: () => {
     // Service worker registration is handled in the RootComponent
   },
@@ -92,6 +85,8 @@ export const Route = createRootRoute({
 function RootComponent() {
   // Register service worker
   useServiceWorker()
+
+  const { queryClient } = Route.useRouteContext()
 
   return (
     <QueryClientProvider client={queryClient}>

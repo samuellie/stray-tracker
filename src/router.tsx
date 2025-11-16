@@ -3,6 +3,16 @@ import { getGlobalStartContext } from '@tanstack/react-start'
 import { routeTree } from './routeTree.gen'
 import { DefaultCatchBoundary } from './components/DefaultCatchBoundary'
 import { NotFound } from './components/NotFound'
+import { QueryClient } from '@tanstack/react-query'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+    },
+  },
+})
 
 export function getRouter() {
   const router = createRouter({
@@ -15,7 +25,7 @@ export function getRouter() {
       nonce: getGlobalStartContext()?.nonce,
     },
     context: {
-      session: undefined!,
+      queryClient,
     },
   })
   return router

@@ -1,10 +1,8 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import {
   createFileRoute,
   Link,
   Outlet,
-  redirect,
-  RouterProvider,
   useNavigate,
 } from '@tanstack/react-router'
 import { authClient } from '~/lib/auth-client'
@@ -22,8 +20,6 @@ import { LoadingPage } from '~/components/LoadingPage'
 import { useTheme } from 'next-themes'
 import { Switch } from '~/components/ui/switch'
 import { Moon, Sun } from 'lucide-react'
-import { isServer } from '@tanstack/react-query'
-import { getRouter } from '~/router'
 
 export const Route = createFileRoute('/app')({
   component: AppLayout,
@@ -73,18 +69,32 @@ function AppLayout() {
         Animals
       </Link>
       {(session?.user as any)?.role === 'admin' && (
-        <Link
-          to="/app/shadcn-test"
-          className={`${isMobile ? 'block py-3 px-4 text-base' : 'text-muted-foreground hover:text-foreground transition-colors'}`}
-          activeProps={{
-            className: isMobile
-              ? 'text-blue-600 bg-blue-50 font-medium'
-              : 'text-blue-600 font-medium',
-          }}
-          onClick={() => isMobile && setMobileMenuOpen(false)}
-        >
-          UI Test
-        </Link>
+        <>
+          <Link
+            to="/app/admin/shadcn-test"
+            className={`${isMobile ? 'block py-3 px-4 text-base' : 'text-muted-foreground hover:text-foreground transition-colors'}`}
+            activeProps={{
+              className: isMobile
+                ? 'text-blue-600 bg-blue-50 font-medium'
+                : 'text-blue-600 font-medium',
+            }}
+            onClick={() => isMobile && setMobileMenuOpen(false)}
+          >
+            UI Test
+          </Link>
+          <Link
+            to="/app/admin/users"
+            className={`${isMobile ? 'block py-3 px-4 text-base' : 'text-muted-foreground hover:text-foreground transition-colors'}`}
+            activeProps={{
+              className: isMobile
+                ? 'text-blue-600 bg-blue-50 font-medium'
+                : 'text-blue-600 font-medium',
+            }}
+            onClick={() => isMobile && setMobileMenuOpen(false)}
+          >
+            Users
+          </Link>
+        </>
       )}
     </>
   )

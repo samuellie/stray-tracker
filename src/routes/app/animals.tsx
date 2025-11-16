@@ -7,7 +7,7 @@ export const Route = createFileRoute('/app/animals')({
 function Animals() {
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-4">Animals</h1>
+      <h1 className="text-3xl font-bold mb-8">Animals</h1>
       <p className="text-muted-foreground">
         Browse pets available for adoption.
       </p>

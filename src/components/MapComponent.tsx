@@ -13,7 +13,7 @@ import { useNearbyStrays } from '~/hooks/server/useNearbyStrays'
 import type { Sighting, SightingPhoto, Stray } from 'db/schema'
 import { SightingPopup } from './SightingPopup'
 import { Dialog, DialogContent } from '~/components/ui/dialog'
-import { SightingDialog } from './SightingDialog'
+import { SightingDialog } from './dialogs/SightingDialog'
 import { useIsMobile } from '~/hooks/use-mobile'
 import { User } from 'better-auth'
 

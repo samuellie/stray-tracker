@@ -13,9 +13,9 @@ import { Route as AppRouteRouteImport } from './routes/app/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AuthAuthViewRouteImport } from './routes/auth.$authView'
-import { Route as AppShadcnTestRouteImport } from './routes/app/shadcn-test'
 import { Route as AppAnimalsRouteImport } from './routes/app/animals'
 import { Route as AppAdminUsersRouteImport } from './routes/app/admin/users'
+import { Route as AppAdminShadcnTestRouteImport } from './routes/app/admin/shadcn-test'
 import { Route as AppAccountChar123AccountViewChar125RouteImport } from './routes/app/account/{-$accountView}'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth.$'
 import { Route as ApiFilesBucketSplatRouteImport } from './routes/api/files.$bucket.$'
@@ -40,11 +40,6 @@ const AuthAuthViewRoute = AuthAuthViewRouteImport.update({
   path: '/auth/$authView',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppShadcnTestRoute = AppShadcnTestRouteImport.update({
-  id: '/shadcn-test',
-  path: '/shadcn-test',
-  getParentRoute: () => AppRouteRoute,
-} as any)
 const AppAnimalsRoute = AppAnimalsRouteImport.update({
   id: '/animals',
   path: '/animals',
@@ -53,6 +48,11 @@ const AppAnimalsRoute = AppAnimalsRouteImport.update({
 const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppAdminShadcnTestRoute = AppAdminShadcnTestRouteImport.update({
+  id: '/admin/shadcn-test',
+  path: '/admin/shadcn-test',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppAccountChar123AccountViewChar125Route =
@@ -76,22 +76,22 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteRouteWithChildren
   '/app/animals': typeof AppAnimalsRoute
-  '/app/shadcn-test': typeof AppShadcnTestRoute
   '/auth/$authView': typeof AuthAuthViewRoute
   '/app/': typeof AppIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/app/account/{-$accountView}': typeof AppAccountChar123AccountViewChar125Route
+  '/app/admin/shadcn-test': typeof AppAdminShadcnTestRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/api/files/$bucket/$': typeof ApiFilesBucketSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app/animals': typeof AppAnimalsRoute
-  '/app/shadcn-test': typeof AppShadcnTestRoute
   '/auth/$authView': typeof AuthAuthViewRoute
   '/app': typeof AppIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/app/account/{-$accountView}': typeof AppAccountChar123AccountViewChar125Route
+  '/app/admin/shadcn-test': typeof AppAdminShadcnTestRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/api/files/$bucket/$': typeof ApiFilesBucketSplatRoute
 }
@@ -100,11 +100,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteRouteWithChildren
   '/app/animals': typeof AppAnimalsRoute
-  '/app/shadcn-test': typeof AppShadcnTestRoute
   '/auth/$authView': typeof AuthAuthViewRoute
   '/app/': typeof AppIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/app/account/{-$accountView}': typeof AppAccountChar123AccountViewChar125Route
+  '/app/admin/shadcn-test': typeof AppAdminShadcnTestRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/api/files/$bucket/$': typeof ApiFilesBucketSplatRoute
 }
@@ -114,22 +114,22 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/app/animals'
-    | '/app/shadcn-test'
     | '/auth/$authView'
     | '/app/'
     | '/api/auth/$'
     | '/app/account/{-$accountView}'
+    | '/app/admin/shadcn-test'
     | '/app/admin/users'
     | '/api/files/$bucket/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/app/animals'
-    | '/app/shadcn-test'
     | '/auth/$authView'
     | '/app'
     | '/api/auth/$'
     | '/app/account/{-$accountView}'
+    | '/app/admin/shadcn-test'
     | '/app/admin/users'
     | '/api/files/$bucket/$'
   id:
@@ -137,11 +137,11 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/app/animals'
-    | '/app/shadcn-test'
     | '/auth/$authView'
     | '/app/'
     | '/api/auth/$'
     | '/app/account/{-$accountView}'
+    | '/app/admin/shadcn-test'
     | '/app/admin/users'
     | '/api/files/$bucket/$'
   fileRoutesById: FileRoutesById
@@ -184,13 +184,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthAuthViewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app/shadcn-test': {
-      id: '/app/shadcn-test'
-      path: '/shadcn-test'
-      fullPath: '/app/shadcn-test'
-      preLoaderRoute: typeof AppShadcnTestRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
     '/app/animals': {
       id: '/app/animals'
       path: '/animals'
@@ -203,6 +196,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/users'
       fullPath: '/app/admin/users'
       preLoaderRoute: typeof AppAdminUsersRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/admin/shadcn-test': {
+      id: '/app/admin/shadcn-test'
+      path: '/admin/shadcn-test'
+      fullPath: '/app/admin/shadcn-test'
+      preLoaderRoute: typeof AppAdminShadcnTestRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/app/account/{-$accountView}': {
@@ -231,18 +231,18 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteRouteChildren {
   AppAnimalsRoute: typeof AppAnimalsRoute
-  AppShadcnTestRoute: typeof AppShadcnTestRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAccountChar123AccountViewChar125Route: typeof AppAccountChar123AccountViewChar125Route
+  AppAdminShadcnTestRoute: typeof AppAdminShadcnTestRoute
   AppAdminUsersRoute: typeof AppAdminUsersRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppAnimalsRoute: AppAnimalsRoute,
-  AppShadcnTestRoute: AppShadcnTestRoute,
   AppIndexRoute: AppIndexRoute,
   AppAccountChar123AccountViewChar125Route:
     AppAccountChar123AccountViewChar125Route,
+  AppAdminShadcnTestRoute: AppAdminShadcnTestRoute,
   AppAdminUsersRoute: AppAdminUsersRoute,
 }
 

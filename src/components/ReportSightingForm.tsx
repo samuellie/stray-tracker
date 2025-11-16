@@ -43,8 +43,6 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
     },
   ]
 
-  const { data: session } = authClient.useSession()
-
   const createSightingMutation = useCreateSighting()
 
   // Handle mutation errors with toast

@@ -113,7 +113,7 @@ import {
   TableRow,
 } from '~/components/ui/table'
 
-export const Route = createFileRoute('/app/shadcn-test')({
+export const Route = createFileRoute('/app/admin/shadcn-test')({
   component: ShadcnTestComponent,
 })
 
