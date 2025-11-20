@@ -4,6 +4,7 @@
   "main": "@tanstack/react-start/server-entry",
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
+  "keep_vars": true,
   "observability": {
     "enabled": true
   },
@@ -11,7 +12,7 @@
     {
       "binding": "DB",
       "database_name": "stray-tracker",
-      "database_id": "92933811-a98c-4b39-afc9-ceeb8dfd71c8",
+      "database_id": "15121741-3123-44e2-850b-e0b1d38f64af",
       "migrations_dir": "drizzle/"
     }
   ],
