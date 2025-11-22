@@ -1,5 +1,6 @@
 import { SightingPhoto, type Sighting, type Stray } from 'db/schema'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import { Button } from '~/components/ui/button'
 import { Badge } from '~/components/ui/badge'
 import { Separator } from '~/components/ui/separator'
 import { Spinner } from '~/components/ui/spinner'
@@ -17,6 +18,7 @@ import { getSightingFullImageUrl } from '~/utils/files'
 import { User } from 'better-auth'
 import { Img } from 'react-image'
 import { getPlaceholderImage } from '~/utils/strayImageFallbacks'
+import { useRouter } from '@tanstack/react-router'
 
 interface SightingDialogProps {
   selectedSighting:
@@ -31,6 +33,8 @@ export function SightingDialog({
   selectedSighting,
   onClose,
 }: SightingDialogProps) {
+  const router = useRouter()
+
   if (!selectedSighting) return null
   selectedSighting.sighting.user
   const { data: sightingPhotos, isLoading } = useFindSightingPhotos(

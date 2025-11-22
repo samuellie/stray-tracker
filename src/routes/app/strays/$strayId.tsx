@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { useState } from 'react'
 import { useFindStrayById } from '~/hooks/server/useFindStrayById'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
@@ -9,8 +10,18 @@ import { Img } from 'react-image'
 import { Spinner } from '~/components/ui/spinner'
 import { Button } from '~/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
-import type { Stray, Sighting, SightingPhoto } from 'db/schema'
 import { User } from 'better-auth'
+import { Dialog, DialogContent } from '~/components/ui/dialog'
+import { SightingDialog } from '~/components/dialogs/SightingDialog'
+import { useIsMobile } from '~/hooks/use-mobile'
+import { getSightingThumbnailUrl } from '~/utils/files'
+import type { Stray, Sighting, SightingPhoto } from 'db/schema'
+import { authClient } from '~/lib/auth-client'
+import { useDeleteSighting } from '~/hooks/server/useDeleteSighting'
+import { ConfirmationDialog } from '~/components/dialogs/ConfirmationDialog'
+import { toast } from 'sonner'
+import { useRouter } from '@tanstack/react-router'
+import { Trash2 } from 'lucide-react'
 
 type StrayWithRelations = Stray & {
   caretaker?: User
@@ -29,6 +40,19 @@ export const Route = createFileRoute('/app/strays/$strayId')({
 function StrayDetailPage() {
   const { strayId } = Route.useParams()
   const strayIdNum = Number(strayId)
+  const isMobile = useIsMobile()
+  const router = useRouter()
+  const { data: session } = authClient.useSession()
+  const deleteSightingMutation = useDeleteSighting()
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [sightingToDelete, setSightingToDelete] = useState<number | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [selectedSightingForDialog, setSelectedSightingForDialog] = useState<
+    | (Stray & {
+        sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
+      })
+    | null
+  >(null)
 
   const { data: stray, isLoading, error } = useFindStrayById(strayIdNum)
 
@@ -207,44 +231,83 @@ function StrayDetailPage() {
                   {strayWithRelations.sightings.slice(0, 5).map(sighting => (
                     <div
                       key={sighting.id}
-                      className="flex items-start gap-3 p-4 border rounded-lg"
+                      onClick={() => {
+                        setSelectedSightingForDialog({
+                          ...stray,
+                          sighting,
+                        })
+                        setDialogOpen(true)
+                      }}
                     >
-                      <Avatar className="w-10 h-10">
-                        <AvatarImage src={sighting.user.image || ''} />
-                        <AvatarFallback>
-                          {sighting.user.name.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="text-sm font-semibold">
-                            {sighting.user.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatRelativeDate(Number(sighting.sightingTime))}
-                          </p>
-                        </div>
-                        {sighting.description && (
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {sighting.description}
-                          </p>
-                        )}
-                        {sighting.sightingPhotos.length > 0 && (
-                          <div className="flex gap-2 overflow-x-auto">
-                            {sighting.sightingPhotos.slice(0, 3).map(photo => (
-                              <Img
-                                key={photo.id}
-                                src={photo.url}
-                                alt="Sighting photo"
-                                className="w-16 h-16 object-cover rounded"
-                                unloader={
-                                  <div className="w-16 h-16 bg-muted rounded flex items-center justify-center">
-                                    <Spinner />
-                                  </div>
-                                }
-                              />
-                            ))}
+                      <div className="flex items-start gap-3 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={sighting.user.image || ''} />
+                          <AvatarFallback>
+                            {sighting.user.name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="text-sm font-semibold">
+                              {sighting.user.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatRelativeDate(
+                                Number(sighting.sightingTime)
+                              )}
+                            </p>
                           </div>
+                          {sighting.description && (
+                            <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                              {sighting.description}
+                            </p>
+                          )}
+                          {sighting.sightingPhotos.length > 0 && (
+                            <div className="flex gap-2 overflow-x-auto">
+                              {sighting.sightingPhotos
+                                .slice(0, 3)
+                                .map(photo => (
+                                  <Img
+                                    key={photo.id}
+                                    src={getSightingThumbnailUrl(photo.url)}
+                                    alt="Sighting photo"
+                                    className="w-16 h-16 object-cover rounded"
+                                    loader={
+                                      <div className="w-16 h-16 bg-muted rounded flex items-center justify-center">
+                                        <Spinner />
+                                      </div>
+                                    }
+                                    unloader={
+                                      <Img
+                                        src={getPlaceholderImage(
+                                          photo.url,
+                                          stray.species === 'cat'
+                                            ? 'cats'
+                                            : 'dogs'
+                                        )}
+                                        alt="Sighting photo"
+                                        className="w-16 h-16 object-cover rounded"
+                                      />
+                                    }
+                                  />
+                                ))}
+                            </div>
+                          )}
+                        </div>
+                        {(session?.user?.role === 'admin' ||
+                          session?.user?.id === sighting.userId) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+                            onClick={e => {
+                              e.stopPropagation()
+                              setSightingToDelete(sighting.id)
+                              setDeleteDialogOpen(true)
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         )}
                       </div>
                     </div>
@@ -255,6 +318,42 @@ function StrayDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogContent
+              className={`p-0 ${isMobile ? 'w-full h-full' : 'max-w-2xl'}`}
+            >
+              <SightingDialog
+                selectedSighting={selectedSightingForDialog}
+                onClose={() => setDialogOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
+
+          <ConfirmationDialog
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+            title="Delete Sighting"
+            description="Are you sure you want to delete this sighting? This will also delete all associated photos and community posts. This action cannot be undone."
+            confirmText="Delete"
+            variant="destructive"
+            onConfirm={async () => {
+              if (!sightingToDelete) return
+              try {
+                await deleteSightingMutation.mutateAsync(sightingToDelete)
+                toast.success('Sighting deleted successfully')
+                setDeleteDialogOpen(false)
+                setSightingToDelete(null)
+                router.invalidate()
+              } catch (error) {
+                toast.error('Failed to delete sighting')
+                console.error(error)
+              }
+            }}
+            isLoading={deleteSightingMutation.isPending}
+          />
+
+
         </div>
 
         {/* Sidebar */}

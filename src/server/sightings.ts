@@ -1,4 +1,4 @@
-import { sightings, strays, sightingPhotos } from 'db/schema'
+import { sightings, strays, sightingPhotos, communityPosts } from 'db/schema'
 import { eq, desc, asc, sql, and } from 'drizzle-orm'
 import { getDb } from 'db'
 import { createServerFn } from '@tanstack/react-start'
@@ -194,10 +194,15 @@ export const updateSighting = createServerFn({ method: 'POST' })
 
 // Delete a sighting
 export const deleteSighting = createServerFn({ method: 'POST' })
-  .middleware([adminOnlyMw])
+  .middleware([userMw])
   .inputValidator((id: number) => id)
-  .handler(async ({ data: id }) => {
+  .handler(async ({ data: id, context }) => {
     const db = await getDb()
+    const session = context.session
+
+    if (!session) {
+      throw new Error('Unauthorized')
+    }
 
     // Check if sighting exists
     const existing = await db.query.sightings.findFirst({
@@ -208,6 +213,46 @@ export const deleteSighting = createServerFn({ method: 'POST' })
       throw new Error('Sighting not found')
     }
 
+    // Check permissions: Admin or Creator
+    const isAdmin = (session.user as any).role === 'admin'
+    const isCreator = existing.userId === session.user.id
+
+    if (!isAdmin && !isCreator) {
+      throw new Error('Unauthorized to delete this sighting')
+    }
+
+    // 1. Fetch related photos to delete from R2
+    const photos = await db.query.sightingPhotos.findMany({
+      where: eq(sightingPhotos.sightingId, id),
+    })
+
+    // 2. Delete photos from R2
+    const bucket = env.ANIMAL_PHOTOS_BUCKET
+    if (bucket) {
+      await Promise.all(
+        photos.map(async photo => {
+          try {
+            // Extract key from URL
+            // URL format: https://stray-tracker-animal-photos.pages.dev/sessionId/filename
+            const key = photo.url.replace(`${BUCKET_BASE_URL}/`, '')
+            if (key) {
+              await bucket.delete(key)
+            }
+          } catch (error) {
+            console.error(`Failed to delete R2 file for photo ${photo.id}:`, error)
+          }
+        })
+      )
+    }
+
+    // 3. Delete related records from DB
+    // Delete sighting photos
+    await db.delete(sightingPhotos).where(eq(sightingPhotos.sightingId, id))
+
+    // Delete community posts related to this sighting
+    await db.delete(communityPosts).where(eq(communityPosts.sightingId, id))
+
+    // 4. Delete the sighting
     const result = await db
       .delete(sightings)
       .where(eq(sightings.id, id))

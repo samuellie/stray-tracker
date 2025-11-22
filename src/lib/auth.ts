@@ -48,6 +48,9 @@ const createAuth = (env?: Env, cf?: IncomingRequestCfProperties) => {
           admin(),
           reactStartCookies(), // Cookies integration for TanStack Start
         ],
+        session: {
+          updateAge: 60 * 30, // 30 minutes
+        },
         // Rate limiting for Cloudflare
         rateLimit: {
           enabled: true,
