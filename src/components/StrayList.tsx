@@ -40,17 +40,12 @@ export function StrayList({
     }
   }
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-  } = useInfiniteNearbyStrays(
-    currentUserPosition?.lat,
-    currentUserPosition?.lng,
-    5 // 5km radius
-  )
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
+    useInfiniteNearbyStrays(
+      currentUserPosition?.lat,
+      currentUserPosition?.lng,
+      5 // 5km radius
+    )
 
   const strays = data?.pages.flatMap(page => page) || []
 
@@ -120,8 +115,6 @@ export function StrayList({
     }
   }
 
-  if (!currentUserPosition) return null
-
   return (
     <motion.div
       className="fixed bottom-0 left-0 right-0 z-20 bg-white shadow-[0_-5px_20px_rgba(0,0,0,0.1)] border-t border-gray-100 flex flex-col"
@@ -150,13 +143,12 @@ export function StrayList({
         <h2 className="text-lg font-semibold text-gray-800">Nearby Strays</h2>
         <div className="flex items-center gap-3">
           <div className="text-sm text-gray-500">{strays.length} found</div>
-
         </div>
       </div>
 
       {/* List Content */}
       <div className="flex-1 overflow-y-auto px-4 pb-6 bg-white">
-        {isLoading ? (
+        {isLoading || !currentUserPosition ? (
           <div className="flex justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>

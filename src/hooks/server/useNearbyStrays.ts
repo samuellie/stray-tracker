@@ -22,7 +22,7 @@ export function useInfiniteNearbyStrays(
   radius: number = 5
 ) {
   return useInfiniteQuery({
-    queryKey: ['nearby-strays-infinite', lat, lng, radius],
+    queryKey: ['nearby-strays', lat, lng, radius],
     queryFn: ({ pageParam = 0 }) =>
       getNearbyStrays({
         data: { lat: lat!, lng: lng!, radius, limit: 10, offset: pageParam },
