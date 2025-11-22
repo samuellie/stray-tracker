@@ -25,6 +25,18 @@ interface MapProps {
   onMarkerDragEnd?: (position: { lat: number; lng: number }) => void
   draggable?: boolean
   showNearbySightings?: boolean
+  currentUserPosition?: { lat: number; lng: number } | null
+  onUserPositionChange?: (position: { lat: number; lng: number }) => void
+  selectedSighting?: (Stray & {
+    sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
+  }) | null
+  onSelectSighting?: (
+    sighting:
+      | (Stray & {
+          sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
+        })
+      | null
+  ) => void
 }
 
 export function MapComponent({
@@ -35,6 +47,10 @@ export function MapComponent({
   onMarkerDragEnd,
   draggable = false,
   showNearbySightings = false,
+  currentUserPosition,
+  onUserPositionChange,
+  selectedSighting,
+  onSelectSighting,
 }: MapProps) {
   const isMobile = useIsMobile()
   const MapGeolocateControl = useRef<MaplibreGeolocateControl>(null)
@@ -42,16 +58,25 @@ export function MapComponent({
   const [marker, setMarker] = useState<{ lat: number; lng: number } | null>(
     null
   )
-  const [currentUserPosition, setCurrentUserPosition] = useState<{
+  
+  const [internalUserPosition, setInternalUserPosition] = useState<{
     lat: number
     lng: number
   } | null>(null)
-  const [selectedSighting, setSelectedSighting] = useState<
+
+  const effectiveUserPosition = currentUserPosition !== undefined ? currentUserPosition : internalUserPosition
+
+  // Internal state for selected sighting if not controlled
+  const [internalSelectedSighting, setInternalSelectedSighting] = useState<
     | (Stray & {
         sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
       })
     | null
   >(null)
+
+  const effectiveSelectedSighting = selectedSighting !== undefined ? selectedSighting : internalSelectedSighting
+  const handleSelectSighting = onSelectSighting || setInternalSelectedSighting
+
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedSightingForDialog, setSelectedSightingForDialog] = useState<
     | (Stray & {
@@ -61,10 +86,23 @@ export function MapComponent({
   >(null)
 
   const { data } = useNearbyStrays(
-    showNearbySightings ? currentUserPosition?.lat : undefined,
-    showNearbySightings ? currentUserPosition?.lng : undefined,
+    showNearbySightings ? effectiveUserPosition?.lat : undefined,
+    showNearbySightings ? effectiveUserPosition?.lng : undefined,
     5
   )
+
+  // Fly to selected sighting when it changes
+  useEffect(() => {
+    if (effectiveSelectedSighting && MapContainer.current) {
+      const { lat, lng } = effectiveSelectedSighting.sighting
+       // Offset the center slightly north (higher latitude) so marker appears below center
+       const offsetLat = lat + 0.001 // Approximately 50 meters north at equator
+       MapContainer.current.flyTo({
+         center: [lng, offsetLat],
+         zoom: 16,
+       })
+    }
+  }, [effectiveSelectedSighting])
 
   const handleMarkerDragEnd = (event: {
     lngLat: { lat: number; lng: number }
@@ -87,14 +125,16 @@ export function MapComponent({
       MapGeolocateControl.current.on(
         'geolocate',
         (e: { coords: { latitude: number; longitude: number } }) => {
-          setCurrentUserPosition({
+          const newPos = {
             lat: e.coords.latitude,
             lng: e.coords.longitude,
-          })
-          setMarker({
-            lat: e.coords.latitude,
-            lng: e.coords.longitude,
-          })
+          }
+          if (onUserPositionChange) {
+            onUserPositionChange(newPos)
+          } else {
+            setInternalUserPosition(newPos)
+          }
+          setMarker(newPos)
         }
       )
       if (defaultShowCurrentLocation) {
@@ -120,13 +160,11 @@ export function MapComponent({
         onLoad={handleOnload}
         onClick={handleMapClick}
       >
-        <NavigationControl position="top-left" />
-        <FullscreenControl position="top-right" />
-        <ScaleControl position="bottom-left" />
+        <NavigationControl position="top-right" />
         {showUserLocation && (
           <GeolocateControl
             ref={MapGeolocateControl}
-            position="bottom-left"
+            position="top-left"
             showUserLocation={!positionInput}
             trackUserLocation={!positionInput}
             positionOptions={{ enableHighAccuracy: true }}
@@ -151,21 +189,12 @@ export function MapComponent({
             key={stray.id}
             longitude={stray.sightings[0].lng}
             latitude={stray.sightings[0].lat}
-            onClick={() => {
-              const lng = stray.sightings[0].lng
-              const lat = stray.sightings[0].lat
-              // Offset the center slightly north (higher latitude) so marker appears below center
-              const offsetLat = lat + 0.001 // Approximately 50 meters north at equator
-              MapContainer.current?.flyTo({
-                center: [lng, offsetLat],
-                zoom: 16,
+            onClick={e => {
+              e.originalEvent.stopPropagation()
+              handleSelectSighting({
+                ...stray,
+                sighting: stray.sightings[0],
               })
-              setTimeout(() => {
-                setSelectedSighting({
-                  ...stray,
-                  sighting: stray.sightings[0],
-                })
-              }, 200)
             }}
           >
             <div className="text-lg cursor-pointer">
@@ -178,12 +207,12 @@ export function MapComponent({
           </Marker>
         ))}
         <SightingPopup
-          selectedSighting={selectedSighting}
-          onClose={() => setSelectedSighting(null)}
+          selectedSighting={effectiveSelectedSighting}
+          onClose={() => handleSelectSighting(null)}
           onOpenDialog={() => {
-            setSelectedSightingForDialog(selectedSighting)
+            setSelectedSightingForDialog(effectiveSelectedSighting)
             setDialogOpen(true)
-            setSelectedSighting(null)
+            handleSelectSighting(null)
           }}
         />
       </Map>

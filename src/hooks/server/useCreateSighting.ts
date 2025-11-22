@@ -3,7 +3,7 @@ import { createSighting } from '~/server/sightings'
 import type { InsertSighting } from 'db/schema'
 
 // Custom hook for creating a new sighting
-export function useCreateSighting() {
+export function useCreateSighting(isFromMap?: boolean) {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -17,7 +17,7 @@ export function useCreateSighting() {
     ) => createSighting({ data }),
     onSuccess: () => {
       // Invalidate and refetch sightings data
-      queryClient.invalidateQueries({ queryKey: ['sightings'] })
+      queryClient.invalidateQueries({ queryKey: [isFromMap ? 'nearby-strays' : 'sightings'] })
     },
   })
 }

@@ -8,7 +8,7 @@ import z from 'zod'
 // Get nearby strays based on their latest sighting
 export const getNearbyStrays = createServerFn({ method: 'GET' })
   .middleware([userMw])
-  .inputValidator((input: { lat: number; lng: number; radius?: number }) => {
+  .inputValidator((input: { lat: number; lng: number; radius?: number; limit?: number; offset?: number }) => {
     if (typeof input.lat !== 'number' || typeof input.lng !== 'number') {
       throw new Error('lat and lng must be numbers')
     }
@@ -20,12 +20,31 @@ export const getNearbyStrays = createServerFn({ method: 'GET' })
     }
     return input
   })
-  .handler(async ({ data: { lat, lng, radius = 5 } }) => {
+  .handler(async ({ data: { lat, lng, radius = 5, limit = 10, offset = 0 } }) => {
     const db = await getDb()
 
+    // 1 degree of latitude is approximately 111km
+    // 1 degree of longitude is approximately 111km * cos(latitude)
+    const latDelta = radius / 111
+    const lngDelta = radius / (111 * Math.cos(lat * (Math.PI / 180)))
+
+    const minLat = lat - latDelta
+    const maxLat = lat + latDelta
+    const minLng = lng - lngDelta
+    const maxLng = lng + lngDelta
+
     const result = await db.query.strays.findMany({
-      where: sql`EXISTS (SELECT 1 FROM sightings s WHERE s.stray_id = strays.id AND s.sighting_time = (SELECT MAX(s2.sighting_time) FROM sightings s2 WHERE s2.stray_id = strays.id) AND (6371 * acos(cos(${lat} * 3.141592653589793 / 180) * cos(s.lat * 3.141592653589793 / 180) * cos((s.lng * 3.141592653589793 / 180) - (${lng} * 3.141592653589793 / 180)) + sin(${lat} * 3.141592653589793 / 180) * sin(s.lat * 3.141592653589793 / 180))) < ${radius})`,
+      where: sql`EXISTS (
+        SELECT 1 FROM sightings s 
+        WHERE s.stray_id = strays.id 
+        AND s.sighting_time = (SELECT MAX(s2.sighting_time) FROM sightings s2 WHERE s2.stray_id = strays.id)
+        AND s.lat BETWEEN ${minLat} AND ${maxLat}
+        AND s.lng BETWEEN ${minLng} AND ${maxLng}
+        AND (6371 * acos(cos(${lat} * 3.141592653589793 / 180) * cos(s.lat * 3.141592653589793 / 180) * cos((s.lng * 3.141592653589793 / 180) - (${lng} * 3.141592653589793 / 180)) + sin(${lat} * 3.141592653589793 / 180) * sin(s.lat * 3.141592653589793 / 180))) < ${radius}
+      )`,
       orderBy: sql`(6371 * acos(cos(${lat} * 3.141592653589793 / 180) * cos((SELECT s.lat FROM sightings s WHERE s.stray_id = strays.id ORDER BY s.sighting_time DESC LIMIT 1) * 3.141592653589793 / 180) * cos(((SELECT s.lng FROM sightings s WHERE s.stray_id = strays.id ORDER BY s.sighting_time DESC LIMIT 1) * 3.141592653589793 / 180) - (${lng} * 3.141592653589793 / 180)) + sin(${lat} * 3.141592653589793 / 180) * sin((SELECT s.lat FROM sightings s WHERE s.stray_id = strays.id ORDER BY s.sighting_time DESC LIMIT 1) * 3.141592653589793 / 180)))`,
+      limit,
+      offset,
       with: {
         sightings: {
           orderBy: [desc(sightings.sightingTime)],

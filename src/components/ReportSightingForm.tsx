@@ -2,7 +2,6 @@ import { useForm } from '@tanstack/react-form'
 import { useState, useCallback, useEffect } from 'react'
 import { Button } from '~/components/ui/button'
 import { toast } from 'sonner'
-import { authClient } from '~/lib/auth-client'
 import { useCreateSighting } from '~/hooks/server/useCreateSighting'
 import { sightingFormDefaults } from '~/form-config'
 import {
@@ -43,7 +42,7 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
     },
   ]
 
-  const createSightingMutation = useCreateSighting()
+  const createSightingMutation = useCreateSighting(true)
 
   // Handle mutation errors with toast
   useEffect(() => {
@@ -94,8 +93,6 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
             animalSize: value.animalSize,
           }),
         }
-
-        console.log(sightingData)
 
         await createSightingMutation.mutateAsync(sightingData)
         toast.success('Sighting reported successfully!')
