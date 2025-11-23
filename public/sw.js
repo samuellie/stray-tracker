@@ -1,7 +1,10 @@
 // Service Worker for Stray Tracker PWA
-const CACHE_NAME = 'stray-tracker-v1'
-const STATIC_CACHE_NAME = 'stray-tracker-static-v1'
-const DYNAMIC_CACHE_NAME = 'stray-tracker-dynamic-v1'
+// IMPORTANT: This version should be updated on each deployment
+// You can use a build script to inject the build timestamp or git hash
+const VERSION = '1.0.0-BUILD_TIMESTAMP' // This will be replaced during build
+const CACHE_NAME = `stray-tracker-${VERSION}`
+const STATIC_CACHE_NAME = `stray-tracker-static-${VERSION}`
+const DYNAMIC_CACHE_NAME = `stray-tracker-dynamic-${VERSION}`
 
 // Resources to cache on install
 const STATIC_ASSETS = [
@@ -214,3 +217,17 @@ async function getPendingActions() {
 async function removePendingAction(id) {
   // Placeholder - implement with IndexedDB
 }
+
+// Message event - handle commands from the app
+self.addEventListener('message', event => {
+  console.log('[ServiceWorker] Message received:', event.data)
+
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
+
+  if (event.data && event.data.type === 'GET_VERSION') {
+    event.ports[0].postMessage({ version: VERSION })
+  }
+})
+

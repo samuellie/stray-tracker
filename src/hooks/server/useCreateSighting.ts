@@ -17,7 +17,12 @@ export function useCreateSighting(isFromMap?: boolean) {
     ) => createSighting({ data }),
     onSuccess: () => {
       // Invalidate and refetch sightings data
-      queryClient.invalidateQueries({ queryKey: [isFromMap ? 'nearby-strays' : 'sightings'] })
+      if (isFromMap) {
+        queryClient.invalidateQueries({ queryKey: ['nearby-strays'] })
+        queryClient.invalidateQueries({ queryKey: ["nearby-strays-infinite"] })
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["sightings"] })
+      }
     },
   })
 }

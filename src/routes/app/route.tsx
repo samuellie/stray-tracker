@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useAppVersion } from '~/hooks/use-app-version'
 import {
   createFileRoute,
   Link,
@@ -12,6 +13,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from '~/components/ui/dropdown-menu'
 import { Sheet, SheetContent, SheetTrigger } from '~/components/ui/sheet'
 import { User, Menu } from 'lucide-react'
@@ -112,36 +115,44 @@ function AppLayout() {
     </div>
   )
 
-  const UserMenu = () => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size={isMobile ? 'default' : 'icon'}
-          className={isMobile ? 'w-full justify-start px-4 py-3' : ''}
-        >
-          <User className="h-5 w-5" />
-          {isMobile && <span>Account</span>}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align={isMobile ? 'start' : 'end'}
-        className={isMobile ? 'w-full' : ''}
-      >
-        <DropdownMenuItem asChild>
-          <Link
-            to="/app/account/{-$accountView}"
-            onClick={() => isMobile && setMobileMenuOpen(false)}
+  const UserMenu = () => {
+    const appVersion = useAppVersion()
+    
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size={isMobile ? 'default' : 'icon'}
+            className={isMobile ? 'w-full justify-start px-4 py-3' : ''}
           >
-            Profile
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => authClient.signOut()}>
-          Sign Out
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
+            <User className="h-5 w-5" />
+            {isMobile && <span>Account</span>}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align={isMobile ? 'start' : 'end'}
+          className={isMobile ? 'w-full' : ''}
+        >
+          <DropdownMenuItem asChild>
+            <Link
+              to="/app/account/{-$accountView}"
+              onClick={() => isMobile && setMobileMenuOpen(false)}
+            >
+              Profile
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => authClient.signOut()}>
+            Sign Out
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+            {appVersion}
+          </DropdownMenuLabel>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
 
   if (isPending) {
     return <LoadingPage />
