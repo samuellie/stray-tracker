@@ -1,13 +1,13 @@
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { GeolocateControl as MaplibreGeolocateControl } from 'maplibre-gl'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import Map, {
   NavigationControl,
-  FullscreenControl,
-  ScaleControl,
   GeolocateControl,
   MapRef,
   Marker,
+  Source,
+  Layer,
 } from 'react-map-gl/maplibre'
 import { useNearbyStrays } from '~/hooks/server/useNearbyStrays'
 import type { Sighting, SightingPhoto, Stray } from 'db/schema'
@@ -16,6 +16,11 @@ import { Dialog, DialogContent } from '~/components/ui/dialog'
 import { SightingDialog } from './dialogs/SightingDialog'
 import { useIsMobile } from '~/hooks/use-mobile'
 import { User } from 'better-auth'
+import { useDebounce } from '~/hooks/use-debounce'
+import { Loader2 } from 'lucide-react'
+import { createGeoJSONCircle } from '~/lib/utils'
+import { LOADING_PUNS } from '~/lib/constants'
+import { useMapPulseAnimation } from '~/hooks/use-map-pulse-animation'
 
 interface MapProps {
   className?: string
@@ -33,11 +38,19 @@ interface MapProps {
   onSelectSighting?: (
     sighting:
       | (Stray & {
-          sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-        })
+        sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
+      })
       | null
   ) => void
+  onMapStateChange?: (state: {
+    lat: number
+    lng: number
+    radius: number
+  }) => void
+  mapState?: { lat: number; lng: number; radius: number } | null
 }
+
+
 
 export function MapComponent({
   className,
@@ -51,6 +64,8 @@ export function MapComponent({
   onUserPositionChange,
   selectedSighting,
   onSelectSighting,
+  onMapStateChange,
+  mapState,
 }: MapProps) {
   const isMobile = useIsMobile()
   const MapGeolocateControl = useRef<MaplibreGeolocateControl>(null)
@@ -58,7 +73,7 @@ export function MapComponent({
   const [marker, setMarker] = useState<{ lat: number; lng: number } | null>(
     null
   )
-  
+
   const [internalUserPosition, setInternalUserPosition] = useState<{
     lat: number
     lng: number
@@ -69,8 +84,8 @@ export function MapComponent({
   // Internal state for selected sighting if not controlled
   const [internalSelectedSighting, setInternalSelectedSighting] = useState<
     | (Stray & {
-        sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-      })
+      sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
+    })
     | null
   >(null)
 
@@ -80,27 +95,64 @@ export function MapComponent({
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedSightingForDialog, setSelectedSightingForDialog] = useState<
     | (Stray & {
-        sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-      })
+      sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
+    })
     | null
   >(null)
 
-  const { data } = useNearbyStrays(
-    showNearbySightings ? effectiveUserPosition?.lat : undefined,
-    showNearbySightings ? effectiveUserPosition?.lng : undefined,
-    5
+  const [viewState, setViewState] = useState({
+    latitude: 3.1072086999999984,
+    longitude: 101.67908995767199,
+    zoom: 16,
+  })
+
+  const debouncedViewState = useDebounce(viewState, 500)
+
+  useEffect(() => {
+    if (onMapStateChange) {
+      // Calculate radius based on zoom level
+      // Approximate visible radius in km: 25000 / 2^zoom
+      const radius = 25000 / Math.pow(2, debouncedViewState.zoom)
+      onMapStateChange({
+        lat: debouncedViewState.latitude,
+        lng: debouncedViewState.longitude,
+        radius,
+      })
+    }
+  }, [debouncedViewState, onMapStateChange])
+
+  const { data, isLoading } = useNearbyStrays(
+    showNearbySightings
+      ? mapState?.lat ?? debouncedViewState.latitude
+      : undefined,
+    showNearbySightings
+      ? mapState?.lng ?? debouncedViewState.longitude
+      : undefined,
+    mapState?.radius ?? 25000 / Math.pow(2, debouncedViewState.zoom)
   )
+
+  // Delayed loading state for smoother animation
+  const [showLoading, setShowLoading] = useState(false)
+
+  useEffect(() => {
+    if (isLoading) {
+      setShowLoading(true)
+    } else {
+      const timer = setTimeout(() => setShowLoading(false), 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [isLoading])
 
   // Fly to selected sighting when it changes
   useEffect(() => {
     if (effectiveSelectedSighting && MapContainer.current) {
       const { lat, lng } = effectiveSelectedSighting.sighting
-       // Offset the center slightly north (higher latitude) so marker appears below center
-       const offsetLat = lat + 0.001 // Approximately 50 meters north at equator
-       MapContainer.current.flyTo({
-         center: [lng, offsetLat],
-         zoom: 16,
-       })
+      // Offset the center slightly north (higher latitude) so marker appears below center
+      const offsetLat = lat + 0.001 // Approximately 50 meters north at equator
+      MapContainer.current.flyTo({
+        center: [lng, offsetLat],
+        zoom: 16,
+      })
     }
   }, [effectiveSelectedSighting])
 
@@ -143,6 +195,33 @@ export function MapComponent({
     }
   }
 
+  const loadingMessage = useMemo(() => {
+    if (!showLoading) return ''
+    return LOADING_PUNS[Math.floor(Math.random() * LOADING_PUNS.length)]
+  }, [showLoading])
+
+  const radiusCircle = useMemo(() => {
+    const center = {
+      lat: mapState?.lat ?? debouncedViewState.latitude,
+      lng: mapState?.lng ?? debouncedViewState.longitude,
+    }
+    const radius =
+      mapState?.radius ?? 25000 / Math.pow(2, debouncedViewState.zoom)
+    return createGeoJSONCircle(center, radius)
+  }, [mapState, debouncedViewState])
+
+  // Pulse animation for query circle
+  useMapPulseAnimation({
+    mapRef: MapContainer,
+    showLoading,
+    center: {
+      lat: mapState?.lat ?? debouncedViewState.latitude,
+      lng: mapState?.lng ?? debouncedViewState.longitude,
+    },
+    radius: mapState?.radius ?? 25000 / Math.pow(2, debouncedViewState.zoom),
+    zoom: debouncedViewState.zoom,
+  })
+
   return (
     <div
       className={`relative w-full h-full bg-muted rounded-lg overflow-hidden ${className}`}
@@ -159,7 +238,29 @@ export function MapComponent({
         mapStyle={`https://api.maptiler.com/maps/streets-v2/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY}`}
         onLoad={handleOnload}
         onClick={handleMapClick}
+        onMove={evt => setViewState(evt.viewState)}
       >
+        {showLoading && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm flex items-center gap-2 border border-gray-200">
+            <Loader2 className="w-3 h-3 animate-spin text-primary" />
+            <span className="text-xs font-medium text-gray-600">
+              {loadingMessage}
+            </span>
+          </div>
+        )}
+
+        {/* query circle */}
+        <Source id="radius-source" type="geojson" data={radiusCircle}>
+          <Layer
+            id="radius-layer"
+            type="fill"
+            paint={{
+              'fill-color': '#3b82f6',
+              'fill-opacity': 0, // Start hidden
+            }}
+          />
+
+        </Source>
         <NavigationControl position="top-right" />
         {showUserLocation && (
           <GeolocateControl

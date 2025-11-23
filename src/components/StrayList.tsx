@@ -11,6 +11,7 @@ import type { User } from 'better-auth'
 
 interface StrayListProps {
   currentUserPosition: { lat: number; lng: number } | null
+  mapState: { lat: number; lng: number; radius: number } | null
   isExpanded?: boolean
   onToggleExpand?: (expanded: boolean) => void
   onStrayClick?: (
@@ -21,8 +22,11 @@ interface StrayListProps {
   onAddSighting?: () => void
 }
 
+import { getDistance } from '~/lib/utils'
+
 export function StrayList({
   currentUserPosition,
+  mapState,
   isExpanded: isExpandedProp,
   onToggleExpand,
   onStrayClick,
@@ -42,9 +46,9 @@ export function StrayList({
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     useInfiniteNearbyStrays(
-      currentUserPosition?.lat,
-      currentUserPosition?.lng,
-      5 // 5km radius
+      mapState?.lat,
+      mapState?.lng,
+      mapState?.radius ?? 1 // Default to 1km if not set
     )
 
   const strays = data?.pages.flatMap(page => page) || []
@@ -69,37 +73,14 @@ export function StrayList({
     return () => observer.disconnect()
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
-  // Calculate distance for display
-  const getDistance = (
-    lat1: number,
-    lng1: number,
-    lat2: number,
-    lng2: number
-  ) => {
-    const R = 6371 // Radius of the earth in km
-    const dLat = deg2rad(lat2 - lat1)
-    const dLng = deg2rad(lng2 - lng1)
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(deg2rad(lat1)) *
-        Math.cos(deg2rad(lat2)) *
-        Math.sin(dLng / 2) *
-        Math.sin(dLng / 2)
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-    const d = R * c // Distance in km
-    return d < 1 ? `${(d * 1000).toFixed(0)}m` : `${d.toFixed(1)}km`
-  }
-
-  const deg2rad = (deg: number) => {
-    return deg * (Math.PI / 180)
-  }
+  // Animation variants
 
   // Animation variants
   const variants = {
     expanded: { y: 0, height: '100dvh', borderRadius: '0px' },
     collapsed: {
       y: 0,
-      height: isMobile ? '180px' : '200px',
+      height: isMobile ? '96px' : '120px',
       borderRadius: '24px 24px 0 0',
     },
   }

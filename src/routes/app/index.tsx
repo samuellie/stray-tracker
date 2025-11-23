@@ -34,6 +34,12 @@ function Home() {
   >(null)
   const [isStrayListExpanded, setIsStrayListExpanded] = useState(false)
 
+  const [mapState, setMapState] = useState<{
+    lat: number
+    lng: number
+    radius: number
+  } | null>(null)
+
   const handleStrayClick = (
     stray: Stray & {
       sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
@@ -54,11 +60,13 @@ function Home() {
           onUserPositionChange={setCurrentUserPosition}
           selectedSighting={selectedSighting}
           onSelectSighting={setSelectedSighting}
+          onMapStateChange={setMapState}
         />
       </div>
 
       <StrayList
         currentUserPosition={currentUserPosition}
+        mapState={mapState}
         isExpanded={isStrayListExpanded}
         onToggleExpand={setIsStrayListExpanded}
         onStrayClick={handleStrayClick}
@@ -83,7 +91,7 @@ function Home() {
 
       {/* Floating Action Button */}
       {!isStrayListExpanded && (
-        <div className={`fixed z-30 bottom-[200px] right-4`}>
+        <div className={`fixed z-30 ${isMobile?"bottom-[100px]":"bottom-[200px]"} right-4`}>
           <Button
             size="lg"
             className={`h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow`}
