@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
-import { motion, useAnimation, PanInfo } from 'motion/react'
+import { motion, PanInfo } from 'motion/react'
 import { useInfiniteNearbyStrays } from '~/hooks/server/useNearbyStrays'
 import { useIsMobile } from '~/hooks/use-mobile'
-import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Loader2, MapPin, Plus } from 'lucide-react'
+import { getSightingThumbnailUrl } from '~/utils/files'
+import { getPlaceholderImage } from '~/utils/strayImageFallbacks'
+import { Img } from 'react-image'
+import { Spinner } from '~/components/ui/spinner'
 import type { Stray, Sighting, SightingPhoto } from 'db/schema'
 import type { User } from 'better-auth'
 
@@ -147,15 +150,37 @@ export function StrayList({
                   onStrayClick?.({ ...stray, sighting: stray.sightings[0] })
                 }
               >
-                <Avatar className="h-16 w-16 rounded-lg border-2 border-white shadow-sm">
-                  <AvatarImage
-                    src={stray.sightings[0]?.sightingPhotos[0]?.url}
-                    className="object-cover"
+                <div className="h-16 w-16 shrink-0 rounded-lg border-2 border-white shadow-sm overflow-hidden bg-gray-100">
+                  <Img
+                    src={
+                      stray.sightings[0]?.sightingPhotos[0]
+                        ? getSightingThumbnailUrl(
+                          stray.sightings[0].sightingPhotos[0].url
+                        )
+                        : getPlaceholderImage(
+                          '',
+                          stray.species === 'cat' ? 'cats' : 'dogs'
+                        )
+                    }
+                    loader={
+                      <div className="w-full h-full flex items-center justify-center bg-muted">
+                        <Spinner className="h-4 w-4" />
+                      </div>
+                    }
+                    unloader={
+                      <Img
+                        src={getPlaceholderImage(
+                          stray.sightings[0]?.sightingPhotos[0]?.url || '',
+                          stray.species === 'cat' ? 'cats' : 'dogs'
+                        )}
+                        alt={`${stray.species} sighting photo`}
+                        className="w-full h-full object-cover"
+                      />
+                    }
+                    alt={`${stray.species} sighting photo`}
+                    className="w-full h-full object-cover"
                   />
-                  <AvatarFallback className="rounded-lg text-2xl">
-                    {stray.species === 'cat' ? '🐱' : '🐶'}
-                  </AvatarFallback>
-                </Avatar>
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start">
                     <h3 className="font-medium text-gray-900 truncate">
