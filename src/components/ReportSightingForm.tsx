@@ -6,18 +6,10 @@ import { useCreateSighting } from '~/hooks/server/useCreateSighting'
 import { sightingFormDefaults } from '~/form-config'
 import {
   Stepper,
-  StepperNav,
-  StepperItem,
-  StepperTrigger,
-  StepperIndicator,
-  StepperTitle,
-  StepperSeparator,
   StepperContent,
 } from '~/components/ui/stepper'
 import { ImageLocationStep } from '~/components/sighting-form-steps/ImageLocationStep'
 import { AnimalTypeStep } from '~/components/sighting-form-steps/AnimalTypeStep'
-import { ObservationStep } from '~/components/sighting-form-steps/ObservationStep'
-import { AdditionalInfoStep } from '~/components/sighting-form-steps/AdditionalInfoStep'
 import { type ProcessedImage } from '~/hooks/useProcessImages'
 import { useIsMobile } from '~/hooks/use-mobile'
 
@@ -31,14 +23,10 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
   const isMobile = useIsMobile()
 
   const steps = [
-    { id: 'images-location', title: 'Pictures' },
+    { id: 'images-location', title: 'Details' },
     {
       id: 'animal-type',
       title: 'Matching',
-    },
-    {
-      id: 'observation-additional',
-      title: 'Details',
     },
   ]
 
@@ -60,16 +48,17 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
 
   const form = useForm({
     defaultValues: sightingFormDefaults,
+
     onSubmit: async ({ value }) => {
       try {
         // Construct location data if coordinates are available
         const location =
           value.latitude && value.longitude
             ? {
-                lat: value.latitude,
-                lng: value.longitude,
-                address: value.location,
-              }
+              lat: value.latitude,
+              lng: value.longitude,
+              address: value.location,
+            }
             : null
 
         if (!location) {
@@ -84,9 +73,7 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
           lng: value.longitude!,
           location: { address1: value.location },
           sightingTime: value.date ? new Date(value.date) : new Date(),
-          notes: value.notes,
-          weatherCondition: value.weatherCondition,
-          confidence: value.confidence,
+          // Removed fields: notes, weatherCondition, confidence
           imageKeys: images.map(img => img.key).filter(Boolean),
           ...(reportingNewAnimal && {
             species: value.species,
@@ -124,89 +111,70 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
   }, [])
 
   return (
-    <div
-      className={`w-full max-w-2xl mx-auto pb-16 ${isMobile ? 'p-2' : 'p-0'} `}
-    >
-      <h1 className="text-2xl font-bold">New Sighting</h1>
+    <div className={`w-full flex-1 min-h-0 flex flex-col ${isMobile ? 'p-0' : 'p-0'} `}>
       <form
         onSubmit={e => {
           e.preventDefault()
           e.stopPropagation()
           form.handleSubmit()
         }}
-        className="mt-4"
+        className="flex-1 min-h-0 flex flex-col overflow-hidden"
       >
         <Stepper
-          className="space-y-4"
+          className="flex flex-col flex-1 overflow-hidden"
           value={currentStep}
           onValueChange={setCurrentStep}
         >
-          <StepperNav className="align-middle">
-            {steps.map((step, index) => (
-              <StepperItem className="flex-grow" key={step.id} step={index + 1}>
-                <StepperTrigger className="flex flex-col gap-2.5">
-                  <StepperIndicator>{index + 1}</StepperIndicator>
-                  <StepperTitle>{step.title}</StepperTitle>
-                </StepperTrigger>
-                {index < steps.length - 1 && <StepperSeparator />}
-              </StepperItem>
-            ))}
-          </StepperNav>
+          <div className="flex-1 overflow-y-auto p-6">
+            <StepperContent value={1} forceMount className="mt-0">
+              <form.Subscribe
+                selector={state => [state.values.description, state.values.date]}
+                children={([description, date]) => (
+                  <ImageLocationStep
+                    onMarkerDragEnd={handleMarkerDragEnd}
+                    onImagesUpdate={setImages}
+                    description={description || ''}
+                    onDescriptionChange={value =>
+                      form.setFieldValue('description', value)
+                    }
+                    date={date || new Date().toISOString()}
+                    onDateChange={value => form.setFieldValue('date', value)}
+                  />
+                )}
+              />
+            </StepperContent>
 
-          <StepperContent value={1} forceMount>
-            <ImageLocationStep
-              onMarkerDragEnd={handleMarkerDragEnd}
-              onImagesUpdate={setImages}
-            />
-          </StepperContent>
-
-          <StepperContent value={2} forceMount>
-            <AnimalTypeStep
-              reportingNewAnimal={reportingNewAnimal}
-              onReportingNewAnimalChange={setReportingNewAnimal}
-              strayId={form.state.values.strayId}
-              onStrayIdChange={value => form.setFieldValue('strayId', value)}
-              species={form.state.values.species}
-              onSpeciesChange={value => form.setFieldValue('species', value)}
-              animalSize={form.state.values.animalSize}
-              onAnimalSizeChange={value =>
-                form.setFieldValue('animalSize', value)
-              }
-              strayIdError={form.state.fieldMeta.strayId?.errors?.[0]}
-              speciesError={form.state.fieldMeta.species?.errors?.[0]}
-              animalSizeError={form.state.fieldMeta.animalSize?.errors?.[0]}
-              latitude={form.state.values.latitude}
-              longitude={form.state.values.longitude}
-            />
-          </StepperContent>
-
-          <StepperContent value={3} forceMount>
-            <ObservationStep
-              description={form.state.values.description || ''}
-              onDescriptionChange={value =>
-                form.setFieldValue('description', value)
-              }
-              descriptionError={form.state.fieldMeta.description?.errors?.[0]}
-              date={form.state.values.date || ''}
-              onDateChange={value => form.setFieldValue('date', value)}
-              dateError={form.state.fieldMeta.date?.errors?.[0]}
-            />
-            <AdditionalInfoStep
-              weatherCondition={form.state.values.weatherCondition}
-              onWeatherConditionChange={value =>
-                form.setFieldValue('weatherCondition', value)
-              }
-              confidence={form.state.values.confidence}
-              onConfidenceChange={value =>
-                form.setFieldValue('confidence', value)
-              }
-              notes={form.state.values.notes || ''}
-              onNotesChange={value => form.setFieldValue('notes', value)}
-            />
-          </StepperContent>
+            <StepperContent value={2} forceMount className="mt-0">
+              <form.Subscribe
+                selector={state => ({
+                  values: state.values,
+                  fieldMeta: state.fieldMeta,
+                })}
+                children={({ values, fieldMeta }) => (
+                  <AnimalTypeStep
+                    reportingNewAnimal={reportingNewAnimal}
+                    onReportingNewAnimalChange={setReportingNewAnimal}
+                    strayId={values.strayId}
+                    onStrayIdChange={value => form.setFieldValue('strayId', value)}
+                    species={values.species}
+                    onSpeciesChange={value => form.setFieldValue('species', value)}
+                    animalSize={values.animalSize}
+                    onAnimalSizeChange={value =>
+                      form.setFieldValue('animalSize', value)
+                    }
+                    strayIdError={fieldMeta.strayId?.errors?.[0]}
+                    speciesError={fieldMeta.species?.errors?.[0]}
+                    animalSizeError={fieldMeta.animalSize?.errors?.[0]}
+                    latitude={values.latitude}
+                    longitude={values.longitude}
+                  />
+                )}
+              />
+            </StepperContent>
+          </div>
         </Stepper>
 
-        <div className="fixed bottom-0 left-0 right-0 flex justify-between z-50 bg-background/95 rounded-lg p-4 w-full">
+        <div className="flex justify-between bg-background border-t p-4 shrink-0 mt-auto">
           {currentStep !== 1 ? (
             <Button
               type="button"

@@ -28,8 +28,8 @@ function Home() {
   } | null>(null)
   const [selectedSighting, setSelectedSighting] = useState<
     | (Stray & {
-        sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-      })
+      sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
+    })
     | null
   >(null)
   const [isStrayListExpanded, setIsStrayListExpanded] = useState(false)
@@ -83,7 +83,7 @@ function Home() {
         </Sheet>
       ) : (
         <Dialog open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-          <DialogContent className="min-w-96 max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden gap-0">
             <ReportSightingForm onSuccess={() => setIsPopoverOpen(false)} />
           </DialogContent>
         </Dialog>
@@ -91,7 +91,7 @@ function Home() {
 
       {/* Floating Action Button */}
       {!isStrayListExpanded && (
-        <div className={`fixed z-30 ${isMobile?"bottom-[100px]":"bottom-[200px]"} right-4`}>
+        <div className={`fixed z-30 ${isMobile ? "bottom-[100px]" : "bottom-[200px]"} right-4`}>
           <Button
             size="lg"
             className={`h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow`}

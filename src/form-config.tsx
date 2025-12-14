@@ -61,7 +61,8 @@ export const sightingFormSchema = z
     description: z
       .string()
       .min(10, 'Description must be at least 10 characters')
-      .max(1000, 'Description must be less than 1000 characters'),
+      .max(1000, 'Description must be less than 1000 characters')
+      .optional(),
     location: z
       .string()
       .min(1, 'Location is required')
@@ -78,19 +79,6 @@ export const sightingFormSchema = z
       const date = new Date(value)
       return !isNaN(date.getTime()) && date <= new Date()
     }, 'Date cannot be in the future'),
-    weatherCondition: z
-      .string()
-      .max(50, 'Weather condition must be less than 50 characters')
-      .optional(),
-    confidence: z
-      .number()
-      .min(1, 'Confidence must be at least 1')
-      .max(10, 'Confidence must be at most 10')
-      .optional(),
-    notes: z
-      .string()
-      .max(1000, 'Notes must be less than 1000 characters')
-      .optional(),
   })
   .refine(
     data => {
@@ -182,7 +170,6 @@ export const animalFormDefaults: Partial<AnimalFormData> = {
 export const sightingFormDefaults: Partial<SightingFormData> = {
   species: 'cat',
   animalSize: 'small',
-  date: new Date().toISOString(),
 }
 
 export const signupFormDefaults: Partial<SignupFormData> = {

@@ -31,7 +31,7 @@ export function ImagePreviewGallery({
             <p className="text-sm text-muted-foreground mb-2">
               {images.length} image{images.length > 1 ? 's' : ''} selected
             </p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
               <AnimatePresence mode="popLayout">
                 {images.map(({ thumbnail, file }, index) => (
                   <motion.div
@@ -60,11 +60,11 @@ export function ImagePreviewGallery({
                       )}
                     {onRemove && (
                       <Button
+                        type="button"
                         variant="destructive"
                         size="sm"
-                        className={`absolute top-2 right-2 transition-opacity ${
-                          isMobile ? '' : 'opacity-0 group-hover:opacity-100'
-                        }`}
+                        className={`absolute top-2 right-2 transition-opacity ${isMobile ? '' : 'opacity-0 group-hover:opacity-100'
+                          }`}
                         onClick={() => onRemove(index)}
                       >
                         <Trash2 size={16} />

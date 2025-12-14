@@ -76,9 +76,6 @@ export const sightings = sqliteTable('sightings', {
   sightingTime: integer('sighting_time', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
-  weatherCondition: text('weather_condition'),
-  confidence: integer('confidence'), // 1-10 scale
-  notes: text('notes'),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
