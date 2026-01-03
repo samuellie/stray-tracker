@@ -192,6 +192,23 @@ export function useProcessImages() {
     thumbnails: images.map(img => img.thumbnail),
     progress,
     sessionId,
+    setImages,
+    setPrimaryImage: useCallback((index: number) => {
+      setImages(prev => {
+        if (index === 0 || index >= prev.length) return prev
+        const newImages = [...prev]
+        const [selected] = newImages.splice(index, 1)
+        newImages.unshift(selected)
+        return newImages
+      })
+      setProgress(prev => {
+        if (index === 0 || index >= prev.length) return prev
+        const newProgress = [...prev]
+        const [selected] = newProgress.splice(index, 1)
+        newProgress.unshift(selected)
+        return newProgress
+      })
+    }, []),
     addImages,
     removeImage,
   }

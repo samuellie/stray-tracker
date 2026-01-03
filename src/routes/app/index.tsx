@@ -14,6 +14,7 @@ import { useIsMobile } from '~/hooks/use-mobile'
 import { StrayList } from '~/components/StrayList'
 import type { Stray, Sighting, SightingPhoto } from 'db/schema'
 import type { User } from 'better-auth'
+import { SightingDialog } from '~/components/dialogs/SightingDialog'
 
 export const Route = createFileRoute('/app/')({
   component: Home,
@@ -40,6 +41,31 @@ function Home() {
     radius: number
   } | null>(null)
 
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [selectedSightingForDialog, setSelectedSightingForDialog] = useState<
+    | (Stray & {
+      sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
+    })
+    | null
+  >(null)
+
+  const handleOpenSightingDialog = (
+    sighting: Stray & {
+      sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
+    }
+  ) => {
+    setSelectedSightingForDialog(sighting)
+    setDialogOpen(true)
+  }
+
+  const handleSightingSubmitSuccess = (sighting: any) => {
+    setIsPopoverOpen(false)
+    if (sighting) {
+      const strayResult = { ...sighting.stray, sighting: sighting }
+      handleOpenSightingDialog(strayResult)
+    }
+  }
+
   const handleStrayClick = (
     stray: Stray & {
       sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
@@ -60,7 +86,9 @@ function Home() {
           onUserPositionChange={setCurrentUserPosition}
           selectedSighting={selectedSighting}
           onSelectSighting={setSelectedSighting}
+
           onMapStateChange={setMapState}
+          onOpenSightingDialog={handleOpenSightingDialog}
         />
       </div>
 
@@ -78,13 +106,25 @@ function Home() {
       {isMobile ? (
         <Sheet open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
           <SheetContent side="bottom" className="h-screen overflow-y-auto p-0">
-            <ReportSightingForm onSuccess={() => setIsPopoverOpen(false)} />
+            <ReportSightingForm
+              onSuccess={handleSightingSubmitSuccess}
+              initialLocation={
+                currentUserPosition ??
+                (mapState ? { lat: mapState.lat, lng: mapState.lng } : null)
+              }
+            />
           </SheetContent>
         </Sheet>
       ) : (
         <Dialog open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
           <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden gap-0">
-            <ReportSightingForm onSuccess={() => setIsPopoverOpen(false)} />
+            <ReportSightingForm
+              onSuccess={handleSightingSubmitSuccess}
+              initialLocation={
+                currentUserPosition ??
+                (mapState ? { lat: mapState.lat, lng: mapState.lng } : null)
+              }
+            />
           </DialogContent>
         </Dialog>
       )}
@@ -101,6 +141,16 @@ function Home() {
           </Button>
         </div>
       )}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent
+          className={`p-0 ${isMobile ? 'w-full h-full' : 'max-w-2xl'}`}
+        >
+          <SightingDialog
+            selectedSighting={selectedSightingForDialog}
+            onClose={() => setDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

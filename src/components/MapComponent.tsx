@@ -12,13 +12,11 @@ import Map, {
 import { useNearbyStrays } from '~/hooks/server/useNearbyStrays'
 import type { Sighting, SightingPhoto, Stray } from 'db/schema'
 import { SightingPopup } from './SightingPopup'
-import { Dialog, DialogContent } from '~/components/ui/dialog'
-import { SightingDialog } from './dialogs/SightingDialog'
 import { useIsMobile } from '~/hooks/use-mobile'
 import { User } from 'better-auth'
 import { useDebounce } from '~/hooks/use-debounce'
 import { Loader2 } from 'lucide-react'
-import { createGeoJSONCircle } from '~/lib/utils'
+import { createGeoJSONCircle, calculateDistanceInKm } from '~/lib/utils'
 import { LOADING_PUNS } from '~/lib/constants'
 import { useMapPulseAnimation } from '~/hooks/use-map-pulse-animation'
 
@@ -31,6 +29,7 @@ interface MapProps {
   draggable?: boolean
   showNearbySightings?: boolean
   currentUserPosition?: { lat: number; lng: number } | null
+  initialMarkerPosition?: { lat: number; lng: number } | null
   onUserPositionChange?: (position: { lat: number; lng: number }) => void
   selectedSighting?: (Stray & {
     sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
@@ -48,6 +47,11 @@ interface MapProps {
     radius: number
   }) => void
   mapState?: { lat: number; lng: number; radius: number } | null
+  onOpenSightingDialog?: (
+    sighting: Stray & {
+      sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
+    }
+  ) => void
 }
 
 
@@ -66,12 +70,14 @@ export function MapComponent({
   onSelectSighting,
   onMapStateChange,
   mapState,
+  onOpenSightingDialog,
+  initialMarkerPosition,
 }: MapProps) {
   const isMobile = useIsMobile()
   const MapGeolocateControl = useRef<MaplibreGeolocateControl>(null)
   const MapContainer = useRef<MapRef>(null)
   const [marker, setMarker] = useState<{ lat: number; lng: number } | null>(
-    null
+    initialMarkerPosition ?? null
   )
 
   const [internalUserPosition, setInternalUserPosition] = useState<{
@@ -92,17 +98,10 @@ export function MapComponent({
   const effectiveSelectedSighting = selectedSighting !== undefined ? selectedSighting : internalSelectedSighting
   const handleSelectSighting = onSelectSighting || setInternalSelectedSighting
 
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedSightingForDialog, setSelectedSightingForDialog] = useState<
-    | (Stray & {
-      sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-    })
-    | null
-  >(null)
 
   const [viewState, setViewState] = useState({
-    latitude: 3.1072086999999984,
-    longitude: 101.67908995767199,
+    latitude: initialMarkerPosition?.lat ?? 3.1072086999999984,
+    longitude: initialMarkerPosition?.lng ?? 101.67908995767199,
     zoom: 16,
   })
 
@@ -121,14 +120,60 @@ export function MapComponent({
     }
   }, [debouncedViewState, onMapStateChange])
 
+  // Optimize nearby strays fetching
+  // Only update the fetching parameters if:
+  // 1. Initial load
+  // 2. Distance moved > 0.5km
+  // 3. Zoom level changed significantly (implying radius change)
+  const [fetchParams, setFetchParams] = useState<{
+    lat: number
+    lng: number
+    radius: number
+  } | null>(null)
+
+  useEffect(() => {
+    if (!showNearbySightings) return
+
+    const currentLat = mapState?.lat ?? debouncedViewState.latitude
+    const currentLng = mapState?.lng ?? debouncedViewState.longitude
+    const currentRadius =
+      mapState?.radius ?? 25000 / Math.pow(2, debouncedViewState.zoom)
+
+    // Initial fetch
+    if (!fetchParams) {
+      setFetchParams({
+        lat: currentLat,
+        lng: currentLng,
+        radius: currentRadius,
+      })
+      return
+    }
+
+    // Check distance
+    const dist = calculateDistanceInKm(
+      currentLat,
+      currentLng,
+      fetchParams.lat,
+      fetchParams.lng
+    )
+
+    // Check radius change (zoom)
+    // If radius changed by more than 10%, strictly update
+    const radiusRatio = Math.abs(currentRadius - fetchParams.radius) / fetchParams.radius
+
+    if (dist > 0.5 || radiusRatio > 0.1) {
+      setFetchParams({
+        lat: currentLat,
+        lng: currentLng,
+        radius: currentRadius,
+      })
+    }
+  }, [debouncedViewState, mapState, showNearbySightings, fetchParams])
+
   const { data, isLoading } = useNearbyStrays(
-    showNearbySightings
-      ? mapState?.lat ?? debouncedViewState.latitude
-      : undefined,
-    showNearbySightings
-      ? mapState?.lng ?? debouncedViewState.longitude
-      : undefined,
-    mapState?.radius ?? 25000 / Math.pow(2, debouncedViewState.zoom)
+    showNearbySightings ? fetchParams?.lat : undefined,
+    showNearbySightings ? fetchParams?.lng : undefined,
+    fetchParams?.radius
   )
 
   // Delayed loading state for smoother animation
@@ -230,8 +275,8 @@ export function MapComponent({
         ref={MapContainer}
         interactive
         initialViewState={{
-          latitude: 3.1072086999999984,
-          longitude: 101.67908995767199,
+          latitude: initialMarkerPosition?.lat ?? 3.1072086999999984,
+          longitude: initialMarkerPosition?.lng ?? 101.67908995767199,
           zoom: 16,
         }}
         style={{ width: '100%', height: '100%' }}
@@ -311,22 +356,13 @@ export function MapComponent({
           selectedSighting={effectiveSelectedSighting}
           onClose={() => handleSelectSighting(null)}
           onOpenDialog={() => {
-            setSelectedSightingForDialog(effectiveSelectedSighting)
-            setDialogOpen(true)
+            if (effectiveSelectedSighting) {
+              onOpenSightingDialog?.(effectiveSelectedSighting)
+            }
             handleSelectSighting(null)
           }}
         />
       </Map>
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent
-          className={`p-0 ${isMobile ? 'w-full h-full' : 'max-w-2xl'}`}
-        >
-          <SightingDialog
-            selectedSighting={selectedSightingForDialog}
-            onClose={() => setDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

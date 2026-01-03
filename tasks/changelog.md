@@ -9,10 +9,12 @@
 - **Development Environment**: TypeScript, Vite, Tailwind CSS, and shadcn/ui setup
 - **Cloud Infrastructure**: Cloudflare Workers, D1 database, R2 storage configuration
 - **Authentication Enhancement**: R2 bucket integration for user profile uploads with file validation
+- **Service Worker**: Offline support and background sync
+- **Memory Management**: Proper cleanup and garbage collection
+- **Map Optimization**: Implemented threshold-based data fetching to reduce API calls based on distance and zoom level.
 - **Task Management**: Detailed development roadmap and active context tracking
 - **UI Enhancement**: Converted report sighting form from full page to popover component triggered by FAB
-- **Map Integration**: Added MapComponent for location-based sightings with interactive features
-- **Component Architecture**: Implemented ReportSightingForm component with type-safe form handling
+
 
 ### Changed
 

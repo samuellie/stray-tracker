@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { User } from 'better-auth'
 import { Img } from 'react-image'
 import { Spinner } from '~/components/ui/spinner'
+import { authClient } from '~/lib/auth-client'
 
 interface SightingPopupProps {
   selectedSighting:
@@ -28,6 +29,8 @@ export function SightingPopup({
   onOpenDialog,
 }: SightingPopupProps) {
   if (!selectedSighting) return null
+
+  const { data: session } = authClient.useSession()
 
   const sightingPhotos = selectedSighting.sighting.sightingPhotos
   const primaryPhoto = sightingPhotos?.[0] // Use first photo as primary
@@ -74,6 +77,7 @@ export function SightingPopup({
             <div className="flex flex-col">
               <span className="text-sm font-semibold leading-none text-foreground">
                 {selectedSighting.sighting.user.name}
+                {session?.user?.id === selectedSighting.sighting.user.id && ' (me)'}
               </span>
               <span className="text-[10px] text-muted-foreground mt-0.5 font-medium uppercase tracking-tight">
                 {formatRelativeDate(

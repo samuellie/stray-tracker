@@ -14,10 +14,11 @@ import { type ProcessedImage } from '~/hooks/useProcessImages'
 import { useIsMobile } from '~/hooks/use-mobile'
 
 interface ReportSightingFormProps {
-  onSuccess?: () => void
+  onSuccess?: (sighting?: any) => void
+  initialLocation?: { lat: number; lng: number; address?: string } | null
 }
 
-export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
+export function ReportSightingForm({ onSuccess, initialLocation }: ReportSightingFormProps) {
   const [reportingNewAnimal, setReportingNewAnimal] = useState(false)
   const [images, setImages] = useState<ProcessedImage[]>([])
   const isMobile = useIsMobile()
@@ -47,7 +48,16 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
   ])
 
   const form = useForm({
-    defaultValues: sightingFormDefaults,
+    defaultValues: {
+      ...sightingFormDefaults,
+      ...(initialLocation
+        ? {
+          latitude: initialLocation.lat,
+          longitude: initialLocation.lng,
+          location: initialLocation.address || '',
+        }
+        : {}),
+    },
 
     onSubmit: async ({ value }) => {
       try {
@@ -73,7 +83,6 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
           lng: value.longitude!,
           location: { address1: value.location },
           sightingTime: value.date ? new Date(value.date) : new Date(),
-          // Removed fields: notes, weatherCondition, confidence
           imageKeys: images.map(img => img.key).filter(Boolean),
           ...(reportingNewAnimal && {
             species: value.species,
@@ -81,10 +90,10 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
           }),
         }
 
-        await createSightingMutation.mutateAsync(sightingData)
+        const createdSighting = await createSightingMutation.mutateAsync(sightingData)
         toast.success('Sighting reported successfully!')
         form.reset()
-        onSuccess?.()
+        onSuccess?.(createdSighting)
       } catch (error) {
         console.error('Failed to report sighting:', error)
         throw error
@@ -139,6 +148,7 @@ export function ReportSightingForm({ onSuccess }: ReportSightingFormProps) {
                     }
                     date={date || new Date().toISOString()}
                     onDateChange={value => form.setFieldValue('date', value)}
+                    initialLocation={initialLocation}
                   />
                 )}
               />

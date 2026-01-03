@@ -37,6 +37,7 @@
 - ✅ **Documentation**: Comprehensive architecture and requirements documented
 - ✅ **UI Enhancement**: Converted report sighting form from full page to popover component triggered by FAB
 - ✅ **Map Integration**: Added MapComponent for location-based sightings with interactive features
+- ✅ **Map Optimization**: Implemented threshold-based data fetching in MapComponent to reduce API calls
 - ✅ **Component Architecture**: Implemented ReportSightingForm component with type-safe form handling
 - ✅ **Camera Integration**: Added camera dialog component for mobile photo capture in sighting reports
 - ✅ **Gallery Selection**: Created ImageGallerySelector component for selecting images from device gallery on mobile devices

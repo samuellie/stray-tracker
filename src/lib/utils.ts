@@ -57,7 +57,7 @@ export const createGeoJSONCircle = (
   } as GeoJSON.GeoJSON
 }
 
-export function getDistance(
+export function calculateDistanceInKm(
   lat1: number,
   lng1: number,
   lat2: number,
@@ -74,6 +74,16 @@ export function getDistance(
     Math.sin(dLng / 2)
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   const d = R * c // Distance in km
+  return d
+}
+
+export function getDistance(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+) {
+  const d = calculateDistanceInKm(lat1, lng1, lat2, lng2)
   return d < 1 ? `${(d * 1000).toFixed(0)}m` : `${d.toFixed(1)}km`
 }
 

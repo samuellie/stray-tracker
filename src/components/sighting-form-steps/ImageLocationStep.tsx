@@ -15,6 +15,7 @@ interface ImageLocationStepProps {
   onDescriptionChange: (value: string) => void
   date: string
   onDateChange: (value: string) => void
+  initialLocation?: { lat: number; lng: number } | null
 }
 
 export function ImageLocationStep({
@@ -24,6 +25,7 @@ export function ImageLocationStep({
   onDescriptionChange,
   date,
   onDateChange,
+  initialLocation,
 }: ImageLocationStepProps) {
   const isMobile = useIsMobile()
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -36,6 +38,7 @@ export function ImageLocationStep({
     progress: imageProgress,
     addImages,
     removeImage,
+    setPrimaryImage,
   } = useProcessImages()
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -126,6 +129,7 @@ export function ImageLocationStep({
             images={images}
             imageProgress={imageProgress}
             onRemove={removeImage}
+            onSetPrimary={setPrimaryImage}
           />
           {isMobile ? (
             <div className="flex gap-2">
@@ -155,7 +159,8 @@ export function ImageLocationStep({
               defaultShowCurrentLocation
               positionInput
               onMarkerDragEnd={handleMarkerDragEnd}
-            // showUserLocation={false}
+              initialMarkerPosition={initialLocation}
+              showUserLocation={false}
             />
           </div>
         </div>

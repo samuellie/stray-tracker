@@ -20,6 +20,7 @@ import { User } from 'better-auth'
 import { Img } from 'react-image'
 import { getPlaceholderImage } from '~/utils/strayImageFallbacks'
 import { useRouter } from '@tanstack/react-router'
+import { authClient } from '~/lib/auth-client'
 
 interface SightingDialogProps {
   selectedSighting:
@@ -38,6 +39,8 @@ export function SightingDialog({
 
   if (!selectedSighting) return null
 
+  const { data: session } = authClient.useSession()
+
   const { data: sightingPhotos, isLoading } = useFindSightingPhotos(
     selectedSighting.sighting.id
   )
@@ -55,6 +58,7 @@ export function SightingDialog({
           <div className="flex flex-col">
             <span className="text-base font-semibold leading-none text-foreground">
               {selectedSighting.sighting.user.name}
+              {session?.user?.id === selectedSighting.sighting.user.id && ' (me)'}
             </span>
             <span className="text-xs text-muted-foreground mt-1 font-medium uppercase tracking-tight">
               {formatRelativeDate(

@@ -151,7 +151,19 @@ export const createSighting = createServerFn({ method: 'POST' })
       }
     }
 
-    return sighting
+    // Fetch the complete sighting with relations to return
+    const fullSighting = await db.query.sightings.findFirst({
+      where: eq(sightings.id, sighting.id),
+      with: {
+        stray: true,
+        user: true,
+        sightingPhotos: true,
+      },
+    })
+
+    if (!fullSighting) throw new Error('Failed to retrieve created sighting')
+
+    return fullSighting
   })
 
 // Update a sighting

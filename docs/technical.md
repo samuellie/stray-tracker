@@ -562,6 +562,11 @@ graph LR
 - **Service Worker**: Offline support and background sync
 - **Memory Management**: Proper cleanup and garbage collection
 
+**Map Optimization**
+
+- **Threshold-based Fetching**: Fetches new data only when user moves significant distance (>0.5km) or significantly changes zoom level (>10% radius change).
+- **Distance Calculation**: Efficient haversine formula implementation for client-side distance checks.
+
 ### Backend Performance
 
 **Edge Computing Benefits**
