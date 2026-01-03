@@ -2,7 +2,7 @@
   "name": "Stray Tracker",
   "short_name": "StrayTracker",
   "description": "Community-driven Progressive Web App for tracking and helping stray animals",
-  "start_url": "/",
+  "start_url": "/app?source=pwa",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3b82f6",

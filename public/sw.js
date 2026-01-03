@@ -1,7 +1,7 @@
 // Service Worker for Stray Tracker PWA
 // IMPORTANT: This version should be updated on each deployment
 // You can use a build script to inject the build timestamp or git hash
-const VERSION = '1.0.0-2026-01-03T17-15-43-596Z' // This will be replaced during build
+const VERSION = '1.0.0-2026-01-03T17-20-31-192Z' // This will be replaced during build
 const CACHE_NAME = `stray-tracker-${VERSION}`
 const STATIC_CACHE_NAME = `stray-tracker-static-${VERSION}`
 const DYNAMIC_CACHE_NAME = `stray-tracker-dynamic-${VERSION}`

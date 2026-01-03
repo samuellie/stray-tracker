@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { ArrowRight, ArrowRightIcon } from 'lucide-react'
 import { Button } from '~/components/ui/button'
 import {
@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from '~/components/ui/card'
 import { authClient } from '~/lib/auth-client'
+import { useEffect } from 'react'
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
@@ -16,6 +17,20 @@ export const Route = createFileRoute('/')({
 
 function RouteComponent() {
   const { data: session } = authClient.useSession()
+  const navigate = useNavigate()
+
+  // PWA Redirection
+  useEffect(() => {
+    // Check if running in standalone mode (PWA)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    // Check for source=pwa parameter
+    const searchParams = new URLSearchParams(window.location.search)
+    const isPwaSource = searchParams.get('source') === 'pwa'
+
+    if (isStandalone || isPwaSource) {
+      navigate({ to: '/app' })
+    }
+  }, [navigate])
 
   const AuthButtons = () => {
     if (session) {
