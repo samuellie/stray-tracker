@@ -32,15 +32,15 @@ function AppLayout() {
   const isMobile = useIsMobile()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { theme, setTheme } = useTheme()
-  const navigate = useNavigate()
   const {
     data: session,
     isPending, //loading state
   } = authClient.useSession()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (!isPending && !session) {
-      navigate({ to: '/', search: {} })
+      navigate({ to: '/auth/$authView', params: { authView: 'sign-in' } })
     }
   }, [isPending, session, navigate])
 
@@ -117,7 +117,7 @@ function AppLayout() {
 
   const UserMenu = () => {
     const appVersion = useAppVersion()
-    
+
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -142,7 +142,11 @@ function AppLayout() {
               Profile
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => authClient.signOut()}>
+          <DropdownMenuItem onClick={() => authClient.signOut({
+            fetchOptions: {
+              onSuccess: () => navigate({ to: '/auth/$authView', params: { authView: 'sign-in' } })
+            }
+          })}>
             Sign Out
           </DropdownMenuItem>
           <DropdownMenuSeparator />

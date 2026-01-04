@@ -49,8 +49,8 @@ function StrayDetailPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedSightingForDialog, setSelectedSightingForDialog] = useState<
     | (Stray & {
-        sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-      })
+      sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
+    })
     | null
   >(null)
 
@@ -296,19 +296,19 @@ function StrayDetailPage() {
                         </div>
                         {(session?.user?.role === 'admin' ||
                           session?.user?.id === sighting.userId) && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
-                            onClick={e => {
-                              e.stopPropagation()
-                              setSightingToDelete(sighting.id)
-                              setDeleteDialogOpen(true)
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+                              onClick={e => {
+                                e.stopPropagation()
+                                setSightingToDelete(sighting.id)
+                                setDeleteDialogOpen(true)
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
                       </div>
                     </div>
                   ))}
@@ -341,12 +341,12 @@ function StrayDetailPage() {
               if (!sightingToDelete) return
               try {
                 await deleteSightingMutation.mutateAsync(sightingToDelete)
-                toast.success('Sighting deleted successfully')
+                toast.success('Deleted successfully')
                 setDeleteDialogOpen(false)
                 setSightingToDelete(null)
                 router.invalidate()
               } catch (error) {
-                toast.error('Failed to delete sighting')
+                toast.error('Failed to delete')
                 console.error(error)
               }
             }}
