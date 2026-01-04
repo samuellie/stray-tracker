@@ -9,6 +9,7 @@ export function useDeleteSighting() {
     mutationFn: (id: number) => deleteSighting({ data: id }),
     onSuccess: () => {
       // Invalidate and refetch sightings and strays data
+      queryClient.invalidateQueries({ queryKey: ['nearby-strays'] })
       queryClient.invalidateQueries({ queryKey: ['sightings'] })
       queryClient.invalidateQueries({ queryKey: ['strays'] })
       queryClient.invalidateQueries({ queryKey: ['stray'] })
