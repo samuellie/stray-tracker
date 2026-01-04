@@ -19,7 +19,7 @@ export const strays = sqliteTable('strays', {
   })
     .notNull()
     .default('spotted'),
-  description: text('description'),
+  description: text('description', { length: 1000 }),
   healthNotes: text('health_notes'),
   careRequirements: text('care_requirements'),
   // Primary location stored as JSON
@@ -71,7 +71,7 @@ export const sightings = sqliteTable('sightings', {
     postcode?: string
     country?: string
   }>(),
-  description: text('description'),
+  description: text('description', { length: 1000 }),
   // Additional sighting metadata
   sightingTime: integer('sighting_time', { mode: 'timestamp' })
     .notNull()
@@ -106,7 +106,7 @@ export const strayPhotos = sqliteTable('stray_photos', {
   fileName: text('file_name'),
   fileSize: integer('file_size'),
   mimeType: text('mime_type'),
-  description: text('description'),
+  description: text('description', { length: 1000 }),
   // Whether this is the primary photo for the stray
   isPrimary: integer('is_primary', { mode: 'boolean' }).default(false),
   uploadedAt: integer('uploaded_at', { mode: 'timestamp' })
@@ -207,7 +207,7 @@ export const namingSuggestions = sqliteTable('naming_suggestions', {
     .references(() => authSchema.users.id)
     .notNull(),
   name: text('name', { length: 50 }).notNull(),
-  description: text('description'),
+  description: text('description', { length: 1000 }),
   isSelected: integer('is_selected', { mode: 'boolean' }).default(false),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()

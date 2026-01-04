@@ -56,6 +56,7 @@ export type AnimalFormData = z.infer<typeof animalFormSchema> & {
 export const sightingFormSchema = z
   .object({
     strayId: z.number().optional(),
+    strayName: z.string().max(50, 'Name must be less than 50 characters').optional(),
     species: z.enum(['cat', 'dog', 'other']).optional(),
     animalSize: z.enum(['small', 'medium', 'large']).optional(),
     description: z
@@ -168,6 +169,7 @@ export const animalFormDefaults: Partial<AnimalFormData> = {
 }
 
 export const sightingFormDefaults: Partial<SightingFormData> = {
+  strayName: '',
   species: 'cat',
   animalSize: 'small',
 }

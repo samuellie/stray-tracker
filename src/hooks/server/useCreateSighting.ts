@@ -13,6 +13,7 @@ export function useCreateSighting(isFromMap?: boolean) {
         species?: string
         animalSize?: string
         location?: InsertSighting['location'] | null
+        strayName?: string
       }
     ) => createSighting({ data }),
     onSuccess: () => {

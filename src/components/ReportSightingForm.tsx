@@ -21,6 +21,7 @@ interface ReportSightingFormProps {
 export function ReportSightingForm({ onSuccess, initialLocation }: ReportSightingFormProps) {
   const [reportingNewAnimal, setReportingNewAnimal] = useState(false)
   const [images, setImages] = useState<ProcessedImage[]>([])
+  const [isUploading, setIsUploading] = useState(false)
   const isMobile = useIsMobile()
 
   const steps = [
@@ -60,6 +61,14 @@ export function ReportSightingForm({ onSuccess, initialLocation }: ReportSightin
     },
 
     onSubmit: async ({ value }) => {
+      if (isUploading) {
+        toast.info("Uploading your cute photos...", {
+          description: 'Submit again after upload is complete!',
+        })
+        setCurrentStep(1)
+        return
+      }
+
       try {
         // Construct location data if coordinates are available
         const location =
@@ -85,6 +94,7 @@ export function ReportSightingForm({ onSuccess, initialLocation }: ReportSightin
           sightingTime: value.date ? new Date(value.date) : new Date(),
           imageKeys: images.map(img => img.key).filter(Boolean),
           ...(reportingNewAnimal && {
+            strayName: value.strayName,
             species: value.species,
             animalSize: value.animalSize,
           }),
@@ -142,6 +152,7 @@ export function ReportSightingForm({ onSuccess, initialLocation }: ReportSightin
                   <ImageLocationStep
                     onMarkerDragEnd={handleMarkerDragEnd}
                     onImagesUpdate={setImages}
+                    onUploadingChange={setIsUploading}
                     description={description || ''}
                     onDescriptionChange={value =>
                       form.setFieldValue('description', value)
@@ -172,9 +183,14 @@ export function ReportSightingForm({ onSuccess, initialLocation }: ReportSightin
                     onAnimalSizeChange={value =>
                       form.setFieldValue('animalSize', value)
                     }
+                    strayName={values.strayName}
+                    onStrayNameChange={value =>
+                      form.setFieldValue('strayName', value)
+                    }
                     strayIdError={fieldMeta.strayId?.errors?.[0]}
                     speciesError={fieldMeta.species?.errors?.[0]}
                     animalSizeError={fieldMeta.animalSize?.errors?.[0]}
+                    strayNameError={fieldMeta.strayName?.errors?.[0]}
                     latitude={values.latitude}
                     longitude={values.longitude}
                   />

@@ -72,6 +72,7 @@ export const createSighting = createServerFn({ method: 'POST' })
         animalSize?: string
         location?: InsertSighting['location'] | null
         imageKeys?: string[] // Temporary image keys to finalize
+        strayName?: string
       }
     ) => data
   )
@@ -86,6 +87,7 @@ export const createSighting = createServerFn({ method: 'POST' })
       const newStray = await db
         .insert(strays)
         .values({
+          name: data.strayName,
           species: data.species as 'cat' | 'dog' | 'other',
           size: data.animalSize as 'small' | 'medium' | 'large',
           status: 'spotted',

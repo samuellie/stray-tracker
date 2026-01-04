@@ -21,6 +21,16 @@ import { Img } from 'react-image'
 import { getPlaceholderImage } from '~/utils/strayImageFallbacks'
 import { useRouter } from '@tanstack/react-router'
 import { authClient } from '~/lib/auth-client'
+import { MoreVertical, X } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '~/components/ui/dropdown-menu'
+import { useDeleteSighting } from '~/hooks/server/useDeleteSighting'
+import { ConfirmationDialog } from './ConfirmationDialog'
+import { useState } from 'react'
 
 interface SightingDialogProps {
   selectedSighting:
@@ -36,16 +46,49 @@ export function SightingDialog({
   onClose,
 }: SightingDialogProps) {
   const router = useRouter()
+  const deleteSightingMutation = useDeleteSighting()
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   if (!selectedSighting) return null
 
   const { data: session } = authClient.useSession()
+  const isOwner = session?.user?.id === selectedSighting.sighting.user.id
 
   const { data: sightingPhotos, isLoading } = useFindSightingPhotos(
     selectedSighting.sighting.id
   )
+
+  const handleDelete = () => {
+    setIsDeleting(true)
+    deleteSightingMutation.mutate(selectedSighting.sighting.id, {
+      onSuccess: () => {
+        setIsDeleting(false)
+        setIsDeleteDialogOpen(false)
+        onClose()
+      },
+      onError: () => {
+        setIsDeleting(false)
+        // You might want to show a toast here
+      }
+    })
+  }
+
   return (
-    <Card className="border-0 max-w-2xl w-full overflow-hidden">
+    <Card className="border-0 max-w-2xl w-full overflow-hidden relative group">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="absolute top-2 right-2 h-8 w-8 rounded-full z-10 bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm"
+        onClick={e => {
+          e.stopPropagation()
+          onClose()
+        }}
+        aria-label="Close popup"
+      >
+        <X className="h-4 w-4" />
+      </Button>
+
       {/* User Header - Instagram style */}
       <div className="p-4 flex items-center justify-between border-b border-gray-50">
         <div className="flex items-center gap-3">
@@ -58,7 +101,7 @@ export function SightingDialog({
           <div className="flex flex-col">
             <span className="text-base font-semibold leading-none text-foreground">
               {selectedSighting.sighting.user.name}
-              {session?.user?.id === selectedSighting.sighting.user.id && ' (me)'}
+              {isOwner && ' (me)'}
             </span>
             <span className="text-xs text-muted-foreground mt-1 font-medium uppercase tracking-tight">
               {formatRelativeDate(
@@ -67,6 +110,37 @@ export function SightingDialog({
             </span>
           </div>
         </div>
+        {isOwner && (
+          <div className="mr-8"> {/* mr-8 to avoid overlap with close button which is absolute */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive cursor-pointer"
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  disabled={isDeleting}
+                >
+                  Delete Sighting
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <ConfirmationDialog
+              open={isDeleteDialogOpen}
+              onOpenChange={setIsDeleteDialogOpen}
+              title="Delete Sighting"
+              description="Are you sure you want to delete this sighting? This action cannot be undone."
+              confirmText="Delete"
+              variant="destructive"
+              onConfirm={handleDelete}
+              isLoading={isDeleting}
+            />
+          </div>
+        )}
       </div>
 
       {/* Media / Photos */}

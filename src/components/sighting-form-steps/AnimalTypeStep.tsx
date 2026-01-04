@@ -29,9 +29,12 @@ interface AnimalTypeStepProps {
   onSpeciesChange: (value: 'cat' | 'dog' | 'other') => void
   animalSize?: 'small' | 'medium' | 'large'
   onAnimalSizeChange: (value: 'small' | 'medium' | 'large') => void
+  strayName?: string
+  onStrayNameChange: (value: string) => void
   strayIdError?: string
   speciesError?: string
   animalSizeError?: string
+  strayNameError?: string
   latitude?: number
   longitude?: number
 }
@@ -45,9 +48,12 @@ export function AnimalTypeStep({
   onSpeciesChange,
   animalSize,
   onAnimalSizeChange,
+  strayName,
+  onStrayNameChange,
   strayIdError,
   speciesError,
   animalSizeError,
+  strayNameError,
   latitude,
   longitude,
 }: AnimalTypeStepProps) {
@@ -84,6 +90,20 @@ export function AnimalTypeStep({
         {reportingNewAnimal ? (
           <div className="space-y-4">
             <Label>Create new stray</Label>
+
+            {/* Name Field */}
+            <div className="space-y-2">
+              <Label htmlFor="strayName">Stray Name (Optional)</Label>
+              <Input
+                id="strayName"
+                placeholder="Give this stray a name"
+                value={strayName}
+                onChange={e => onStrayNameChange(e.target.value)}
+              />
+              {strayNameError && (
+                <p className="text-sm text-red-600">{strayNameError}</p>
+              )}
+            </div>
             {/* Species Selection */}
             <div className="space-y-2">
               <Label htmlFor="species">Species *</Label>
@@ -149,21 +169,20 @@ export function AnimalTypeStep({
                     const distance =
                       latestSighting && latitude && longitude
                         ? calculateDistance(
-                            latitude,
-                            longitude,
-                            latestSighting.lat,
-                            latestSighting.lng
-                          )
+                          latitude,
+                          longitude,
+                          latestSighting.lat,
+                          latestSighting.lng
+                        )
                         : null
 
                     return (
                       <Card
                         key={stray.id}
-                        className={`h-48 cursor-pointer transition-colors relative overflow-hidden ${
-                          selectedStray?.id === stray.id
+                        className={`h-48 cursor-pointer transition-colors relative overflow-hidden ${selectedStray?.id === stray.id
                             ? 'ring-4 ring-primary'
                             : 'hover:ring-2 hover:ring-muted-foreground/20'
-                        }`}
+                          }`}
                         onClick={() => {
                           setSelectedStray(stray)
                           onStrayIdChange(stray.id)

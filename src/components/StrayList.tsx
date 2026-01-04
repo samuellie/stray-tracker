@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { motion, PanInfo } from 'motion/react'
+import { motion, PanInfo, useDragControls } from 'motion/react'
 import { useInfiniteNearbyStrays } from '~/hooks/server/useNearbyStrays'
 import { useIsMobile } from '~/hooks/use-mobile'
 import { Badge } from '~/components/ui/badge'
@@ -99,39 +99,85 @@ export function StrayList({
     }
   }
 
+  const dragControls = useDragControls()
+  const containerRef = useRef<HTMLDivElement>(null)
+  const touchStart = useRef<number | null>(null)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const scrollTop = containerRef.current?.scrollTop ?? 0
+    if (scrollTop <= 0) {
+      touchStart.current = e.touches[0].clientY
+    } else {
+      touchStart.current = null
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStart.current === null) return
+
+    // Calculate distance
+    const currentY = e.touches[0].clientY
+    const diff = currentY - touchStart.current
+
+    // If pulling down significantly at the top
+    if (diff > 100) {
+      // We could add visual feedback here, but for now we'll just rely on the snap
+    }
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart.current === null) return
+
+    const currentY = e.changedTouches[0].clientY
+    const diff = currentY - touchStart.current
+
+    if (diff > 100) {
+      handleToggleExpand(false)
+    }
+    touchStart.current = null
+  }
+
   return (
     <motion.div
-      className="fixed bottom-0 left-0 right-0 z-20 bg-white shadow-[0_-5px_20px_rgba(0,0,0,0.1)] border-t border-gray-100 flex flex-col"
+      ref={containerRef}
+      className="fixed bottom-0 left-0 right-0 z-20 bg-white shadow-[0_-5px_20px_rgba(0,0,0,0.1)] border-t border-gray-100 flex flex-col overflow-y-auto no-scrollbar overscroll-contain"
       initial="collapsed"
       animate={isExpanded ? 'expanded' : 'collapsed'}
       variants={variants}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       drag="y"
+      dragControls={dragControls}
+      dragListener={!isExpanded}
       dragConstraints={{ top: 0, bottom: 0 }}
       dragElastic={0.05}
       onDragEnd={handleDragEnd}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
-      {/* Drag Handle */}
-      <div
-        className="w-full flex justify-center pt-3 pb-1 cursor-pointer shrink-0"
-        onClick={() => handleToggleExpand(!isExpanded)}
-      >
-        <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
-      </div>
+      {/* Drag Handle Area */}
+      <div onPointerDown={(e) => dragControls.start(e)} className="shrink-0 bg-white sticky top-0 z-10">
+        <div
+          className="w-full flex justify-center pt-3 pb-1 cursor-pointer"
+          onClick={() => handleToggleExpand(!isExpanded)}
+        >
+          <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+        </div>
 
-      {/* Header */}
-      <div
-        className="px-6 pb-2 flex justify-between items-center bg-white shrink-0"
-        onClick={() => handleToggleExpand(!isExpanded)}
-      >
-        <h2 className="text-lg font-semibold text-gray-800">Nearby Strays</h2>
-        <div className="flex items-center gap-3">
-          <div className="text-sm text-gray-500">{strays.length} found</div>
+        {/* Header */}
+        <div
+          className="px-6 pb-2 flex justify-between items-center"
+          onClick={() => handleToggleExpand(!isExpanded)}
+        >
+          <h2 className="text-lg font-semibold text-gray-800">Nearby Strays</h2>
+          <div className="flex items-center gap-3">
+            <div className="text-sm text-gray-500">{strays.length} found</div>
+          </div>
         </div>
       </div>
 
       {/* List Content */}
-      <div className="flex-1 overflow-y-auto px-4 pb-6 bg-white">
+      <div className="px-4 pb-6 bg-white">
         {isLoading || !currentUserPosition ? (
           <div className="flex justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -221,7 +267,7 @@ export function StrayList({
 
       {/* Floating Action Button (only when expanded) */}
       {isExpanded && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30">
           <Button
             size="lg"
             className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow"

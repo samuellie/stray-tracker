@@ -10,6 +10,7 @@ import { Textarea } from '~/components/ui/textarea'
 
 interface ImageLocationStepProps {
   onImagesUpdate?: (images: ProcessedImage[]) => void
+  onUploadingChange?: (isUploading: boolean) => void
   onMarkerDragEnd: (position: { lat: number; lng: number }) => void
   description: string
   onDescriptionChange: (value: string) => void
@@ -20,6 +21,7 @@ interface ImageLocationStepProps {
 
 export function ImageLocationStep({
   onImagesUpdate,
+  onUploadingChange,
   onMarkerDragEnd,
   description,
   onDescriptionChange,
@@ -42,6 +44,11 @@ export function ImageLocationStep({
   } = useProcessImages()
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    const isUploading = imageProgress.some(p => p >= 0 && p < 100)
+    onUploadingChange?.(isUploading)
+  }, [imageProgress, onUploadingChange])
 
   useEffect(() => {
     onImagesUpdate?.(images)
