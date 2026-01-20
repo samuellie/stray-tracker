@@ -21,7 +21,7 @@ import { Img } from 'react-image'
 import { getPlaceholderImage } from '~/utils/strayImageFallbacks'
 import { useRouter } from '@tanstack/react-router'
 import { authClient } from '~/lib/auth-client'
-import { MoreVertical, X } from 'lucide-react'
+import { ArrowLeft, MoreVertical, X } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,19 +30,21 @@ import {
 } from '~/components/ui/dropdown-menu'
 import { useDeleteSighting } from '~/hooks/server/useDeleteSighting'
 import { ConfirmationDialog } from './ConfirmationDialog'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { useFindInfiniteStraySightings } from '~/hooks/server/useFindInfiniteStraySightings'
+import { calculateDistance } from '~/utils/distance'
+
+type SightingWithDetails = Stray & {
+  sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
+}
 
 interface SightingDialogProps {
-  selectedSighting:
-  | (Stray & {
-    sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-  })
-  | null
+  selectedSighting: SightingWithDetails | null
   onClose: () => void
 }
 
 export function SightingDialog({
-  selectedSighting,
+  selectedSighting: initialSighting,
   onClose,
 }: SightingDialogProps) {
   const router = useRouter()
@@ -50,22 +52,58 @@ export function SightingDialog({
   const [isDeleting, setIsDeleting] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
-  if (!selectedSighting) return null
+  // Stack to keep track of navigation history within the dialog
+  const [sightingHistory, setSightingHistory] = useState<SightingWithDetails[]>([])
+
+  // Current sighting to display is either the top of the stack or the initial prop
+  const currentSighting = sightingHistory.length > 0
+    ? sightingHistory[sightingHistory.length - 1]
+    : initialSighting
+
+  if (!currentSighting) return null
 
   const { data: session } = authClient.useSession()
-  const isOwner = session?.user?.id === selectedSighting.sighting.user.id
+  const isOwner = session?.user?.id === currentSighting.sighting.user.id
 
   const { data: sightingPhotos, isLoading } = useFindSightingPhotos(
-    selectedSighting.sighting.id
+    currentSighting.sighting.id
   )
+
+  const handleBack = () => {
+    setSightingHistory(prev => prev.slice(0, -1))
+  }
+
+  const handleSightingClick = (sighting: any) => {
+    // Construct the SightingWithDetails object from the simple sighting data
+    // Note: We might be missing some deep nested data like full user details if not returned by search
+    // But for display purposes in the dialog, we map what we have.
+    // Ideally, we should fetch the full sighting details, but we can reuse the type if the structure matches.
+
+    // Check if the clicked sighting is already the current one (avoid duplicates)
+    if (sighting.id === currentSighting.sighting.id) return;
+
+    const newSighting: SightingWithDetails = {
+      ...currentSighting, // Inherit stray details
+      sighting: {
+        ...sighting,
+        user: sighting.user || currentSighting.sighting.user, // Fallback if user not in timeline data
+        sightingPhotos: sighting.sightingPhotos || []
+      }
+    }
+    setSightingHistory(prev => [...prev, newSighting])
+  }
 
   const handleDelete = () => {
     setIsDeleting(true)
-    deleteSightingMutation.mutate(selectedSighting.sighting.id, {
+    deleteSightingMutation.mutate(currentSighting.sighting.id, {
       onSuccess: () => {
         setIsDeleting(false)
         setIsDeleteDialogOpen(false)
-        onClose()
+        if (sightingHistory.length > 0) {
+          handleBack()
+        } else {
+          onClose()
+        }
       },
       onError: () => {
         setIsDeleting(false)
@@ -76,36 +114,49 @@ export function SightingDialog({
 
   return (
     <Card className="border-0 max-w-2xl w-full overflow-hidden relative group">
-      <Button
-        variant="ghost"
-        size="sm"
-        className="absolute top-2 right-2 h-8 w-8 rounded-full z-10 bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm"
-        onClick={e => {
-          e.stopPropagation()
-          onClose()
-        }}
-        aria-label="Close popup"
-      >
-        <X className="h-4 w-4" />
-      </Button>
+      <div className="absolute top-2 right-2 z-10 flex gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm"
+          onClick={e => {
+            e.stopPropagation()
+            onClose()
+          }}
+          aria-label="Close popup"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+
 
       {/* User Header - Instagram style */}
       <div className="p-4 flex items-center justify-between border-b border-gray-50">
         <div className="flex items-center gap-3">
+          {sightingHistory.length > 0 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 -ml-2 mr-1 text-muted-foreground hover:text-foreground"
+              onClick={handleBack}
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          )}
           <Avatar className="w-10 h-10 ring-1 ring-primary/10">
-            <AvatarImage src={selectedSighting.sighting.user.image || ''} />
+            <AvatarImage src={currentSighting.sighting.user.image || ''} />
             <AvatarFallback className="text-sm bg-primary/5 text-primary">
-              {selectedSighting.sighting.user.name.charAt(0).toUpperCase()}
+              {currentSighting.sighting.user.name.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
             <span className="text-base font-semibold leading-none text-foreground">
-              {selectedSighting.sighting.user.name}
+              {currentSighting.sighting.user.name}
               {isOwner && ' (me)'}
             </span>
             <span className="text-xs text-muted-foreground mt-1 font-medium uppercase tracking-tight">
               {formatRelativeDate(
-                Number(selectedSighting.sighting.sightingTime)
+                Number(currentSighting.sighting.sightingTime)
               )}
             </span>
           </div>
@@ -142,7 +193,6 @@ export function SightingDialog({
           </div>
         )}
       </div>
-
       {/* Media / Photos */}
       {isLoading ? (
         <div className="w-full h-96 bg-gray-200 flex items-center justify-center">
@@ -162,13 +212,13 @@ export function SightingDialog({
                 <Img
                   src={getPlaceholderImage(
                     sightingPhotos[0].url,
-                    selectedSighting.species === 'cat' ? 'cats' : 'dogs'
+                    currentSighting.species === 'cat' ? 'cats' : 'dogs'
                   )}
-                  alt={`${selectedSighting.species} sighting photo`}
+                  alt={`${currentSighting.species} sighting photo`}
                   className="w-full h-[500px] object-cover"
                 />
               }
-              alt={`${selectedSighting.species} sighting photo`}
+              alt={`${currentSighting.species} sighting photo`}
               className="w-full h-[500px] object-cover"
             />
           ) : (
@@ -187,15 +237,15 @@ export function SightingDialog({
                         <Img
                           src={getPlaceholderImage(
                             photo.url,
-                            selectedSighting.species === 'cat'
+                            currentSighting.species === 'cat'
                               ? 'cats'
                               : 'dogs'
                           )}
-                          alt={`${selectedSighting.species} sighting photo ${index + 1}`}
+                          alt={`${currentSighting.species} sighting photo ${index + 1}`}
                           className="w-full h-[500px] object-cover"
                         />
                       }
-                      alt={`${selectedSighting.species} sighting photo ${index + 1}`}
+                      alt={`${currentSighting.species} sighting photo ${index + 1}`}
                       className="w-full h-[500px] object-cover"
                     />
                   </CarouselItem>
@@ -215,87 +265,195 @@ export function SightingDialog({
         <Img
           src={getPlaceholderImage(
             '',
-            selectedSighting.species === 'cat' ? 'cats' : 'dogs'
+            currentSighting.species === 'cat' ? 'cats' : 'dogs'
           )}
-          alt={`${selectedSighting.species} sighting photo`}
+          alt={`${currentSighting.species} sighting photo`}
           className="w-full h-[500px] object-cover"
         />
       )}
       <CardContent className="px-4 pb-4">
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4">
-            {selectedSighting.name && (
+            {currentSighting.name && (
               <CardTitle className="text-2xl font-bold">
-                {selectedSighting.name}
+                {currentSighting.name}
               </CardTitle>
             )}
           </div>
 
           <div className="flex gap-2 flex-wrap pb-2">
-            {selectedSighting.status && (
+            {currentSighting.status && (
               <Badge variant="outline" className="px-2.5 py-0.5 text-xs font-medium border-primary/20 bg-primary/5 text-primary">
-                {selectedSighting.status}
+                {currentSighting.status}
               </Badge>
             )}
-            {selectedSighting.size && (
+            {currentSighting.size && (
               <Badge variant="outline" className="px-2.5 py-0.5 text-xs font-medium border-primary/20 bg-primary/5 text-primary">
-                {selectedSighting.size}
+                {currentSighting.size}
               </Badge>
             )}
-            {selectedSighting.age && (
+            {currentSighting.age && (
               <Badge variant="outline" className="px-2.5 py-0.5 text-xs font-medium">
-                {selectedSighting.age}
+                {currentSighting.age}
               </Badge>
             )}
-            {selectedSighting.breed && (
+            {currentSighting.breed && (
               <Badge variant="outline" className="px-2.5 py-0.5 text-xs font-medium">
-                {selectedSighting.breed}
+                {currentSighting.breed}
               </Badge>
             )}
-            {selectedSighting.colors && (
+            {currentSighting.colors && (
               <Badge variant="outline" className="px-2.5 py-0.5 text-xs font-medium">
-                {selectedSighting.colors}
+                {currentSighting.colors}
               </Badge>
             )}
-            {selectedSighting.markings && (
+            {currentSighting.markings && (
               <Badge variant="outline" className="px-2.5 py-0.5 text-xs font-medium">
-                {selectedSighting.markings}
+                {currentSighting.markings}
               </Badge>
             )}
           </div>
 
-          {selectedSighting.sighting.description && (
+          {currentSighting.sighting.description && (
             <div className="text-sm leading-relaxed text-muted-foreground italic border-l-2 border-primary/10 pl-4 py-1">
-              &quot;{selectedSighting.sighting.description}&quot;
+              &quot;{currentSighting.sighting.description}&quot;
             </div>
           )}
 
-          {(selectedSighting.healthNotes || selectedSighting.careRequirements) && (
+          {(currentSighting.healthNotes || currentSighting.careRequirements) && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gray-50">
-              {selectedSighting.healthNotes && (
+              {currentSighting.healthNotes && (
                 <div className="space-y-1.5">
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                     Health Notes
                   </span>
                   <p className="text-sm text-foreground leading-relaxed">
-                    {selectedSighting.healthNotes}
+                    {currentSighting.healthNotes}
                   </p>
                 </div>
               )}
-              {selectedSighting.careRequirements && (
+              {currentSighting.careRequirements && (
                 <div className="space-y-1.5">
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                     Care Requirements
                   </span>
                   <p className="text-sm text-foreground leading-relaxed">
-                    {selectedSighting.careRequirements}
+                    {currentSighting.careRequirements}
                   </p>
                 </div>
               )}
             </div>
           )}
         </div>
+
+        {sightingHistory.length === 0 && (
+          <SightingTimeline
+            strayId={currentSighting.id}
+            excludeSightingId={currentSighting.sighting.id}
+            primaryLocation={currentSighting.sighting.lat && currentSighting.sighting.lng ? { lat: currentSighting.sighting.lat, lng: currentSighting.sighting.lng } : null}
+            onSightingClick={handleSightingClick}
+          />
+        )}
       </CardContent>
     </Card>
+  )
+}
+
+function SightingTimeline({
+  strayId,
+  excludeSightingId,
+  primaryLocation,
+  onSightingClick
+}: {
+  strayId: number,
+  excludeSightingId: number,
+  primaryLocation: { lat: number, lng: number } | null
+  onSightingClick: (sighting: any) => void
+}) {
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useFindInfiniteStraySightings(strayId, excludeSightingId)
+  const observerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage) {
+          fetchNextPage()
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    if (observerRef.current) {
+      observer.observe(observerRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [hasNextPage, fetchNextPage])
+
+  const sightings = data?.pages.flatMap((page: any) => page) || []
+
+  if (sightings.length === 0) return null
+
+  return (
+    <div className="mt-6 pt-6 border-t border-gray-100">
+      <h3 className="text-sm font-semibold mb-4 text-foreground">Sighting History</h3>
+      <div className="space-y-4">
+        {sightings.map((sighting: any) => {
+          const distance = primaryLocation
+            ? calculateDistance(
+              primaryLocation.lat,
+              primaryLocation.lng,
+              sighting.lat,
+              sighting.lng
+            )
+            : null
+
+          return (
+            <div
+              key={sighting.id}
+              className="flex gap-3 items-start cursor-pointer hover:bg-gray-50 pt-2 rounded-lg transition-colors group"
+              onClick={() => onSightingClick(sighting)}
+            >
+              <div className="relative w-16 h-16 rounded-md overflow-hidden bg-muted flex-shrink-0 border border-gray-100">
+                {sighting.sightingPhotos && sighting.sightingPhotos.length > 0 ? (
+                  <Img
+                    src={getSightingFullImageUrl(sighting.sightingPhotos[0].url)}
+                    loader={<div className="w-full h-full bg-muted animate-pulse" />}
+                    unloader={
+                      <Img
+                        src={getPlaceholderImage(
+                          sighting.sightingPhotos[0].url,
+                          sighting.stray?.species === 'cat' ? 'cats' : 'dogs'
+                        )}
+                        className="w-full h-full object-cover"
+                      />
+                    }
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground/20 bg-muted">
+                    <span className="text-xs">No img</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0 py-1">
+                <p className="text-sm font-medium text-foreground">
+                  {formatRelativeDate(Number(sighting.sightingTime))}
+                </p>
+                <p className="text-xs text-muted-foreground truncate mt-0.5">
+                  {distance !== null
+                    ? `${distance.toFixed(2)} km from primary location`
+                    : 'Distance unknown'
+                  }
+                </p>
+              </div>
+            </div>
+          )
+        })}
+        <div ref={observerRef} className="h-4 w-full flex items-center justify-center">
+          {isFetchingNextPage && <Spinner className="size-4 opacity-50" />}
+        </div>
+      </div>
+    </div>
   )
 }

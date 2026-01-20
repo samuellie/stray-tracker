@@ -314,11 +314,14 @@ export const searchSightings = createServerFn({ method: 'GET' })
       strayId: z.number().optional(),
       excludeSightingId: z.number().optional(),
       userId: z.string().optional(),
-      limit: z.number().positive().default(50),
+      limit: z.number().positive().default(10),
+      offset: z.number().nonnegative().default(0),
     })
   )
   .handler(
-    async ({ data: { strayId, excludeSightingId, userId, limit = 50 } }) => {
+    async ({
+      data: { strayId, excludeSightingId, userId, limit = 10, offset = 0 },
+    }) => {
       const db = await getDb()
 
       const whereConditions = []
@@ -342,9 +345,13 @@ export const searchSightings = createServerFn({ method: 'GET' })
         where: whereCondition,
         with: {
           stray: true,
+          sightingPhotos: {
+            limit: 1, // We only need the first photo for thumbnail
+          },
         },
         orderBy: [desc(sightings.sightingTime || sightings.createdAt)],
         limit,
+        offset,
       })
 
       return result
