@@ -59,9 +59,11 @@ export function AnimalTypeStep({
 }: AnimalTypeStepProps) {
   const [selectedStray, setSelectedStray] = useState<Stray | null>(null)
 
+  // Skip the nearby-strays query entirely while on the "new animal" branch —
+  // it's wasted work since the matching grid never renders here.
   const { data: nearbyStrays, isLoading: isLoadingStrays } = useNearbyStrays(
-    latitude,
-    longitude,
+    reportingNewAnimal ? undefined : latitude,
+    reportingNewAnimal ? undefined : longitude,
     5 // 5km radius
   )
   return (

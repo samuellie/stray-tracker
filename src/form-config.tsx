@@ -53,48 +53,32 @@ export type AnimalFormData = z.infer<typeof animalFormSchema> & {
 }
 
 // Sighting form schema
-export const sightingFormSchema = z
-  .object({
-    strayId: z.number().optional(),
-    strayName: z.string().max(50, 'Name must be less than 50 characters').optional(),
-    species: z.enum(['cat', 'dog', 'other']).optional(),
-    animalSize: z.enum(['small', 'medium', 'large']).optional(),
-    description: z
-      .string()
-      .min(10, 'Description must be at least 10 characters')
-      .max(1000, 'Description must be less than 1000 characters')
-      .optional(),
-    location: z
-      .string()
-      .min(1, 'Location is required')
-      .max(200, 'Location must be less than 200 characters'),
-    latitude: z
-      .number()
-      .min(-90, 'Invalid latitude')
-      .max(90, 'Invalid latitude'),
-    longitude: z
-      .number()
-      .min(-180, 'Invalid longitude')
-      .max(180, 'Invalid longitude'),
-    date: z.string().refine(value => {
-      const date = new Date(value)
-      return !isNaN(date.getTime()) && date <= new Date()
-    }, 'Date cannot be in the future'),
-  })
-  .refine(
-    data => {
-      // If strayId is not provided, species and animalSize are required
-      if (!data.strayId) {
-        return data.species && data.animalSize
-      }
-      return true
-    },
-    {
-      message:
-        'Species and size are required when reporting a new animal not in the system',
-      path: ['species'], // This will show the error on the species field
-    }
-  )
+export const sightingFormSchema = z.object({
+  strayId: z.number().optional(),
+  strayName: z.string().max(50, 'Name must be less than 50 characters').optional(),
+  species: z.enum(['cat', 'dog', 'other']).optional(),
+  animalSize: z.enum(['small', 'medium', 'large']).optional(),
+  description: z
+    .string()
+    .max(1000, 'Description must be less than 1000 characters')
+    .optional(),
+  location: z
+    .string()
+    .min(1, 'Location is required')
+    .max(200, 'Location must be less than 200 characters'),
+  latitude: z
+    .number()
+    .min(-90, 'Invalid latitude')
+    .max(90, 'Invalid latitude'),
+  longitude: z
+    .number()
+    .min(-180, 'Invalid longitude')
+    .max(180, 'Invalid longitude'),
+  date: z.string().refine(value => {
+    const date = new Date(value)
+    return !isNaN(date.getTime()) && date <= new Date()
+  }, 'Date cannot be in the future'),
+})
 
 export type SightingFormData = z.infer<typeof sightingFormSchema> & {
   images: File[]

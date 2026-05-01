@@ -1,5 +1,5 @@
 import { useForm } from '@tanstack/react-form'
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Button } from '~/components/ui/button'
 import { toast } from 'sonner'
 import { useCreateSighting } from '~/hooks/server/useCreateSighting'
@@ -19,9 +19,10 @@ interface ReportSightingFormProps {
 }
 
 export function ReportSightingForm({ onSuccess, initialLocation }: ReportSightingFormProps) {
-  const [reportingNewAnimal, setReportingNewAnimal] = useState(false)
+  const [reportingNewAnimal, setReportingNewAnimal] = useState(true)
   const [images, setImages] = useState<ProcessedImage[]>([])
   const [isUploading, setIsUploading] = useState(false)
+  const [pendingSubmit, setPendingSubmit] = useState(false)
   const isMobile = useIsMobile()
 
   const steps = [
@@ -62,9 +63,9 @@ export function ReportSightingForm({ onSuccess, initialLocation }: ReportSightin
 
     onSubmit: async ({ value }) => {
       if (isUploading) {
-        toast.info("Uploading your cute photos...", {
-          description: 'Submit again after upload is complete!',
-        })
+        // Arm the submission instead of asking the user to try again. We'll
+        // re-fire onSubmit ourselves the moment uploads finish.
+        setPendingSubmit(true)
         setCurrentStep(1)
         return
       }
@@ -112,6 +113,21 @@ export function ReportSightingForm({ onSuccess, initialLocation }: ReportSightin
   })
 
   const [currentStep, setCurrentStep] = useState(1)
+
+  // Auto-fire the armed submission once uploads finish, but only if the user
+  // had already pressed Submit. Without a ref guard the effect can run twice
+  // in StrictMode and double-submit.
+  const autoSubmittedRef = useRef(false)
+  useEffect(() => {
+    if (pendingSubmit && !isUploading && !autoSubmittedRef.current) {
+      autoSubmittedRef.current = true
+      setPendingSubmit(false)
+      form.handleSubmit()
+    }
+    if (isUploading) {
+      autoSubmittedRef.current = false
+    }
+  }, [pendingSubmit, isUploading, form])
 
   const handleMarkerDragEnd = useCallback(
     (position: { lat: number; lng: number }) => {
@@ -200,7 +216,7 @@ export function ReportSightingForm({ onSuccess, initialLocation }: ReportSightin
           </div>
         </Stepper>
 
-        <div className="flex justify-between bg-background border-t p-4 shrink-0 mt-auto">
+        <div className="flex justify-between bg-background border-t p-4 shrink-0 mt-auto gap-2">
           {currentStep !== 1 ? (
             <Button
               type="button"
@@ -208,31 +224,40 @@ export function ReportSightingForm({ onSuccess, initialLocation }: ReportSightin
               disabled={currentStep === 1}
               variant="outline"
             >
-              Previous
+              Back
             </Button>
           ) : (
-            <div />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleNext}
+              className="text-muted-foreground"
+            >
+              Match to existing stray
+            </Button>
           )}
 
-          {currentStep === steps.length ? (
-            <form.Subscribe
-              selector={state => [state.canSubmit, state.isSubmitting]}
-              children={([canSubmit, isSubmitting]) => (
+          <form.Subscribe
+            selector={state => [state.canSubmit, state.isSubmitting]}
+            children={([canSubmit, isSubmitting]) => {
+              const submitting =
+                isSubmitting || createSightingMutation.isPending
+              const label = pendingSubmit
+                ? 'Submits when upload completes…'
+                : submitting
+                  ? 'Submitting'
+                  : 'Submit'
+              return (
                 <Button
                   type="submit"
-                  disabled={!canSubmit || createSightingMutation.isPending}
+                  disabled={!canSubmit || submitting || pendingSubmit}
                 >
-                  {isSubmitting || createSightingMutation.isPending
-                    ? 'Submitting'
-                    : 'Submit'}
+                  {label}
                 </Button>
-              )}
-            />
-          ) : (
-            <Button type="button" onClick={handleNext}>
-              Next
-            </Button>
-          )}
+              )
+            }}
+          />
         </div>
       </form>
     </div>
