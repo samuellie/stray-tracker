@@ -107,19 +107,6 @@ export function MapComponent({
 
   const debouncedViewState = useDebounce(viewState, 500)
 
-  useEffect(() => {
-    if (onMapStateChange) {
-      // Calculate radius based on zoom level
-      // Approximate visible radius in km: 25000 / 2^zoom
-      const radius = 25000 / Math.pow(2, debouncedViewState.zoom)
-      onMapStateChange({
-        lat: debouncedViewState.latitude,
-        lng: debouncedViewState.longitude,
-        radius,
-      })
-    }
-  }, [debouncedViewState, onMapStateChange])
-
   // Optimize nearby strays fetching
   // Only update the fetching parameters if:
   // 1. Initial load
@@ -170,6 +157,14 @@ export function MapComponent({
     }
   }, [debouncedViewState, mapState, showNearbySightings, fetchParams])
 
+  // Notify parent only when the *gated* fetch params actually change so we
+  // don't trigger a parent re-render on every 500ms debounce tick while the
+  // device is sitting still.
+  useEffect(() => {
+    if (!onMapStateChange || !fetchParams) return
+    onMapStateChange(fetchParams)
+  }, [fetchParams, onMapStateChange])
+
   const { data, isLoading } = useNearbyStrays(
     showNearbySightings ? fetchParams?.lat : undefined,
     showNearbySightings ? fetchParams?.lng : undefined,
@@ -217,6 +212,8 @@ export function MapComponent({
     }
   }
 
+  const lastGeolocateRef = useRef<{ lat: number; lng: number } | null>(null)
+
   const handleOnload = () => {
     if (MapGeolocateControl.current) {
       MapGeolocateControl.current.on(
@@ -226,6 +223,19 @@ export function MapComponent({
             lat: e.coords.latitude,
             lng: e.coords.longitude,
           }
+          // GPS noise can fire dozens of geolocate events while the device
+          // is stationary. Ignore anything under ~10m so we don't keep
+          // re-rendering the map / re-firing parent callbacks.
+          const last = lastGeolocateRef.current
+          if (
+            last &&
+            calculateDistanceInKm(last.lat, last.lng, newPos.lat, newPos.lng) <
+              0.01
+          ) {
+            return
+          }
+          lastGeolocateRef.current = newPos
+
           if (onUserPositionChange) {
             onUserPositionChange(newPos)
           } else {
@@ -245,25 +255,32 @@ export function MapComponent({
     return LOADING_PUNS[Math.floor(Math.random() * LOADING_PUNS.length)]
   }, [showLoading])
 
-  const radiusCircle = useMemo(() => {
-    const center = {
-      lat: mapState?.lat ?? debouncedViewState.latitude,
-      lng: mapState?.lng ?? debouncedViewState.longitude,
-    }
-    const radius =
-      mapState?.radius ?? 25000 / Math.pow(2, debouncedViewState.zoom)
-    return createGeoJSONCircle(center, radius)
-  }, [mapState, debouncedViewState])
+  // Anchor the radius circle / pulse to the gated fetch params so they don't
+  // recompute on every micro-pan; fall back to the live view only until the
+  // first fetch settles.
+  const circleCenter = useMemo(
+    () => ({
+      lat: fetchParams?.lat ?? mapState?.lat ?? debouncedViewState.latitude,
+      lng: fetchParams?.lng ?? mapState?.lng ?? debouncedViewState.longitude,
+    }),
+    [fetchParams, mapState, debouncedViewState.latitude, debouncedViewState.longitude]
+  )
+  const circleRadius =
+    fetchParams?.radius ??
+    mapState?.radius ??
+    25000 / Math.pow(2, debouncedViewState.zoom)
+
+  const radiusCircle = useMemo(
+    () => createGeoJSONCircle(circleCenter, circleRadius),
+    [circleCenter, circleRadius]
+  )
 
   // Pulse animation for query circle
   useMapPulseAnimation({
     mapRef: MapContainer,
     showLoading,
-    center: {
-      lat: mapState?.lat ?? debouncedViewState.latitude,
-      lng: mapState?.lng ?? debouncedViewState.longitude,
-    },
-    radius: mapState?.radius ?? 25000 / Math.pow(2, debouncedViewState.zoom),
+    center: circleCenter,
+    radius: circleRadius,
     zoom: debouncedViewState.zoom,
   })
 
@@ -312,8 +329,13 @@ export function MapComponent({
             ref={MapGeolocateControl}
             position="top-left"
             showUserLocation={!positionInput}
-            trackUserLocation={!positionInput}
-            positionOptions={{ enableHighAccuracy: true }}
+            // Continuous tracking + high-accuracy GPS keeps the GPS chip and
+            // radio active the whole time the map is mounted, which is a
+            // major contributor to device heat (especially while a sighting
+            // is being uploaded with the map sitting behind the sheet).
+            // Take a single high-accuracy fix and stop.
+            trackUserLocation={false}
+            positionOptions={{ enableHighAccuracy: false, maximumAge: 60000 }}
           />
         )}
         {positionInput && (
