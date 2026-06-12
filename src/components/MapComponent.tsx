@@ -10,10 +10,9 @@ import Map, {
   Layer,
 } from 'react-map-gl/maplibre'
 import { useNearbyStrays } from '~/hooks/server/useNearbyStrays'
-import type { Sighting, SightingPhoto, Stray } from 'db/schema'
+import type { SightingWithDetails } from '~/types/sighting'
 import { SightingPopup } from './SightingPopup'
 import { useIsMobile } from '~/hooks/use-mobile'
-import { User } from 'better-auth'
 import { useDebounce } from '~/hooks/use-debounce'
 import { Loader2 } from 'lucide-react'
 import { createGeoJSONCircle, calculateDistanceInKm } from '~/lib/utils'
@@ -31,27 +30,15 @@ interface MapProps {
   currentUserPosition?: { lat: number; lng: number } | null
   initialMarkerPosition?: { lat: number; lng: number } | null
   onUserPositionChange?: (position: { lat: number; lng: number }) => void
-  selectedSighting?: (Stray & {
-    sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-  }) | null
-  onSelectSighting?: (
-    sighting:
-      | (Stray & {
-        sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-      })
-      | null
-  ) => void
+  selectedSighting?: SightingWithDetails | null
+  onSelectSighting?: (sighting: SightingWithDetails | null) => void
   onMapStateChange?: (state: {
     lat: number
     lng: number
     radius: number
   }) => void
   mapState?: { lat: number; lng: number; radius: number } | null
-  onOpenSightingDialog?: (
-    sighting: Stray & {
-      sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-    }
-  ) => void
+  onOpenSightingDialog?: (sighting: SightingWithDetails) => void
 }
 
 
@@ -88,12 +75,8 @@ export function MapComponent({
   const effectiveUserPosition = currentUserPosition !== undefined ? currentUserPosition : internalUserPosition
 
   // Internal state for selected sighting if not controlled
-  const [internalSelectedSighting, setInternalSelectedSighting] = useState<
-    | (Stray & {
-      sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-    })
-    | null
-  >(null)
+  const [internalSelectedSighting, setInternalSelectedSighting] =
+    useState<SightingWithDetails | null>(null)
 
   const effectiveSelectedSighting = selectedSighting !== undefined ? selectedSighting : internalSelectedSighting
   const handleSelectSighting = onSelectSighting || setInternalSelectedSighting

@@ -1,6 +1,6 @@
 import { Popup } from 'react-map-gl/maplibre'
-import { SightingPhoto, type Sighting, type Stray } from 'db/schema'
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import type { SightingWithDetails } from '~/types/sighting'
+import { Card, CardContent, CardTitle } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { formatRelativeDate } from '~/utils/date'
@@ -8,17 +8,12 @@ import { getSightingThumbnailUrl } from '~/utils/files'
 import { getPlaceholderImage } from '~/utils/strayImageFallbacks'
 import { X } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
-import { User } from 'better-auth'
 import { Img } from 'react-image'
 import { Spinner } from '~/components/ui/spinner'
 import { authClient } from '~/lib/auth-client'
 
 interface SightingPopupProps {
-  selectedSighting:
-  | (Stray & {
-    sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-  })
-  | null
+  selectedSighting: SightingWithDetails | null
   onClose: () => void
   onOpenDialog?: () => void
 }
@@ -28,9 +23,9 @@ export function SightingPopup({
   onClose,
   onOpenDialog,
 }: SightingPopupProps) {
-  if (!selectedSighting) return null
-
   const { data: session } = authClient.useSession()
+
+  if (!selectedSighting) return null
 
   const sightingPhotos = selectedSighting.sighting.sightingPhotos
   const primaryPhoto = sightingPhotos?.[0] // Use first photo as primary

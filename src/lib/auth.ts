@@ -8,7 +8,7 @@ import { drizzle } from 'drizzle-orm/d1'
 
 const createAuth = (env?: Env, cf?: IncomingRequestCfProperties) => {
   const db = env
-    ? drizzle(env.DB, { schema: schema, logger: true })
+    ? drizzle(env.DB, { schema: schema, logger: import.meta.env.DEV })
     : ({} as any)
   return betterAuth(
     withCloudflare(
@@ -24,7 +24,9 @@ const createAuth = (env?: Env, cf?: IncomingRequestCfProperties) => {
             debugLogs: true,
           },
         },
-        kv: env?.CACHE,
+        // Cast: wrangler-generated Env types differ from the
+        // @cloudflare/workers-types version better-auth-cloudflare expects
+        kv: env?.CACHE as Parameters<typeof withCloudflare>[0]['kv'],
         r2: env
           ? {
               bucket: env.USER_PROFILE_BUCKET,

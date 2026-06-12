@@ -170,18 +170,18 @@ export const animalFormDefaults: Partial<AnimalFormData> = {
 
 export const sightingFormDefaults: Partial<SightingFormData> = {
   strayName: '',
-  species: 'cat',
-  animalSize: 'small',
+  species: undefined,
+  animalSize: undefined,
 }
 
 export const signupFormDefaults: Partial<SignupFormData> = {
-  name: 'samuel',
-  email: 'user@email.com',
-  password: 'password',
-  confirmPassword: 'password',
+  name: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
 }
 
 export const loginFormDefaults: LoginFormData = {
-  email: 'user@email.com',
-  password: 'password',
+  email: '',
+  password: '',
 }

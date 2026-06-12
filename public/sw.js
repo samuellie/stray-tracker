@@ -2,6 +2,11 @@
 // IMPORTANT: This version should be updated on each deployment
 // You can use a build script to inject the build timestamp or git hash
 const VERSION = '1.0.0-2026-01-20T12-11-37-993Z' // This will be replaced during build
+const DEBUG = false
+function swLog(...args) {
+  if (DEBUG) console.log(...args)
+}
+
 const CACHE_NAME = `stray-tracker-${VERSION}`
 const STATIC_CACHE_NAME = `stray-tracker-static-${VERSION}`
 const DYNAMIC_CACHE_NAME = `stray-tracker-dynamic-${VERSION}`
@@ -17,15 +22,15 @@ const STATIC_ASSETS = [
 
 // Install event - cache static assets
 self.addEventListener('install', event => {
-  console.log('[ServiceWorker] Install')
+  swLog('[ServiceWorker] Install')
   event.waitUntil(
     caches.open(STATIC_CACHE_NAME)
       .then(cache => {
-        console.log('[ServiceWorker] Caching static assets')
+        swLog('[ServiceWorker] Caching static assets')
         return cache.addAll(STATIC_ASSETS)
       })
       .catch(error => {
-        console.log('[ServiceWorker] Error caching static assets:', error)
+        swLog('[ServiceWorker] Error caching static assets:', error)
       })
   )
   self.skipWaiting()
@@ -33,14 +38,14 @@ self.addEventListener('install', event => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', event => {
-  console.log('[ServiceWorker] Activate')
+  swLog('[ServiceWorker] Activate')
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames
           .filter(cacheName => cacheName !== STATIC_CACHE_NAME && cacheName !== DYNAMIC_CACHE_NAME)
           .map(cacheName => {
-            console.log('[ServiceWorker] Deleting old cache:', cacheName)
+            swLog('[ServiceWorker] Deleting old cache:', cacheName)
             return caches.delete(cacheName)
           })
       )
@@ -134,7 +139,7 @@ self.addEventListener('fetch', event => {
 
 // Background sync for offline actions
 self.addEventListener('sync', event => {
-  console.log('[ServiceWorker] Background sync triggered:', event.tag)
+  swLog('[ServiceWorker] Background sync triggered:', event.tag)
 
   if (event.tag === 'background-sync') {
     event.waitUntil(doBackgroundSync())
@@ -152,17 +157,17 @@ async function doBackgroundSync() {
         // Remove from pending actions
         await removePendingAction(action.id)
       } catch (error) {
-        console.log('[ServiceWorker] Background sync failed for action:', action, error)
+        swLog('[ServiceWorker] Background sync failed for action:', action, error)
       }
     }
   } catch (error) {
-    console.log('[ServiceWorker] Background sync error:', error)
+    swLog('[ServiceWorker] Background sync error:', error)
   }
 }
 
 // Push notification event
 self.addEventListener('push', event => {
-  console.log('[ServiceWorker] Push received')
+  swLog('[ServiceWorker] Push received')
 
   if (!event.data) return
 
@@ -186,7 +191,7 @@ self.addEventListener('push', event => {
 
 // Notification click event
 self.addEventListener('notificationclick', event => {
-  console.log('[ServiceWorker] Notification clicked')
+  swLog('[ServiceWorker] Notification clicked')
 
   event.notification.close()
 
@@ -220,7 +225,7 @@ async function removePendingAction(id) {
 
 // Message event - handle commands from the app
 self.addEventListener('message', event => {
-  console.log('[ServiceWorker] Message received:', event.data)
+  swLog('[ServiceWorker] Message received:', event.data)
 
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting()

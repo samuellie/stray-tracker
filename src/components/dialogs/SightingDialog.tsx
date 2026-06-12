@@ -1,9 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
-import { SightingPhoto, type Sighting, type Stray } from 'db/schema'
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import { Card, CardContent, CardTitle } from '~/components/ui/card'
 import { Button } from '~/components/ui/button'
 import { Badge } from '~/components/ui/badge'
-import { Separator } from '~/components/ui/separator'
 import { Spinner } from '~/components/ui/spinner'
 import { formatRelativeDate } from '~/utils/date'
 import {
@@ -15,11 +13,9 @@ import {
   CarouselDots,
 } from '~/components/ui/carousel'
 import { useFindSightingPhotos } from '~/hooks/server/useFindSightingPhotos'
-import { getSightingFullImageUrl } from '~/utils/files'
-import { User } from 'better-auth'
+import { getSightingFullImageUrl, getSightingThumbnailUrl } from '~/utils/files'
 import { Img } from 'react-image'
 import { getPlaceholderImage } from '~/utils/strayImageFallbacks'
-import { useRouter } from '@tanstack/react-router'
 import { authClient } from '~/lib/auth-client'
 import { ArrowLeft, MoreVertical, X } from 'lucide-react'
 import {
@@ -33,10 +29,7 @@ import { ConfirmationDialog } from './ConfirmationDialog'
 import { useState, useRef, useEffect } from 'react'
 import { useFindInfiniteStraySightings } from '~/hooks/server/useFindInfiniteStraySightings'
 import { calculateDistance } from '~/utils/distance'
-
-type SightingWithDetails = Stray & {
-  sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-}
+import type { SightingWithDetails, TimelineSighting } from '~/types/sighting'
 
 interface SightingDialogProps {
   selectedSighting: SightingWithDetails | null
@@ -47,7 +40,6 @@ export function SightingDialog({
   selectedSighting: initialSighting,
   onClose,
 }: SightingDialogProps) {
-  const router = useRouter()
   const deleteSightingMutation = useDeleteSighting()
   const [isDeleting, setIsDeleting] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -60,33 +52,31 @@ export function SightingDialog({
     ? sightingHistory[sightingHistory.length - 1]
     : initialSighting
 
+  const { data: session } = authClient.useSession()
+  const { data: sightingPhotos, isLoading } = useFindSightingPhotos(
+    currentSighting?.sighting.id
+  )
+
   if (!currentSighting) return null
 
-  const { data: session } = authClient.useSession()
   const isOwner = session?.user?.id === currentSighting.sighting.user.id
-
-  const { data: sightingPhotos, isLoading } = useFindSightingPhotos(
-    currentSighting.sighting.id
-  )
 
   const handleBack = () => {
     setSightingHistory(prev => prev.slice(0, -1))
   }
 
-  const handleSightingClick = (sighting: any) => {
-    // Construct the SightingWithDetails object from the simple sighting data
-    // Note: We might be missing some deep nested data like full user details if not returned by search
-    // But for display purposes in the dialog, we map what we have.
-    // Ideally, we should fetch the full sighting details, but we can reuse the type if the structure matches.
-
+  const handleSightingClick = (sighting: TimelineSighting) => {
     // Check if the clicked sighting is already the current one (avoid duplicates)
-    if (sighting.id === currentSighting.sighting.id) return;
+    if (sighting.id === currentSighting.sighting.id) return
 
+    // Construct the SightingWithDetails object from the timeline data; the
+    // timeline doesn't include the reporting user, so fall back to the
+    // current sighting's user for display purposes.
     const newSighting: SightingWithDetails = {
       ...currentSighting, // Inherit stray details
       sighting: {
         ...sighting,
-        user: sighting.user || currentSighting.sighting.user, // Fallback if user not in timeline data
+        user: sighting.user || currentSighting.sighting.user,
         sightingPhotos: sighting.sightingPhotos || []
       }
     }
@@ -368,7 +358,7 @@ function SightingTimeline({
   strayId: number,
   excludeSightingId: number,
   primaryLocation: { lat: number, lng: number } | null
-  onSightingClick: (sighting: any) => void
+  onSightingClick: (sighting: TimelineSighting) => void
 }) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useFindInfiniteStraySightings(strayId, excludeSightingId)
   const observerRef = useRef<HTMLDivElement>(null)
@@ -390,7 +380,7 @@ function SightingTimeline({
     return () => observer.disconnect()
   }, [hasNextPage, fetchNextPage])
 
-  const sightings = data?.pages.flatMap((page: any) => page) || []
+  const sightings = data?.pages.flatMap(page => page) || []
 
   if (sightings.length === 0) return null
 
@@ -398,7 +388,7 @@ function SightingTimeline({
     <div className="mt-6 pt-6 border-t border-gray-100">
       <h3 className="text-sm font-semibold mb-4 text-foreground">Sighting History</h3>
       <div className="space-y-4">
-        {sightings.map((sighting: any) => {
+        {sightings.map(sighting => {
           const distance = primaryLocation
             ? calculateDistance(
               primaryLocation.lat,
@@ -417,7 +407,7 @@ function SightingTimeline({
               <div className="relative w-16 h-16 rounded-md overflow-hidden bg-muted flex-shrink-0 border border-gray-100">
                 {sighting.sightingPhotos && sighting.sightingPhotos.length > 0 ? (
                   <Img
-                    src={getSightingFullImageUrl(sighting.sightingPhotos[0].url)}
+                    src={getSightingThumbnailUrl(sighting.sightingPhotos[0].url)}
                     loader={<div className="w-full h-full bg-muted animate-pulse" />}
                     unloader={
                       <Img
@@ -425,9 +415,11 @@ function SightingTimeline({
                           sighting.sightingPhotos[0].url,
                           sighting.stray?.species === 'cat' ? 'cats' : 'dogs'
                         )}
+                        alt={`Sighting ${formatRelativeDate(Number(sighting.sightingTime))}`}
                         className="w-full h-full object-cover"
                       />
                     }
+                    alt={`Sighting ${formatRelativeDate(Number(sighting.sightingTime))}`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (

@@ -12,9 +12,10 @@ import { ImageLocationStep } from '~/components/sighting-form-steps/ImageLocatio
 import { AnimalTypeStep } from '~/components/sighting-form-steps/AnimalTypeStep'
 import { type ProcessedImage } from '~/hooks/useProcessImages'
 import { useIsMobile } from '~/hooks/use-mobile'
+import type { CreatedSighting } from '~/types/sighting'
 
 interface ReportSightingFormProps {
-  onSuccess?: (sighting?: any) => void
+  onSuccess?: (sighting?: CreatedSighting) => void
   initialLocation?: { lat: number; lng: number; address?: string } | null
 }
 

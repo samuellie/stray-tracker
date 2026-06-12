@@ -9,19 +9,14 @@ import { getSightingThumbnailUrl } from '~/utils/files'
 import { getPlaceholderImage } from '~/utils/strayImageFallbacks'
 import { Img } from 'react-image'
 import { Spinner } from '~/components/ui/spinner'
-import type { Stray, Sighting, SightingPhoto } from 'db/schema'
-import type { User } from 'better-auth'
+import type { SightingWithDetails } from '~/types/sighting'
 
 interface StrayListProps {
   currentUserPosition: { lat: number; lng: number } | null
   mapState: { lat: number; lng: number; radius: number } | null
   isExpanded?: boolean
   onToggleExpand?: (expanded: boolean) => void
-  onStrayClick?: (
-    stray: Stray & {
-      sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-    }
-  ) => void
+  onStrayClick?: (stray: SightingWithDetails) => void
   onAddSighting?: () => void
 }
 

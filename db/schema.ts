@@ -536,42 +536,6 @@ export const careRecordsRelations = relations(careRecords, ({ one }) => ({
   }),
 }))
 
-// Indexes for better performance
-export const indexes = {
-  // strays indexes
-  idxstraysSpecies: sql`CREATE INDEX strays_species ON strays(species)`,
-  idxstraysStatus: sql`CREATE INDEX strays_status ON strays(status)`,
-  idxstraysUpdatedAt: sql`CREATE INDEX strays_updated_at ON strays(updated_at)`,
-
-  // Sightings indexes
-  idxSightingsstrayId: sql`CREATE INDEX sightings_stray_id ON sightings(stray_id)`,
-  idxSightingsUserId: sql`CREATE INDEX sightings_user_id ON sightings(user_id)`,
-  idxSightingsCreatedAt: sql`CREATE INDEX sightings_created_at ON sightings(created_at)`,
-
-  // Subscriptions indexes
-  idxSubscriptionsUserId: sql`CREATE INDEX subscriptions_user_id ON stray_subscriptions(user_id)`,
-  idxSubscriptionsstrayId: sql`CREATE INDEX subscriptions_stray_id ON stray_subscriptions(stray_id)`,
-
-  // Naming indexes
-  idxNamingSuggestionsstrayId: sql`CREATE INDEX naming_suggestions_stray_id ON naming_suggestions(stray_id)`,
-  idxNamingVotesSuggestionId: sql`CREATE INDEX naming_votes_suggestion_id ON naming_votes(naming_suggestion_id)`,
-
-  // Community indexes
-  idxCommunityPostsAuthorId: sql`CREATE INDEX community_posts_author_id ON community_posts(author_id)`,
-  idxCommunityPostsType: sql`CREATE INDEX community_posts_type ON community_posts(post_type)`,
-  idxCommunityPostsPublishedAt: sql`CREATE INDEX community_posts_published_at ON community_posts(published_at)`,
-
-  // Tracking indexes
-  idxTrackingRequestsStatus: sql`CREATE INDEX tracking_requests_status ON tracking_requests(status)`,
-
-  // Media indexes
-  idxstrayPhotosstrayId: sql`CREATE INDEX stray_photos_stray_id ON stray_photos(stray_id)`,
-  idxSightingPhotosSightingId: sql`CREATE INDEX sighting_photos_sighting_id ON sighting_photos(sighting_id)`,
-
-  // Achievements indexes
-  idxUserAchievementsUserId: sql`CREATE INDEX user_achievements_user_id ON user_achievements(user_id)`,
-} as const
-
 export default {
   ...authSchema,
   strays,

@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react'
 import imageCompression from 'browser-image-compression'
 import { generateSessionKey, uploadSightingPhoto } from '~/server/files'
-import { file } from 'better-auth'
 import { getBaseFileName } from '~/lib/utils'
 
 export interface ProcessedImage {

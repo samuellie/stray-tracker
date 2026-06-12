@@ -9,38 +9,6 @@ import { adminOnlyMw, moderatorMw, userMw } from '../utils/auth-middleware'
 
 const BUCKET_BASE_URL = 'https://stray-tracker-animal-photos.pages.dev'
 
-// Get sightings within a certain radius of a lat/lng coordinate
-export const getNearbySightings = createServerFn({ method: 'GET' })
-  .middleware([userMw])
-  .inputValidator((input: { lat: number; lng: number; radius?: number }) => {
-    if (typeof input.lat !== 'number' || typeof input.lng !== 'number') {
-      throw new Error('lat and lng must be numbers')
-    }
-    if (
-      input.radius !== undefined &&
-      (typeof input.radius !== 'number' || input.radius <= 0)
-    ) {
-      throw new Error('radius must be a positive number')
-    }
-    return input
-  })
-  .handler(async ({ data: { lat, lng, radius = 5 } }) => {
-    const db = await getDb()
-
-    // Use haversine formula to calculate distance in kilometers
-    // Earth's radius is approximately 6371 km
-    // Convert degrees to radians: degrees * π / 180
-    const result = await db.query.sightings.findMany({
-      where: sql`(6371 * acos(cos(${lat} * 3.141592653589793 / 180) * cos(${sightings.lat} * 3.141592653589793 / 180) * cos((${sightings.lng} * 3.141592653589793 / 180) - (${lng} * 3.141592653589793 / 180)) + sin(${lat} * 3.141592653589793 / 180) * sin(${sightings.lat} * 3.141592653589793 / 180))) < ${radius}`,
-      with: {
-        stray: true,
-      },
-      orderBy: [desc(sightings.sightingTime || sightings.createdAt)],
-    })
-
-    return result
-  })
-
 // Get a single sighting by ID
 export const getSighting = createServerFn({ method: 'GET' })
   .middleware([userMw])

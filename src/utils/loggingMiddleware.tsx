@@ -30,12 +30,14 @@ export const logMiddleware = createMiddleware({ type: 'function' })
   .client(async ctx => {
     const res = await ctx.next()
 
-    const now = new Date()
-    console.log('Client Req/Res:', {
-      duration: now.getTime() - res.context.clientTime.getTime(),
-      durationToServer: res.context.durationToServer,
-      durationFromServer: now.getTime() - res.context.serverTime.getTime(),
-    })
+    if (import.meta.env?.DEV) {
+      const now = new Date()
+      console.log('Client Req/Res:', {
+        duration: now.getTime() - res.context.clientTime.getTime(),
+        durationToServer: res.context.durationToServer,
+        durationFromServer: now.getTime() - res.context.serverTime.getTime(),
+      })
+    }
 
     return res
   })

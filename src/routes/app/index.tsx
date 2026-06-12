@@ -12,8 +12,7 @@ import { useState } from 'react'
 import { useIsMobile } from '~/hooks/use-mobile'
 
 import { StrayList } from '~/components/StrayList'
-import type { Stray, Sighting, SightingPhoto } from 'db/schema'
-import type { User } from 'better-auth'
+import type { CreatedSighting, SightingWithDetails } from '~/types/sighting'
 import { SightingDialog } from '~/components/dialogs/SightingDialog'
 
 export const Route = createFileRoute('/app/')({
@@ -27,12 +26,8 @@ function Home() {
     lat: number
     lng: number
   } | null>(null)
-  const [selectedSighting, setSelectedSighting] = useState<
-    | (Stray & {
-      sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-    })
-    | null
-  >(null)
+  const [selectedSighting, setSelectedSighting] =
+    useState<SightingWithDetails | null>(null)
   const [isStrayListExpanded, setIsStrayListExpanded] = useState(false)
 
   const [mapState, setMapState] = useState<{
@@ -42,35 +37,22 @@ function Home() {
   } | null>(null)
 
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedSightingForDialog, setSelectedSightingForDialog] = useState<
-    | (Stray & {
-      sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-    })
-    | null
-  >(null)
+  const [selectedSightingForDialog, setSelectedSightingForDialog] =
+    useState<SightingWithDetails | null>(null)
 
-  const handleOpenSightingDialog = (
-    sighting: Stray & {
-      sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-    }
-  ) => {
+  const handleOpenSightingDialog = (sighting: SightingWithDetails) => {
     setSelectedSightingForDialog(sighting)
     setDialogOpen(true)
   }
 
-  const handleSightingSubmitSuccess = (sighting: any) => {
+  const handleSightingSubmitSuccess = (sighting?: CreatedSighting) => {
     setIsPopoverOpen(false)
     if (sighting) {
-      const strayResult = { ...sighting.stray, sighting: sighting }
-      handleOpenSightingDialog(strayResult)
+      handleOpenSightingDialog({ ...sighting.stray, sighting })
     }
   }
 
-  const handleStrayClick = (
-    stray: Stray & {
-      sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-    }
-  ) => {
+  const handleStrayClick = (stray: SightingWithDetails) => {
     setSelectedSighting(stray)
     setIsStrayListExpanded(false)
   }

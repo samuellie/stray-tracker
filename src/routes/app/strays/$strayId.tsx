@@ -10,28 +10,17 @@ import { Img } from 'react-image'
 import { Spinner } from '~/components/ui/spinner'
 import { Button } from '~/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
-import { User } from 'better-auth'
 import { Dialog, DialogContent } from '~/components/ui/dialog'
 import { SightingDialog } from '~/components/dialogs/SightingDialog'
 import { useIsMobile } from '~/hooks/use-mobile'
 import { getSightingThumbnailUrl } from '~/utils/files'
-import type { Stray, Sighting, SightingPhoto } from 'db/schema'
+import type { SightingWithDetails, StrayWithRelations } from '~/types/sighting'
 import { authClient } from '~/lib/auth-client'
 import { useDeleteSighting } from '~/hooks/server/useDeleteSighting'
 import { ConfirmationDialog } from '~/components/dialogs/ConfirmationDialog'
 import { toast } from 'sonner'
 import { useRouter } from '@tanstack/react-router'
 import { Trash2 } from 'lucide-react'
-
-type StrayWithRelations = Stray & {
-  caretaker?: User
-  sightings: Array<
-    Sighting & {
-      user: User
-      sightingPhotos: SightingPhoto[]
-    }
-  >
-}
 
 export const Route = createFileRoute('/app/strays/$strayId')({
   component: StrayDetailPage,
@@ -47,12 +36,8 @@ function StrayDetailPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [sightingToDelete, setSightingToDelete] = useState<number | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedSightingForDialog, setSelectedSightingForDialog] = useState<
-    | (Stray & {
-      sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-    })
-    | null
-  >(null)
+  const [selectedSightingForDialog, setSelectedSightingForDialog] =
+    useState<SightingWithDetails | null>(null)
 
   const { data: stray, isLoading, error } = useFindStrayById(strayIdNum)
 
