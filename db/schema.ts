@@ -1,11 +1,21 @@
-import { sqliteTable, text, integer, real, blob } from 'drizzle-orm/sqlite-core'
+import {
+  sqliteTable,
+  text,
+  integer,
+  real,
+  blob,
+  index,
+  uniqueIndex,
+} from 'drizzle-orm/sqlite-core'
 import { relations, sql } from 'drizzle-orm'
 import * as authSchema from './auth.schema'
 
 export * from './auth.schema'
 
 // Stray table - detailed stray profiles
-export const strays = sqliteTable('strays', {
+export const strays = sqliteTable(
+  'strays',
+  {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name'),
   species: text('species', { enum: ['cat', 'dog', 'other'] }).notNull(),
@@ -36,7 +46,12 @@ export const strays = sqliteTable('strays', {
   updatedAt: integer('updated_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
-})
+  },
+  t => [
+    index('strays_status_idx').on(t.status),
+    index('strays_updated_at_idx').on(t.updatedAt),
+  ]
+)
 export const straysRelations = relations(strays, ({ one, many }) => ({
   caretaker: one(authSchema.users, {
     fields: [strays.caretakerId],
@@ -52,7 +67,9 @@ export const straysRelations = relations(strays, ({ one, many }) => ({
 }))
 
 // Sightings table - stray sighting reports
-export const sightings = sqliteTable('sightings', {
+export const sightings = sqliteTable(
+  'sightings',
+  {
   id: integer('id').primaryKey({ autoIncrement: true }),
   strayId: integer('stray_id')
     .references(() => strays.id)
@@ -79,7 +96,15 @@ export const sightings = sqliteTable('sightings', {
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
-})
+  },
+  t => [
+    // Drives latest-sighting-per-stray lookups
+    index('sightings_stray_time_idx').on(t.strayId, t.sightingTime),
+    // Drives bounding-box prefilters for nearby queries
+    index('sightings_lat_lng_idx').on(t.lat, t.lng),
+    index('sightings_user_id_idx').on(t.userId),
+  ]
+)
 
 export const sightingsRelations = relations(sightings, ({ one, many }) => ({
   stray: one(strays, {
@@ -126,7 +151,9 @@ export const strayPhotosRelations = relations(strayPhotos, ({ one }) => ({
 }))
 
 // Sighting photos table - photos from sightings
-export const sightingPhotos = sqliteTable('sighting_photos', {
+export const sightingPhotos = sqliteTable(
+  'sighting_photos',
+  {
   id: integer('id').primaryKey({ autoIncrement: true }),
   sightingId: integer('sighting_id')
     .references(() => sightings.id)
@@ -142,7 +169,9 @@ export const sightingPhotos = sqliteTable('sighting_photos', {
   uploadedAt: integer('uploaded_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
-})
+  },
+  t => [index('sighting_photos_sighting_id_idx').on(t.sightingId)]
+)
 
 export const sightingPhotosRelations = relations(sightingPhotos, ({ one }) => ({
   sighting: one(sightings, {
@@ -156,7 +185,9 @@ export const sightingPhotosRelations = relations(sightingPhotos, ({ one }) => ({
 }))
 
 // stray subscriptions table - user subscriptions to strays or locations
-export const straySubscriptions = sqliteTable('stray_subscriptions', {
+export const straySubscriptions = sqliteTable(
+  'stray_subscriptions',
+  {
   id: integer('id').primaryKey({ autoIncrement: true }),
   userId: text('user_id')
     .references(() => authSchema.users.id)
@@ -181,7 +212,12 @@ export const straySubscriptions = sqliteTable('stray_subscriptions', {
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
-})
+  },
+  t => [
+    index('stray_subscriptions_user_id_idx').on(t.userId),
+    uniqueIndex('stray_subscriptions_stray_user_idx').on(t.strayId, t.userId),
+  ]
+)
 
 export const straySubscriptionsRelations = relations(
   straySubscriptions,
@@ -198,7 +234,9 @@ export const straySubscriptionsRelations = relations(
 )
 
 // Naming suggestions table - community naming suggestions for strays
-export const namingSuggestions = sqliteTable('naming_suggestions', {
+export const namingSuggestions = sqliteTable(
+  'naming_suggestions',
+  {
   id: integer('id').primaryKey({ autoIncrement: true }),
   strayId: integer('stray_id')
     .references(() => strays.id)
@@ -212,7 +250,9 @@ export const namingSuggestions = sqliteTable('naming_suggestions', {
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
-})
+  },
+  t => [index('naming_suggestions_stray_id_idx').on(t.strayId)]
+)
 
 export const namingSuggestionsRelations = relations(
   namingSuggestions,
@@ -230,7 +270,9 @@ export const namingSuggestionsRelations = relations(
 )
 
 // Naming votes table - votes for naming suggestions
-export const namingVotes = sqliteTable('naming_votes', {
+export const namingVotes = sqliteTable(
+  'naming_votes',
+  {
   id: integer('id').primaryKey({ autoIncrement: true }),
   namingSuggestionId: integer('naming_suggestion_id')
     .references(() => namingSuggestions.id)
@@ -242,7 +284,15 @@ export const namingVotes = sqliteTable('naming_votes', {
   votedAt: integer('voted_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
-})
+  },
+  t => [
+    // One vote per user per suggestion (vote changes are upserts)
+    uniqueIndex('naming_votes_suggestion_user_idx').on(
+      t.namingSuggestionId,
+      t.userId
+    ),
+  ]
+)
 
 export const namingVotesRelations = relations(namingVotes, ({ one }) => ({
   namingSuggestion: one(namingSuggestions, {
