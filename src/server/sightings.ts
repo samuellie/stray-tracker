@@ -19,6 +19,8 @@ export const getSighting = createServerFn({ method: 'GET' })
       where: eq(sightings.id, id),
       with: {
         stray: true,
+        user: true,
+        sightingPhotos: true,
       },
     })
 

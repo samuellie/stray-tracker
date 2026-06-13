@@ -28,6 +28,8 @@ import {
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { useDeleteSighting } from '~/hooks/server/useDeleteSighting'
+import { useSightingById } from '~/hooks/server/useSightingById'
+import { Skeleton } from '~/components/ui/skeleton'
 import { ConfirmationDialog } from './ConfirmationDialog'
 import { useState, useRef, useEffect } from 'react'
 import { useFindInfiniteStraySightings } from '~/hooks/server/useFindInfiniteStraySightings'
@@ -35,54 +37,82 @@ import { calculateDistance } from '~/utils/distance'
 import type { SightingWithDetails, TimelineSighting } from '~/types/sighting'
 
 interface SightingDialogProps {
-  selectedSighting: SightingWithDetails | null
+  /** The sighting id to display — usually driven by the ?sighting URL param */
+  sightingId?: number
+  /** Already-loaded data rendered instantly while the fetch confirms it */
+  initialSighting?: SightingWithDetails | null
+  /** Navigate to another sighting (pushes a history entry, so back works) */
+  onNavigateToSighting: (id: number) => void
+  /** Whether in-dialog navigation happened (shows the back arrow) */
+  canGoBack?: boolean
+  onBack?: () => void
   onClose: () => void
 }
 
 export function SightingDialog({
-  selectedSighting: initialSighting,
+  sightingId,
+  initialSighting,
+  onNavigateToSighting,
+  canGoBack = false,
+  onBack,
   onClose,
 }: SightingDialogProps) {
   const deleteSightingMutation = useDeleteSighting()
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
-  // Stack to keep track of navigation history within the dialog
-  const [sightingHistory, setSightingHistory] = useState<SightingWithDetails[]>([])
+  const requestedId = sightingId ?? initialSighting?.sighting.id
+  const { data: fetched } = useSightingById(requestedId)
 
-  // Current sighting to display is either the top of the stack or the initial prop
-  const currentSighting = sightingHistory.length > 0
-    ? sightingHistory[sightingHistory.length - 1]
-    : initialSighting
+  // Prefer fresh data from the server; fall back to the prop while loading
+  // (but never show a stale placeholder for a *different* sighting id)
+  const currentSighting: SightingWithDetails | null =
+    fetched && fetched.stray
+      ? {
+        ...fetched.stray,
+        sighting: {
+          ...fetched,
+          user: fetched.user,
+          sightingPhotos: fetched.sightingPhotos,
+        },
+      }
+      : initialSighting && initialSighting.sighting.id === requestedId
+        ? initialSighting
+        : null
 
   const { data: session } = authClient.useSession()
   const { data: sightingPhotos, isLoading } = useFindSightingPhotos(
     currentSighting?.sighting.id
   )
 
-  if (!currentSighting) return null
+  if (!requestedId) return null
+
+  if (!currentSighting) {
+    return (
+      <Card className="border-0 max-w-2xl w-full overflow-hidden">
+        <div className="p-4 flex items-center gap-3 border-b border-gray-50">
+          <Skeleton className="w-10 h-10 rounded-full" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+        </div>
+        <Skeleton className="w-full h-[500px] rounded-none" />
+        <div className="p-4 space-y-3">
+          <Skeleton className="h-6 w-40" />
+          <div className="flex gap-2">
+            <Skeleton className="h-5 w-16 rounded-full" />
+            <Skeleton className="h-5 w-14 rounded-full" />
+          </div>
+        </div>
+      </Card>
+    )
+  }
 
   const isOwner = session?.user?.id === currentSighting.sighting.user.id
 
-  const handleBack = () => {
-    setSightingHistory(prev => prev.slice(0, -1))
-  }
-
   const handleSightingClick = (sighting: TimelineSighting) => {
-    // Check if the clicked sighting is already the current one (avoid duplicates)
     if (sighting.id === currentSighting.sighting.id) return
-
-    // Construct the SightingWithDetails object from the timeline data; the
-    // timeline doesn't include the reporting user, so fall back to the
-    // current sighting's user for display purposes.
-    const newSighting: SightingWithDetails = {
-      ...currentSighting, // Inherit stray details
-      sighting: {
-        ...sighting,
-        user: sighting.user || currentSighting.sighting.user,
-        sightingPhotos: sighting.sightingPhotos || []
-      }
-    }
-    setSightingHistory(prev => [...prev, newSighting])
+    onNavigateToSighting(sighting.id)
   }
 
   const strayLabel = currentSighting.name || `this ${currentSighting.species}`
@@ -93,10 +123,10 @@ export function SightingDialog({
   )
 
   const handleDelete = () => {
-    const sightingId = currentSighting.sighting.id
+    const deletedId = currentSighting.sighting.id
     setIsDeleteDialogOpen(false)
-    if (sightingHistory.length > 0) {
-      handleBack()
+    if (canGoBack && onBack) {
+      onBack()
     } else {
       onClose()
     }
@@ -104,7 +134,7 @@ export function SightingDialog({
       message: 'Sighting deleted',
       description: `The sighting of ${strayLabel} from ${sightingDateLabel} was removed.`,
       onCommit: () =>
-        deleteSightingMutation.mutate(sightingId, {
+        deleteSightingMutation.mutate(deletedId, {
           onError: error => {
             const { title, description } = getErrorMessage(
               error,
@@ -137,12 +167,13 @@ export function SightingDialog({
       {/* User Header - Instagram style */}
       <div className="p-4 flex items-center justify-between border-b border-gray-50">
         <div className="flex items-center gap-3">
-          {sightingHistory.length > 0 && (
+          {canGoBack && onBack && (
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8 -ml-2 mr-1 text-muted-foreground hover:text-foreground"
-              onClick={handleBack}
+              onClick={onBack}
+              aria-label="Back to previous sighting"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -348,14 +379,12 @@ export function SightingDialog({
           )}
         </div>
 
-        {sightingHistory.length === 0 && (
-          <SightingTimeline
-            strayId={currentSighting.id}
-            excludeSightingId={currentSighting.sighting.id}
-            primaryLocation={currentSighting.sighting.lat && currentSighting.sighting.lng ? { lat: currentSighting.sighting.lat, lng: currentSighting.sighting.lng } : null}
-            onSightingClick={handleSightingClick}
-          />
-        )}
+        <SightingTimeline
+          strayId={currentSighting.id}
+          excludeSightingId={currentSighting.sighting.id}
+          primaryLocation={currentSighting.sighting.lat && currentSighting.sighting.lng ? { lat: currentSighting.sighting.lat, lng: currentSighting.sighting.lng } : null}
+          onSightingClick={handleSightingClick}
+        />
       </CardContent>
     </Card>
   )

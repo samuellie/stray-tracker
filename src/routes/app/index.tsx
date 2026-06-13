@@ -8,7 +8,8 @@ import { Sheet, SheetContent } from '~/components/ui/sheet'
 import { Plus } from 'lucide-react'
 import { MapComponent } from '~/components/MapComponent'
 import { ReportSightingForm } from '~/components/ReportSightingForm'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { useRouter } from '@tanstack/react-router'
 import { useIsMobile } from '~/hooks/use-mobile'
 
 import { StrayList } from '~/components/StrayList'
@@ -16,6 +17,12 @@ import type { CreatedSighting, SightingWithDetails } from '~/types/sighting'
 import { SightingDialog } from '~/components/dialogs/SightingDialog'
 
 export const Route = createFileRoute('/app/')({
+  // ?sighting=<id> drives the sighting dialog, making sightings deep-linkable
+  // and giving the browser back button natural behaviour inside the dialog
+  validateSearch: (search: Record<string, unknown>): { sighting?: number } => {
+    const raw = Number(search.sighting)
+    return Number.isFinite(raw) && raw > 0 ? { sighting: raw } : {}
+  },
   component: Home,
 })
 
@@ -36,13 +43,23 @@ function Home() {
     radius: number
   } | null>(null)
 
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedSightingForDialog, setSelectedSightingForDialog] =
+  const router = useRouter()
+  const navigate = Route.useNavigate()
+  const { sighting: sightingParam } = Route.useSearch()
+  // Instantly-renderable data for the sighting being opened, and the id the
+  // dialog was opened with (in-dialog navigation away from it enables Back)
+  const [dialogPlaceholder, setDialogPlaceholder] =
     useState<SightingWithDetails | null>(null)
+  const openedFromRef = useRef<number | null>(null)
 
   const handleOpenSightingDialog = (sighting: SightingWithDetails) => {
-    setSelectedSightingForDialog(sighting)
-    setDialogOpen(true)
+    setDialogPlaceholder(sighting)
+    openedFromRef.current = sighting.sighting.id
+    navigate({ search: { sighting: sighting.sighting.id } })
+  }
+
+  const closeSightingDialog = () => {
+    navigate({ search: {} })
   }
 
   const handleSightingSubmitSuccess = (sighting?: CreatedSighting) => {
@@ -123,13 +140,26 @@ function Home() {
           </Button>
         </div>
       )}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog
+        open={sightingParam != null}
+        onOpenChange={open => {
+          if (!open) closeSightingDialog()
+        }}
+      >
         <DialogContent
           className={`p-0 ${isMobile ? 'w-full h-full' : 'max-w-2xl'}`}
         >
           <SightingDialog
-            selectedSighting={selectedSightingForDialog}
-            onClose={() => setDialogOpen(false)}
+            sightingId={sightingParam}
+            initialSighting={dialogPlaceholder}
+            onNavigateToSighting={id => navigate({ search: { sighting: id } })}
+            canGoBack={
+              sightingParam != null &&
+              openedFromRef.current != null &&
+              sightingParam !== openedFromRef.current
+            }
+            onBack={() => router.history.back()}
+            onClose={closeSightingDialog}
           />
         </DialogContent>
       </Dialog>

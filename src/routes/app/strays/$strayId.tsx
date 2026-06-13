@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useFindStrayById } from '~/hooks/server/useFindStrayById'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
@@ -26,6 +26,11 @@ import { useRouter } from '@tanstack/react-router'
 import { Trash2 } from 'lucide-react'
 
 export const Route = createFileRoute('/app/strays/$strayId')({
+  // ?sighting=<id> drives the sighting dialog (deep-linkable, back-button friendly)
+  validateSearch: (search: Record<string, unknown>): { sighting?: number } => {
+    const raw = Number(search.sighting)
+    return Number.isFinite(raw) && raw > 0 ? { sighting: raw } : {}
+  },
   component: StrayDetailPage,
 })
 
@@ -38,9 +43,21 @@ function StrayDetailPage() {
   const deleteSightingMutation = useDeleteSighting()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [sightingToDelete, setSightingToDelete] = useState<number | null>(null)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedSightingForDialog, setSelectedSightingForDialog] =
+  const navigate = Route.useNavigate()
+  const { sighting: sightingParam } = Route.useSearch()
+  const [dialogPlaceholder, setDialogPlaceholder] =
     useState<SightingWithDetails | null>(null)
+  const openedFromRef = useRef<number | null>(null)
+
+  const openSightingDialog = (sighting: SightingWithDetails) => {
+    setDialogPlaceholder(sighting)
+    openedFromRef.current = sighting.sighting.id
+    navigate({ search: { sighting: sighting.sighting.id } })
+  }
+
+  const closeSightingDialog = () => {
+    navigate({ search: {} })
+  }
 
   const { data: stray, isLoading, error } = useFindStrayById(strayIdNum)
 
@@ -257,11 +274,10 @@ function StrayDetailPage() {
                     <div
                       key={sighting.id}
                       onClick={() => {
-                        setSelectedSightingForDialog({
+                        openSightingDialog({
                           ...stray,
                           sighting,
                         })
-                        setDialogOpen(true)
                       }}
                     >
                       <div className="flex items-start gap-3 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
@@ -344,13 +360,28 @@ function StrayDetailPage() {
             </CardContent>
           </Card>
 
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog
+            open={sightingParam != null}
+            onOpenChange={open => {
+              if (!open) closeSightingDialog()
+            }}
+          >
             <DialogContent
               className={`p-0 ${isMobile ? 'w-full h-full' : 'max-w-2xl'}`}
             >
               <SightingDialog
-                selectedSighting={selectedSightingForDialog}
-                onClose={() => setDialogOpen(false)}
+                sightingId={sightingParam}
+                initialSighting={dialogPlaceholder}
+                onNavigateToSighting={id =>
+                  navigate({ search: { sighting: id } })
+                }
+                canGoBack={
+                  sightingParam != null &&
+                  openedFromRef.current != null &&
+                  sightingParam !== openedFromRef.current
+                }
+                onBack={() => router.history.back()}
+                onClose={closeSightingDialog}
               />
             </DialogContent>
           </Dialog>
