@@ -1,5 +1,10 @@
 import 'maplibre-gl/dist/maplibre-gl.css'
-import type { GeolocateControl as MaplibreGeolocateControl } from 'maplibre-gl'
+import type {
+  GeolocateControl as MaplibreGeolocateControl,
+  GeoJSONSource,
+  MapLayerMouseEvent,
+} from 'maplibre-gl'
+import type { FeatureCollection, Point } from 'geojson'
 import { useEffect, useRef, useState, useMemo } from 'react'
 import Map, {
   NavigationControl,
@@ -18,6 +23,27 @@ import { Loader2 } from 'lucide-react'
 import { createGeoJSONCircle, calculateDistanceInKm } from '~/lib/utils'
 import { LOADING_PUNS } from '~/lib/constants'
 import { useMapPulseAnimation } from '~/hooks/use-map-pulse-animation'
+
+const EMOJI_BY_SPECIES: Record<string, string> = {
+  cat: '🐱',
+  dog: '🐶',
+  other: '🐾',
+}
+
+// Emoji glyphs aren't available in map fonts, so render them onto a canvas
+// and register the bitmaps as map images for the unclustered-point layer
+function createEmojiImage(emoji: string, size = 48): ImageData | null {
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return null
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.font = `${Math.round(size * 0.8)}px sans-serif`
+  ctx.fillText(emoji, size / 2, size / 2 + 2)
+  return ctx.getImageData(0, 0, size, size)
+}
 
 interface MapProps {
   className?: string
@@ -159,6 +185,34 @@ export function MapComponent({
     fetchParams?.radius
   )
 
+  // GeoJSON source for the clustered stray markers (clustering is handled
+  // natively by MapLibre's embedded supercluster)
+  const straysGeoJSON = useMemo<FeatureCollection>(
+    () => ({
+      type: 'FeatureCollection',
+      features: (data ?? [])
+        .filter(stray => stray.sightings[0])
+        .map(stray => ({
+          type: 'Feature' as const,
+          geometry: {
+            type: 'Point' as const,
+            coordinates: [stray.sightings[0].lng, stray.sightings[0].lat],
+          },
+          properties: { strayId: stray.id, species: stray.species },
+        })),
+    }),
+    [data]
+  )
+
+  // (globalThis.Map — the imported react-map-gl <Map> shadows the built-in)
+  const strayById = useMemo(() => {
+    const lookup = new globalThis.Map<number, NonNullable<typeof data>[number]>()
+    for (const stray of data ?? []) lookup.set(stray.id, stray)
+    return lookup
+  }, [data])
+
+  const [cursor, setCursor] = useState('auto')
+
   // Delayed loading state for smoother animation
   const [showLoading, setShowLoading] = useState(false)
 
@@ -192,7 +246,31 @@ export function MapComponent({
     setMarker(newPos)
   }
 
-  const handleMapClick = (event: { lngLat: { lat: number; lng: number } }) => {
+  const handleMapClick = async (event: MapLayerMouseEvent) => {
+    const feature = event.features?.[0]
+    if (feature) {
+      if (feature.properties?.cluster) {
+        // Zoom in just far enough to break the cluster apart
+        const source = MapContainer.current?.getSource(
+          'strays-source'
+        ) as GeoJSONSource | undefined
+        if (!source) return
+        const zoom = await source.getClusterExpansionZoom(
+          feature.properties.cluster_id as number
+        )
+        const [clusterLng, clusterLat] = (feature.geometry as Point).coordinates
+        MapContainer.current?.flyTo({
+          center: [clusterLng, clusterLat],
+          zoom,
+        })
+      } else {
+        const stray = strayById.get(feature.properties?.strayId as number)
+        if (stray && stray.sightings[0]) {
+          handleSelectSighting({ ...stray, sighting: stray.sightings[0] })
+        }
+      }
+      return
+    }
     if (positionInput) {
       const newPos = { lat: event.lngLat.lat, lng: event.lngLat.lng }
       setMarker(newPos)
@@ -201,6 +279,16 @@ export function MapComponent({
   }
 
   const handleOnload = () => {
+    const map = MapContainer.current?.getMap()
+    if (map) {
+      for (const [species, emoji] of Object.entries(EMOJI_BY_SPECIES)) {
+        const imageId = `stray-${species}`
+        if (!map.hasImage(imageId)) {
+          const image = createEmojiImage(emoji)
+          if (image) map.addImage(imageId, image)
+        }
+      }
+    }
     if (MapGeolocateControl.current) {
       MapGeolocateControl.current.on(
         'geolocate',
@@ -267,6 +355,12 @@ export function MapComponent({
         onLoad={handleOnload}
         onClick={handleMapClick}
         onMove={evt => setViewState(evt.viewState)}
+        interactiveLayerIds={
+          showNearbySightings ? ['clusters', 'unclustered-point'] : undefined
+        }
+        cursor={cursor}
+        onMouseEnter={() => setCursor('pointer')}
+        onMouseLeave={() => setCursor('auto')}
       >
         {showLoading && (
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm flex items-center gap-2 border border-gray-200">
@@ -313,28 +407,65 @@ export function MapComponent({
             />
           </Marker>
         )}
-        {data?.map(stray => (
-          <Marker
-            key={stray.id}
-            longitude={stray.sightings[0].lng}
-            latitude={stray.sightings[0].lat}
-            onClick={e => {
-              e.originalEvent.stopPropagation()
-              handleSelectSighting({
-                ...stray,
-                sighting: stray.sightings[0],
-              })
-            }}
+        {showNearbySightings && (
+          <Source
+            id="strays-source"
+            type="geojson"
+            data={straysGeoJSON}
+            cluster
+            clusterMaxZoom={14}
+            clusterRadius={50}
           >
-            <div className="text-lg cursor-pointer">
-              {stray.species === 'cat'
-                ? '🐱'
-                : stray.species === 'dog'
-                  ? '🐶'
-                  : '🐾'}
-            </div>
-          </Marker>
-        ))}
+            <Layer
+              id="clusters"
+              type="circle"
+              filter={['has', 'point_count']}
+              paint={{
+                'circle-color': [
+                  'step',
+                  ['get', 'point_count'],
+                  '#93c5fd',
+                  10,
+                  '#60a5fa',
+                  25,
+                  '#3b82f6',
+                ],
+                'circle-radius': [
+                  'step',
+                  ['get', 'point_count'],
+                  16,
+                  10,
+                  20,
+                  25,
+                  24,
+                ],
+                'circle-stroke-width': 2,
+                'circle-stroke-color': '#ffffff',
+              }}
+            />
+            <Layer
+              id="cluster-count"
+              type="symbol"
+              filter={['has', 'point_count']}
+              layout={{
+                'text-field': '{point_count_abbreviated}',
+                'text-font': ['Noto Sans Regular'],
+                'text-size': 13,
+              }}
+              paint={{ 'text-color': '#1e3a8a' }}
+            />
+            <Layer
+              id="unclustered-point"
+              type="symbol"
+              filter={['!', ['has', 'point_count']]}
+              layout={{
+                'icon-image': ['concat', 'stray-', ['get', 'species']],
+                'icon-size': 0.55,
+                'icon-allow-overlap': true,
+              }}
+            />
+          </Source>
+        )}
         <SightingPopup
           selectedSighting={effectiveSelectedSighting}
           onClose={() => handleSelectSighting(null)}

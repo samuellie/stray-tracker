@@ -10,7 +10,9 @@ export function useNearbyStrays(
   return useQuery({
     queryKey: ['nearby-strays', lat, lng, radius],
     queryFn: () =>
-      getNearbyStrays({ data: { lat: lat!, lng: lng!, radius, limit: 100 } }),
+      // Clustering keeps high marker counts cheap to render, and the server
+      // query is bounded by its bounding-box index
+      getNearbyStrays({ data: { lat: lat!, lng: lng!, radius, limit: 250 } }),
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: lat != null && lng != null && radius != null,
   })
