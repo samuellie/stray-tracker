@@ -1,6 +1,7 @@
 import { useForm } from '@tanstack/react-form'
 import { useState, useCallback, useEffect } from 'react'
 import { Button } from '~/components/ui/button'
+import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCreateSighting } from '~/hooks/server/useCreateSighting'
 import { sightingFormDefaults } from '~/form-config'
@@ -235,6 +236,11 @@ export function ReportSightingForm({ onSuccess, initialLocation }: ReportSightin
                     !canSubmit || createSightingMutation.isPending || isUploading
                   }
                 >
+                  {(isUploading ||
+                    isSubmitting ||
+                    createSightingMutation.isPending) && (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    )}
                   {isUploading
                     ? 'Uploading photos…'
                     : isSubmitting || createSightingMutation.isPending
