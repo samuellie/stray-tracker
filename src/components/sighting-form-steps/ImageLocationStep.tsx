@@ -39,6 +39,7 @@ export function ImageLocationStep({
     images,
     progress: imageProgress,
     addImages,
+    retryImage,
     removeImage,
     setPrimaryImage,
   } = useProcessImages()
@@ -137,6 +138,7 @@ export function ImageLocationStep({
             imageProgress={imageProgress}
             onRemove={removeImage}
             onSetPrimary={setPrimaryImage}
+            onRetry={retryImage}
           />
           {isMobile ? (
             <div className="flex gap-2">

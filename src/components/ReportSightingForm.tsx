@@ -231,11 +231,15 @@ export function ReportSightingForm({ onSuccess, initialLocation }: ReportSightin
               children={([canSubmit, isSubmitting]) => (
                 <Button
                   type="submit"
-                  disabled={!canSubmit || createSightingMutation.isPending}
+                  disabled={
+                    !canSubmit || createSightingMutation.isPending || isUploading
+                  }
                 >
-                  {isSubmitting || createSightingMutation.isPending
-                    ? 'Submitting'
-                    : 'Submit'}
+                  {isUploading
+                    ? 'Uploading photos…'
+                    : isSubmitting || createSightingMutation.isPending
+                      ? 'Submitting…'
+                      : 'Submit'}
                 </Button>
               )}
             />

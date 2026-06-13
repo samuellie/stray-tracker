@@ -1,6 +1,5 @@
-import { Progress } from '~/components/ui/progress'
 import { Button } from '~/components/ui/button'
-import { Trash2 } from 'lucide-react'
+import { RotateCcw, Trash2 } from 'lucide-react'
 import { useIsMobile } from '~/hooks/use-mobile'
 import { motion, AnimatePresence } from 'motion/react'
 import { ProcessedImage } from '~/hooks/useProcessImages'
@@ -10,6 +9,7 @@ interface ImagePreviewGalleryProps {
   imageProgress: number[]
   onRemove?: (index: number) => void
   onSetPrimary?: (index: number) => void
+  onRetry?: (index: number) => void
 }
 
 export function ImagePreviewGallery({
@@ -17,6 +17,7 @@ export function ImagePreviewGallery({
   imageProgress,
   onRemove,
   onSetPrimary,
+  onRetry,
 }: ImagePreviewGalleryProps) {
   const isMobile = useIsMobile()
   return (
@@ -41,6 +42,10 @@ export function ImagePreviewGallery({
               <AnimatePresence mode="popLayout">
                 {images.map(({ thumbnail, file }, index) => {
                   const isPrimary = index === 0
+                  const progress = imageProgress[index]
+                  const hasFailed = progress === -1
+                  const isProcessing =
+                    progress !== undefined && progress >= 0 && progress < 100
                   return (
                     <motion.div
                       key={file.name}
@@ -62,16 +67,42 @@ export function ImagePreviewGallery({
                           Cover
                         </div>
                       )}
-                      {imageProgress[index] !== undefined &&
-                        imageProgress[index] < 100 && (
-                          <motion.div className="absolute bottom-1 left-0 right-0 h-2 bg-white/80 rounded overflow-hidden">
+                      {hasFailed && (
+                        <div className="absolute inset-0 rounded-xl bg-black/60 flex flex-col items-center justify-center gap-1.5 text-white">
+                          <span className="text-[11px] font-medium">
+                            Upload failed
+                          </span>
+                          {onRetry && (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              className="h-7 px-2 text-xs"
+                              onClick={e => {
+                                e.stopPropagation()
+                                onRetry(index)
+                              }}
+                            >
+                              <RotateCcw size={12} className="mr-1" />
+                              Retry
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                      {isProcessing && (
+                        <div className="absolute bottom-0 left-0 right-0 rounded-b-xl bg-black/50 px-2 pt-1 pb-1.5 backdrop-blur-[2px]">
+                          <span className="block text-[10px] font-medium text-white mb-0.5">
+                            {progress < 70 ? 'Compressing…' : 'Uploading…'}
+                          </span>
+                          <div className="h-1.5 bg-white/30 rounded overflow-hidden">
                             <motion.div
-                              className="h-full bg-red-500 rounded"
-                              animate={{ width: `${imageProgress[index] || 0}%` }}
+                              className="h-full bg-primary rounded"
+                              animate={{ width: `${Math.max(progress, 4)}%` }}
                               transition={{ duration: 0.3 }}
                             />
-                          </motion.div>
-                        )}
+                          </div>
+                        </div>
+                      )}
                       {onRemove && (
                         <Button
                           type="button"
