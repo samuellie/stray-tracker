@@ -381,9 +381,12 @@ export const bountyAssignmentsRelations = relations(
 )
 
 // Community posts table - community feed posts
-export const communityPosts = sqliteTable('community_posts', {
+export const communityPosts = sqliteTable(
+  'community_posts',
+  {
   id: integer('id').primaryKey({ autoIncrement: true }),
-  authorId: integer('author_id')
+  // text id matching better-auth users.id (was integer — never usable)
+  authorId: text('author_id')
     .references(() => authSchema.users.id)
     .notNull(),
   title: text('title', { length: 200 }),
@@ -415,7 +418,9 @@ export const communityPosts = sqliteTable('community_posts', {
   updatedAt: integer('updated_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
-})
+  },
+  t => [index('community_posts_published_at_idx').on(t.publishedAt)]
+)
 
 export const communityPostsRelations = relations(
   communityPosts,
@@ -438,12 +443,15 @@ export const communityPostsRelations = relations(
 )
 
 // Post comments table - comments on community posts
-export const postComments = sqliteTable('post_comments', {
+export const postComments = sqliteTable(
+  'post_comments',
+  {
   id: integer('id').primaryKey({ autoIncrement: true }),
   postId: integer('post_id')
     .references(() => communityPosts.id)
     .notNull(),
-  authorId: integer('author_id')
+  // text id matching better-auth users.id (was integer — never usable)
+  authorId: text('author_id')
     .references(() => authSchema.users.id)
     .notNull(),
   parentId: integer('parent_id'), // For threaded comments - nullable without reference for now
@@ -456,7 +464,9 @@ export const postComments = sqliteTable('post_comments', {
   updatedAt: integer('updated_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
-})
+  },
+  t => [index('post_comments_post_id_idx').on(t.postId)]
+)
 
 export const postCommentsRelations = relations(
   postComments,
@@ -478,7 +488,9 @@ export const postCommentsRelations = relations(
 )
 
 // Post reactions table - likes and reactions to posts
-export const postReactions = sqliteTable('post_reactions', {
+export const postReactions = sqliteTable(
+  'post_reactions',
+  {
   id: integer('id').primaryKey({ autoIncrement: true }),
   postId: integer('post_id')
     .references(() => communityPosts.id)
@@ -492,7 +504,12 @@ export const postReactions = sqliteTable('post_reactions', {
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
-})
+  },
+  t => [
+    // One reaction per user per post (changing reaction is an upsert)
+    uniqueIndex('post_reactions_post_user_idx').on(t.postId, t.userId),
+  ]
+)
 
 export const postReactionsRelations = relations(postReactions, ({ one }) => ({
   post: one(communityPosts, {

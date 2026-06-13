@@ -55,9 +55,12 @@ function FollowingPage() {
       ) : !subscriptions || subscriptions.length === 0 ? (
         <div className="text-center py-16">
           <Heart className="w-10 h-10 mx-auto text-muted-foreground/40" />
-          <p className="mt-3 font-medium">You're not following any strays yet</p>
+          <p className="mt-3 font-medium">
+            You&apos;re not following any strays yet
+          </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Open a stray's profile and tap Follow to keep up with new sightings.
+            Open a stray&apos;s profile and tap Follow to keep up with new
+            sightings.
           </p>
           <Button asChild variant="outline" className="mt-4">
             <Link to="/app">Browse the map</Link>
