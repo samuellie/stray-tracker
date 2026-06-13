@@ -19,6 +19,7 @@ import type { SightingWithDetails, StrayWithRelations } from '~/types/sighting'
 import { authClient } from '~/lib/auth-client'
 import { useDeleteSighting } from '~/hooks/server/useDeleteSighting'
 import { ConfirmationDialog } from '~/components/dialogs/ConfirmationDialog'
+import { NamingSuggestions } from '~/components/NamingSuggestions'
 import { toast } from 'sonner'
 import { getErrorMessage } from '~/lib/errors'
 import { toastUndoable } from '~/lib/undoable'
@@ -429,6 +430,13 @@ function StrayDetailPage() {
 
         {/* Sidebar */}
         <div className="space-y-6">
+          {/* Community naming */}
+          <Card>
+            <CardContent className="pt-6">
+              <NamingSuggestions strayId={strayIdNum} />
+            </CardContent>
+          </Card>
+
           {/* Primary Location */}
           {stray.primaryLocation && (
             <Card>

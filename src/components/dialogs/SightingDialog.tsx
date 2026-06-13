@@ -31,6 +31,7 @@ import { useDeleteSighting } from '~/hooks/server/useDeleteSighting'
 import { useSightingById } from '~/hooks/server/useSightingById'
 import { Skeleton } from '~/components/ui/skeleton'
 import { ConfirmationDialog } from './ConfirmationDialog'
+import { NamingSuggestions } from '~/components/NamingSuggestions'
 import { useState, useRef, useEffect } from 'react'
 import { useFindInfiniteStraySightings } from '~/hooks/server/useFindInfiniteStraySightings'
 import { calculateDistance } from '~/utils/distance'
@@ -378,6 +379,12 @@ export function SightingDialog({
             </div>
           )}
         </div>
+
+        {!currentSighting.name && (
+          <div className="mt-6 pt-6 border-t border-gray-100">
+            <NamingSuggestions strayId={currentSighting.id} compact />
+          </div>
+        )}
 
         <SightingTimeline
           strayId={currentSighting.id}
