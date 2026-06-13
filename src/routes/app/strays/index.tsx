@@ -38,6 +38,9 @@ function Strays() {
   const [status, setStatus] = useState<string>('all')
   const [size, setSize] = useState<string>('all')
 
+  const PAGE_SIZE = 10
+  const [pageIndex, setPageIndex] = useState(0)
+
   const debouncedSearch = useDebounce(search, 300)
   const hasActiveFilters =
     debouncedSearch !== '' ||
@@ -50,10 +53,19 @@ function Strays() {
     setSpecies('all')
     setStatus('all')
     setSize('all')
+    setPageIndex(0)
+  }
+
+  // Changing any filter returns to the first page
+  const withPageReset = <V,>(setter: (value: V) => void) => {
+    return (value: V) => {
+      setPageIndex(0)
+      setter(value)
+    }
   }
 
   const {
-    data: strays,
+    data,
     isLoading,
     error,
     refetch,
@@ -64,8 +76,12 @@ function Strays() {
       : (status as 'spotted' | 'being_cared_for' | 'adopted' | 'deceased'),
     size === 'all' ? undefined : (size as 'small' | 'medium' | 'large'),
     debouncedSearch || undefined,
-    100
+    PAGE_SIZE,
+    pageIndex * PAGE_SIZE
   )
+
+  const strays = data?.items
+  const total = data?.total ?? 0
 
   // Handle row click navigation
   const handleRowClick = (stray: Stray) => {
@@ -172,12 +188,23 @@ function Strays() {
     []
   )
 
-  // Create table instance
+  // Create table instance (server-driven pagination)
   const table = useTable({
     data: strays || [],
     columns,
     enablePagination: true,
-    pageSize: 10,
+    pageSize: PAGE_SIZE,
+    manualPagination: {
+      pageCount: Math.max(1, Math.ceil(total / PAGE_SIZE)),
+      pagination: { pageIndex, pageSize: PAGE_SIZE },
+      onPaginationChange: updater => {
+        const next =
+          typeof updater === 'function'
+            ? updater({ pageIndex, pageSize: PAGE_SIZE })
+            : updater
+        setPageIndex(next.pageIndex)
+      },
+    },
   })
 
   return (
@@ -202,12 +229,12 @@ function Strays() {
               <Input
                 placeholder="Search by name or description..."
                 value={search}
-                onChange={e => setSearch(e.target.value)}
+                onChange={e => withPageReset(setSearch)(e.target.value)}
               />
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Species</label>
-              <Select value={species} onValueChange={setSpecies}>
+              <Select value={species} onValueChange={withPageReset(setSpecies)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All species" />
                 </SelectTrigger>
@@ -221,7 +248,7 @@ function Strays() {
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Status</label>
-              <Select value={status} onValueChange={setStatus}>
+              <Select value={status} onValueChange={withPageReset(setStatus)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
@@ -238,7 +265,7 @@ function Strays() {
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Size</label>
-              <Select value={size} onValueChange={setSize}>
+              <Select value={size} onValueChange={withPageReset(setSize)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All sizes" />
                 </SelectTrigger>
@@ -259,9 +286,7 @@ function Strays() {
         <CardContent className="p-0">
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">
-                Strays ({strays?.length || 0})
-              </h2>
+              <h2 className="text-lg font-semibold">Strays ({total})</h2>
             </div>
 
             {isLoading ? (
@@ -301,7 +326,7 @@ function Strays() {
                   onRowClick={handleRowClick}
                   clickableRows={true}
                 />
-                <Pagination table={table} />
+                <Pagination table={table} totalRows={total} />
               </>
             ) : hasActiveFilters ? (
               <div className="text-center py-12">

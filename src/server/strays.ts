@@ -119,9 +119,13 @@ export const searchStrays = createServerFn({ method: 'GET' })
       size: z.enum(['small', 'medium', 'large']).optional(),
       search: z.string().optional(), // For name/description search
       limit: z.number().positive().default(100),
+      offset: z.number().nonnegative().default(0),
     })
   )
-  .handler(async ({ data: { species, status, size, search, limit = 100 } }) => {
+  .handler(
+    async ({
+      data: { species, status, size, search, limit = 100, offset = 0 },
+    }) => {
     const db = await getDb()
 
     const whereConditions = []
@@ -148,13 +152,20 @@ export const searchStrays = createServerFn({ method: 'GET' })
     const whereCondition =
       whereConditions.length > 0 ? and(...whereConditions) : undefined
 
-    const result = await db.query.strays.findMany({
-      where: whereCondition,
-      orderBy: [desc(strays.updatedAt)],
-      limit,
-    })
+    const [items, [{ total }]] = await Promise.all([
+      db.query.strays.findMany({
+        where: whereCondition,
+        orderBy: [desc(strays.updatedAt)],
+        limit,
+        offset,
+      }),
+      db
+        .select({ total: sql<number>`count(*)` })
+        .from(strays)
+        .where(whereCondition),
+    ])
 
-    return result
+    return { items, total }
   })
 
 // Get a single stray by ID with related data

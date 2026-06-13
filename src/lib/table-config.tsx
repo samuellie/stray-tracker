@@ -22,6 +22,14 @@ interface UseTableOptions<T> {
   enableFiltering?: boolean
   enablePagination?: boolean
   onRowClick?: (row: T) => void
+  /** Server-driven pagination: pages are fetched, not sliced client-side */
+  manualPagination?: {
+    pageCount: number
+    pagination: PaginationState
+    onPaginationChange: (
+      updater: PaginationState | ((old: PaginationState) => PaginationState)
+    ) => void
+  }
 }
 
 export function useTable<T>({
@@ -31,7 +39,7 @@ export function useTable<T>({
   enableSorting = true,
   enableFiltering = true,
   enablePagination = true,
-  onRowClick,
+  manualPagination,
 }: UseTableOptions<T>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -44,18 +52,23 @@ export function useTable<T>({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: enablePagination
-      ? getPaginationRowModel()
-      : undefined,
+    getPaginationRowModel:
+      enablePagination && !manualPagination
+        ? getPaginationRowModel()
+        : undefined,
     getSortedRowModel: enableSorting ? getSortedRowModel() : undefined,
     getFilteredRowModel: enableFiltering ? getFilteredRowModel() : undefined,
+    manualPagination: !!manualPagination,
+    pageCount: manualPagination?.pageCount,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    onPaginationChange: setPagination,
+    onPaginationChange: manualPagination
+      ? manualPagination.onPaginationChange
+      : setPagination,
     state: {
       sorting,
       columnFilters,
-      pagination,
+      pagination: manualPagination ? manualPagination.pagination : pagination,
     },
   })
 
@@ -142,10 +155,14 @@ export function Table<T>({
 // Pagination component
 interface PaginationProps {
   table: TanstackTable<any>
+  /** Total row count across all pages (required for manual pagination) */
+  totalRows?: number
 }
 
-export function Pagination({ table }: PaginationProps) {
+export function Pagination({ table, totalRows }: PaginationProps) {
   if (table.getPageCount() <= 1) return null
+
+  const total = totalRows ?? table.getFilteredRowModel().rows.length
 
   return (
     <div className="flex items-center justify-between px-4 py-3 bg-background border-t border-border sm:px-6">
@@ -162,14 +179,10 @@ export function Pagination({ table }: PaginationProps) {
             {Math.min(
               (table.getState().pagination.pageIndex + 1) *
                 table.getState().pagination.pageSize,
-              table.getFilteredRowModel().rows.length
+              total
             )}
           </span>{' '}
-          of{' '}
-          <span className="font-medium">
-            {table.getFilteredRowModel().rows.length}
-          </span>{' '}
-          results
+          of <span className="font-medium">{total}</span> results
         </p>
       </div>
       <div className="flex items-center space-x-2">
