@@ -13,6 +13,7 @@ import { AnimalTypeStep } from '~/components/sighting-form-steps/AnimalTypeStep'
 import { type ProcessedImage } from '~/hooks/useProcessImages'
 import { useIsMobile } from '~/hooks/use-mobile'
 import type { CreatedSighting } from '~/types/sighting'
+import { getErrorMessage } from '~/lib/errors'
 
 interface ReportSightingFormProps {
   onSuccess?: (sighting?: CreatedSighting) => void
@@ -34,20 +35,6 @@ export function ReportSightingForm({ onSuccess, initialLocation }: ReportSightin
   ]
 
   const createSightingMutation = useCreateSighting(true)
-
-  // Handle mutation errors with toast
-  useEffect(() => {
-    if (createSightingMutation.isError && createSightingMutation.error) {
-      toast.error(
-        createSightingMutation.error?.message || 'Failed to report sighting'
-      )
-      createSightingMutation.reset()
-    }
-  }, [
-    createSightingMutation.isError,
-    createSightingMutation.error,
-    createSightingMutation,
-  ])
 
   const form = useForm({
     defaultValues: {
@@ -113,6 +100,29 @@ export function ReportSightingForm({ onSuccess, initialLocation }: ReportSightin
   })
 
   const [currentStep, setCurrentStep] = useState(1)
+
+  // Handle mutation errors with toast
+  useEffect(() => {
+    if (createSightingMutation.isError && createSightingMutation.error) {
+      const { title, description } = getErrorMessage(
+        createSightingMutation.error,
+        'Could not report the sighting'
+      )
+      toast.error(title, {
+        description,
+        action: {
+          label: 'Retry',
+          onClick: () => form.handleSubmit(),
+        },
+      })
+      createSightingMutation.reset()
+    }
+  }, [
+    createSightingMutation.isError,
+    createSightingMutation.error,
+    createSightingMutation,
+    form,
+  ])
 
   const handleMarkerDragEnd = useCallback(
     (position: { lat: number; lng: number }) => {

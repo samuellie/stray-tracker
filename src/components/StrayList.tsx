@@ -4,7 +4,8 @@ import { useInfiniteNearbyStrays } from '~/hooks/server/useNearbyStrays'
 import { useIsMobile } from '~/hooks/use-mobile'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
-import { Loader2, MapPin, Plus } from 'lucide-react'
+import { Skeleton } from '~/components/ui/skeleton'
+import { Loader2, MapPin, PawPrint, Plus } from 'lucide-react'
 import { getSightingThumbnailUrl } from '~/utils/files'
 import { getPlaceholderImage } from '~/utils/strayImageFallbacks'
 import { Img } from 'react-image'
@@ -174,12 +175,43 @@ export function StrayList({
       {/* List Content */}
       <div className="px-4 pb-6 bg-white">
         {isLoading || !currentUserPosition ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="space-y-3 pt-2" aria-label="Loading nearby strays">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-4 p-3 rounded-xl border border-gray-100"
+              >
+                <Skeleton className="h-16 w-16 shrink-0 rounded-lg" />
+                <div className="flex-1 space-y-2">
+                  <div className="flex justify-between">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-4 w-16 rounded-full" />
+                  </div>
+                  <Skeleton className="h-3 w-36" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : strays.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            No strays found nearby.
+          <div className="text-center py-10">
+            <PawPrint className="w-10 h-10 mx-auto text-gray-300" />
+            <p className="mt-3 font-medium text-gray-700">
+              No strays reported in this area yet
+            </p>
+            <p className="mt-1 text-sm text-gray-500">
+              Seen a stray around here? Be the first to report it.
+            </p>
+            <Button
+              className="mt-4"
+              onClick={e => {
+                e.stopPropagation()
+                onAddSighting?.()
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Report the first sighting
+            </Button>
           </div>
         ) : (
           <div className="space-y-3 pt-2">

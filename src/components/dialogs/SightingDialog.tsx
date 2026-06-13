@@ -17,6 +17,8 @@ import { getSightingFullImageUrl, getSightingThumbnailUrl } from '~/utils/files'
 import { Img } from 'react-image'
 import { getPlaceholderImage } from '~/utils/strayImageFallbacks'
 import { authClient } from '~/lib/auth-client'
+import { toast } from 'sonner'
+import { getErrorMessage } from '~/lib/errors'
 import { ArrowLeft, MoreVertical, X } from 'lucide-react'
 import {
   DropdownMenu,
@@ -95,9 +97,13 @@ export function SightingDialog({
           onClose()
         }
       },
-      onError: () => {
+      onError: error => {
         setIsDeleting(false)
-        // You might want to show a toast here
+        const { title, description } = getErrorMessage(
+          error,
+          'Could not delete the sighting'
+        )
+        toast.error(title, { description })
       }
     })
   }

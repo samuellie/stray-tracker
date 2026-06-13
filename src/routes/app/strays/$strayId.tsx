@@ -13,6 +13,7 @@ import { ArrowLeft } from 'lucide-react'
 import { Dialog, DialogContent } from '~/components/ui/dialog'
 import { SightingDialog } from '~/components/dialogs/SightingDialog'
 import { useIsMobile } from '~/hooks/use-mobile'
+import { Skeleton } from '~/components/ui/skeleton'
 import { getSightingThumbnailUrl } from '~/utils/files'
 import type { SightingWithDetails, StrayWithRelations } from '~/types/sighting'
 import { authClient } from '~/lib/auth-client'
@@ -43,13 +44,50 @@ function StrayDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-96">
-          <div className="text-center">
-            <Spinner />
-            <p className="mt-4 text-muted-foreground">
-              Loading stray details...
-            </p>
+      <div className="container mx-auto px-4 py-8" aria-label="Loading stray details">
+        <div className="mb-6">
+          <Skeleton className="h-10 w-36 mb-4" />
+          <Skeleton className="h-9 w-64 mb-2" />
+          <Skeleton className="h-5 w-48" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <Skeleton className="w-full h-80 rounded-t-lg rounded-b-none" />
+              <div className="p-6 space-y-3">
+                <Skeleton className="h-6 w-48" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-5 w-20 rounded-full" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                  <Skeleton className="h-5 w-14 rounded-full" />
+                </div>
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            </Card>
+            <Card>
+              <div className="p-6 space-y-4">
+                <Skeleton className="h-6 w-40" />
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex items-start gap-3 p-4 border rounded-lg">
+                    <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-40" />
+                      <Skeleton className="h-3 w-full" />
+                      <Skeleton className="w-16 h-16 rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+          <div className="space-y-6">
+            <Card>
+              <div className="p-6 space-y-3">
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            </Card>
           </div>
         </div>
       </div>
