@@ -20,6 +20,8 @@ import { authClient } from '~/lib/auth-client'
 import { useDeleteSighting } from '~/hooks/server/useDeleteSighting'
 import { ConfirmationDialog } from '~/components/dialogs/ConfirmationDialog'
 import { toast } from 'sonner'
+import { getErrorMessage } from '~/lib/errors'
+import { toastUndoable } from '~/lib/undoable'
 import { useRouter } from '@tanstack/react-router'
 import { Trash2 } from 'lucide-react'
 
@@ -357,23 +359,38 @@ function StrayDetailPage() {
             open={deleteDialogOpen}
             onOpenChange={setDeleteDialogOpen}
             title="Delete Sighting"
-            description="Are you sure you want to delete this sighting? This will also delete all associated photos and community posts. This action cannot be undone."
+            description={(() => {
+              const target = strayWithRelations.sightings.find(
+                s => s.id === sightingToDelete
+              )
+              const when = target
+                ? ` from ${formatRelativeDate(Number(target.sightingTime))}`
+                : ''
+              const photos = target?.sightingPhotos.length ?? 0
+              return `This removes the sighting${when}${photos > 0 ? ` along with ${photos} photo${photos > 1 ? 's' : ''}` : ''}. You'll have a few seconds to undo.`
+            })()}
             confirmText="Delete"
             variant="destructive"
-            onConfirm={async () => {
+            onConfirm={() => {
               if (!sightingToDelete) return
-              try {
-                await deleteSightingMutation.mutateAsync(sightingToDelete)
-                toast.success('Deleted successfully')
-                setDeleteDialogOpen(false)
-                setSightingToDelete(null)
-                router.invalidate()
-              } catch (error) {
-                toast.error('Failed to delete')
-                console.error(error)
-              }
+              const id = sightingToDelete
+              setDeleteDialogOpen(false)
+              setSightingToDelete(null)
+              toastUndoable({
+                message: 'Sighting deleted',
+                onCommit: () =>
+                  deleteSightingMutation.mutate(id, {
+                    onSuccess: () => router.invalidate(),
+                    onError: error => {
+                      const { title, description } = getErrorMessage(
+                        error,
+                        'Could not delete the sighting'
+                      )
+                      toast.error(title, { description })
+                    },
+                  }),
+              })
             }}
-            isLoading={deleteSightingMutation.isPending}
           />
 
 

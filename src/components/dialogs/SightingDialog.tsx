@@ -19,6 +19,7 @@ import { getPlaceholderImage } from '~/utils/strayImageFallbacks'
 import { authClient } from '~/lib/auth-client'
 import { toast } from 'sonner'
 import { getErrorMessage } from '~/lib/errors'
+import { toastUndoable } from '~/lib/undoable'
 import { ArrowLeft, MoreVertical, X } from 'lucide-react'
 import {
   DropdownMenu,
@@ -43,7 +44,6 @@ export function SightingDialog({
   onClose,
 }: SightingDialogProps) {
   const deleteSightingMutation = useDeleteSighting()
-  const [isDeleting, setIsDeleting] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   // Stack to keep track of navigation history within the dialog
@@ -85,26 +85,34 @@ export function SightingDialog({
     setSightingHistory(prev => [...prev, newSighting])
   }
 
+  const strayLabel = currentSighting.name || `this ${currentSighting.species}`
+  const photoCount =
+    sightingPhotos?.length ?? currentSighting.sighting.sightingPhotos.length
+  const sightingDateLabel = formatRelativeDate(
+    Number(currentSighting.sighting.sightingTime)
+  )
+
   const handleDelete = () => {
-    setIsDeleting(true)
-    deleteSightingMutation.mutate(currentSighting.sighting.id, {
-      onSuccess: () => {
-        setIsDeleting(false)
-        setIsDeleteDialogOpen(false)
-        if (sightingHistory.length > 0) {
-          handleBack()
-        } else {
-          onClose()
-        }
-      },
-      onError: error => {
-        setIsDeleting(false)
-        const { title, description } = getErrorMessage(
-          error,
-          'Could not delete the sighting'
-        )
-        toast.error(title, { description })
-      }
+    const sightingId = currentSighting.sighting.id
+    setIsDeleteDialogOpen(false)
+    if (sightingHistory.length > 0) {
+      handleBack()
+    } else {
+      onClose()
+    }
+    toastUndoable({
+      message: 'Sighting deleted',
+      description: `The sighting of ${strayLabel} from ${sightingDateLabel} was removed.`,
+      onCommit: () =>
+        deleteSightingMutation.mutate(sightingId, {
+          onError: error => {
+            const { title, description } = getErrorMessage(
+              error,
+              'Could not delete the sighting'
+            )
+            toast.error(title, { description })
+          },
+        }),
     })
   }
 
@@ -169,7 +177,6 @@ export function SightingDialog({
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive cursor-pointer"
                   onClick={() => setIsDeleteDialogOpen(true)}
-                  disabled={isDeleting}
                 >
                   Delete Sighting
                 </DropdownMenuItem>
@@ -180,11 +187,10 @@ export function SightingDialog({
               open={isDeleteDialogOpen}
               onOpenChange={setIsDeleteDialogOpen}
               title="Delete Sighting"
-              description="Are you sure you want to delete this sighting? This action cannot be undone."
+              description={`This removes the sighting of ${strayLabel} from ${sightingDateLabel}${photoCount > 0 ? ` along with ${photoCount} photo${photoCount > 1 ? 's' : ''}` : ''}. You'll have a few seconds to undo.`}
               confirmText="Delete"
               variant="destructive"
               onConfirm={handleDelete}
-              isLoading={isDeleting}
             />
           </div>
         )}
