@@ -32,6 +32,7 @@ import { useSightingById } from '~/hooks/server/useSightingById'
 import { Skeleton } from '~/components/ui/skeleton'
 import { ConfirmationDialog } from './ConfirmationDialog'
 import { NamingSuggestions } from '~/components/NamingSuggestions'
+import { FollowStrayButton } from '~/components/FollowStrayButton'
 import { useState, useRef, useEffect } from 'react'
 import { useFindInfiniteStraySightings } from '~/hooks/server/useFindInfiniteStraySightings'
 import { calculateDistance } from '~/utils/distance'
@@ -308,11 +309,14 @@ export function SightingDialog({
       <CardContent className="px-4 pb-4">
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4">
-            {currentSighting.name && (
+            {currentSighting.name ? (
               <CardTitle className="text-2xl font-bold">
                 {currentSighting.name}
               </CardTitle>
+            ) : (
+              <span />
             )}
+            <FollowStrayButton strayId={currentSighting.id} size="sm" />
           </div>
 
           <div className="flex gap-2 flex-wrap pb-2">

@@ -20,6 +20,7 @@ import { authClient } from '~/lib/auth-client'
 import { useDeleteSighting } from '~/hooks/server/useDeleteSighting'
 import { ConfirmationDialog } from '~/components/dialogs/ConfirmationDialog'
 import { NamingSuggestions } from '~/components/NamingSuggestions'
+import { FollowStrayButton } from '~/components/FollowStrayButton'
 import { toast } from 'sonner'
 import { getErrorMessage } from '~/lib/errors'
 import { toastUndoable } from '~/lib/undoable'
@@ -147,7 +148,10 @@ function StrayDetailPage() {
             Back to Strays
           </Link>
         </Button>
-        <h1 className="text-3xl font-bold">{stray.name || 'Unnamed Stray'}</h1>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <h1 className="text-3xl font-bold">{stray.name || 'Unnamed Stray'}</h1>
+          <FollowStrayButton strayId={strayIdNum} />
+        </div>
         <p className="text-muted-foreground">
           Detailed view and sighting history
         </p>
