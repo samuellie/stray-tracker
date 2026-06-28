@@ -1,4 +1,4 @@
-PRAGMA foreign_keys=OFF;--> statement-breakpoint
+PRAGMA defer_foreign_keys=on;--> statement-breakpoint
 CREATE TABLE `__new_naming_suggestions` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`stray_id` integer NOT NULL,
@@ -14,7 +14,6 @@ CREATE TABLE `__new_naming_suggestions` (
 INSERT INTO `__new_naming_suggestions`("id", "stray_id", "user_id", "name", "description", "is_selected", "created_at") SELECT "id", "stray_id", "user_id", "name", "description", "is_selected", "created_at" FROM `naming_suggestions`;--> statement-breakpoint
 DROP TABLE `naming_suggestions`;--> statement-breakpoint
 ALTER TABLE `__new_naming_suggestions` RENAME TO `naming_suggestions`;--> statement-breakpoint
-PRAGMA foreign_keys=ON;--> statement-breakpoint
 CREATE INDEX `naming_suggestions_stray_id_idx` ON `naming_suggestions` (`stray_id`);--> statement-breakpoint
 CREATE TABLE `__new_sightings` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,

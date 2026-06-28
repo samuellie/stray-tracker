@@ -1,4 +1,4 @@
-PRAGMA foreign_keys=OFF;--> statement-breakpoint
+PRAGMA defer_foreign_keys=on;--> statement-breakpoint
 CREATE TABLE `__new_community_posts` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`author_id` text NOT NULL,
@@ -23,7 +23,6 @@ CREATE TABLE `__new_community_posts` (
 INSERT INTO `__new_community_posts`("id", "author_id", "title", "content", "post_type", "stray_id", "sighting_id", "location", "media", "like_count", "comment_count", "share_count", "is_published", "published_at", "updated_at") SELECT "id", "author_id", "title", "content", "post_type", "stray_id", "sighting_id", "location", "media", "like_count", "comment_count", "share_count", "is_published", "published_at", "updated_at" FROM `community_posts`;--> statement-breakpoint
 DROP TABLE `community_posts`;--> statement-breakpoint
 ALTER TABLE `__new_community_posts` RENAME TO `community_posts`;--> statement-breakpoint
-PRAGMA foreign_keys=ON;--> statement-breakpoint
 CREATE INDEX `community_posts_published_at_idx` ON `community_posts` (`published_at`);--> statement-breakpoint
 CREATE TABLE `__new_post_comments` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
