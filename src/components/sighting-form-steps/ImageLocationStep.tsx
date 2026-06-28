@@ -1,12 +1,19 @@
-import { useCallback, useState, useEffect, useRef } from 'react'
+import { useCallback, useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { useIsMobile } from '~/hooks/use-mobile'
 import { ProcessedImage, useProcessImages } from '~/hooks/useProcessImages'
 import { CameraDialog } from '~/components/CameraDialog'
 import { ImageGallerySelector } from '~/components/ImageGallerySelector'
 import { ImageUploadArea } from '~/components/ImageUploadArea'
-import { MapComponent } from '~/components/MapComponent'
 import { ImagePreviewGallery } from '~/components/ImagePreviewGallery'
 import { Textarea } from '~/components/ui/textarea'
+import { Button } from '~/components/ui/button'
+import { MapPin } from 'lucide-react'
+
+// Lazy-load the map: maplibre-gl is a multi-MB bundle and most posts use the
+// auto-detected GPS location without ever opening the map picker.
+const MapComponent = lazy(() =>
+  import('~/components/MapComponent').then(m => ({ default: m.MapComponent }))
+)
 
 interface ImageLocationStepProps {
   onImagesUpdate?: (images: ProcessedImage[]) => void
@@ -31,6 +38,7 @@ export function ImageLocationStep({
 }: ImageLocationStepProps) {
   const isMobile = useIsMobile()
   const [showDatePicker, setShowDatePicker] = useState(false)
+  const [showMap, setShowMap] = useState(false)
   const [markerPosition, setMarkerPosition] = useState<{
     lat: number
     lng: number
@@ -161,17 +169,44 @@ export function ImageLocationStep({
           />
 
           <h3 className="text-sm font-medium text-muted-foreground mt-4 mb-2">Location</h3>
-          <div className={isMobile ? 'h-64' : 'h-64'}>
-            <MapComponent
-              draggable
-              className="h-full rounded-md overflow-hidden"
-              defaultShowCurrentLocation
-              positionInput
-              onMarkerDragEnd={handleMarkerDragEnd}
-              initialMarkerPosition={initialLocation}
-              showUserLocation={false}
-            />
-          </div>
+          {showMap ? (
+            <div className="h-64">
+              <Suspense
+                fallback={
+                  <div className="h-full rounded-md bg-muted animate-pulse" />
+                }
+              >
+                <MapComponent
+                  draggable
+                  className="h-full rounded-md overflow-hidden"
+                  defaultShowCurrentLocation
+                  positionInput
+                  onMarkerDragEnd={handleMarkerDragEnd}
+                  initialMarkerPosition={
+                    markerPosition ?? initialLocation ?? null
+                  }
+                  showUserLocation={false}
+                />
+              </Suspense>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full justify-start text-left h-auto py-3"
+              onClick={() => setShowMap(true)}
+            >
+              <MapPin className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="flex flex-col items-start min-w-0">
+                <span className="text-sm font-medium">
+                  {initialLocation ? 'Use current location' : 'Set location'}
+                </span>
+                <span className="text-xs text-muted-foreground truncate w-full">
+                  Tap to adjust on map
+                </span>
+              </span>
+            </Button>
+          )}
         </div>
       </div>
     </div>

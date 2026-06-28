@@ -39,45 +39,38 @@ export function useProcessImages() {
       file: File,
       onProgress: (progress: number) => void
     ): Promise<{ fullSize: File; thumbnail: File }> => {
-      // Full-size and thumbnail compress concurrently; each reports 0-100,
-      // combined and scaled into the 0-70 range
-      const parts = { full: 0, thumb: 0 }
-      const report = () =>
-        onProgress(
-          Math.min(
-            COMPRESSION_PROGRESS_CEILING,
-            Math.round((parts.full + parts.thumb) * 0.35)
-          )
-        )
-
       const fileBaseName = getBaseFileName(file.name)
-      const [compressedFull, compressedThumbnail] = await Promise.all([
-        imageCompression(file, {
-          maxSizeMB: 1,
-          maxWidthOrHeight: 1920,
-          fileType: 'image/webp',
-          useWebWorker: true,
-          onProgress: p => {
-            parts.full = p
-            report()
-          },
-        }),
-        imageCompression(file, {
-          maxSizeMB: 0.1,
-          maxWidthOrHeight: 300,
-          fileType: 'image/webp',
-          useWebWorker: true,
-          onProgress: p => {
-            parts.thumb = p
-            report()
-          },
-        }),
-      ])
+
+      // Compress the full-size image first (reports into the first half of the
+      // 0-70 compression band).
+      const compressedFull = await imageCompression(file, {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        fileType: 'image/webp',
+        useWebWorker: true,
+        onProgress: p => onProgress(Math.min(35, Math.round(p * 0.35))),
+      })
+      const fullSize = new File([compressedFull], `${fileBaseName}.webp`, {
+        type: 'image/webp',
+      })
+
+      // Derive the thumbnail from the already-compressed full-size file
+      // instead of re-decoding the original photo. Decoding a ~1MB / 1920px
+      // WebP is dramatically cheaper than re-decoding a 12MP camera photo,
+      // which was the main source of CPU heat during upload.
+      const compressedThumbnail = await imageCompression(fullSize, {
+        maxSizeMB: 0.1,
+        maxWidthOrHeight: 300,
+        fileType: 'image/webp',
+        useWebWorker: true,
+        onProgress: p =>
+          onProgress(
+            Math.min(COMPRESSION_PROGRESS_CEILING, 35 + Math.round(p * 0.35))
+          ),
+      })
 
       return {
-        fullSize: new File([compressedFull], `${fileBaseName}.webp`, {
-          type: 'image/webp',
-        }),
+        fullSize,
         thumbnail: new File(
           [compressedThumbnail],
           `${fileBaseName}_thumbnail.webp`,
@@ -101,8 +94,12 @@ export function useProcessImages() {
       thumbnailFormData.append('sessionId', session)
       thumbnailFormData.append('file', thumbnail)
 
-      const response = await uploadSightingPhoto({ data: fullImageFormData })
-      await uploadSightingPhoto({ data: thumbnailFormData })
+      // Upload full-size and thumbnail concurrently so the radio is on for
+      // one window instead of two back-to-back transmissions.
+      const [response] = await Promise.all([
+        uploadSightingPhoto({ data: fullImageFormData }),
+        uploadSightingPhoto({ data: thumbnailFormData }),
+      ])
       return response.key
     },
     []
