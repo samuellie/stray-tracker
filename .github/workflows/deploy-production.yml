@@ -1,0 +1,50 @@
+name: Deploy to Production
+
+# Deploys to Cloudflare Workers when changes are merged (pushed) into
+# the release/production branch. Mirrors the local `pnpm deploy` flow:
+# update service-worker version -> build -> apply remote D1 migrations -> deploy.
+on:
+  push:
+    branches: [release/production]
+  workflow_dispatch: # allow manual re-deploy from the Actions tab
+
+# Never run two production deploys at once.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Update service worker version
+        run: pnpm run update-sw
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Apply D1 migrations (remote)
+        run: pnpm wrangler d1 migrations apply stray-tracker --remote
+
+      - name: Deploy to Cloudflare Workers
+        run: pnpm wrangler deploy
