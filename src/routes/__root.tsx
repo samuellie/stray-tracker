@@ -24,8 +24,6 @@ function useServiceWorker() {
       navigator.serviceWorker
         .register('/sw.js', { scope: '/' })
         .then(registration => {
-          console.log('SW registered: ', registration)
-
           // Check for updates every 60 seconds
           setInterval(() => {
             registration.update()
@@ -38,9 +36,6 @@ function useServiceWorker() {
 
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New service worker is installed but waiting to activate
-                console.log('New service worker available')
-                
                 // Show update notification to user
                 if (window.confirm('A new version of the app is available. Reload to update?')) {
                   newWorker.postMessage({ type: 'SKIP_WAITING' })
@@ -52,12 +47,11 @@ function useServiceWorker() {
 
           // Handle controller change (when new SW takes over)
           navigator.serviceWorker.addEventListener('controllerchange', () => {
-            console.log('Service worker controller changed, reloading page')
             window.location.reload()
           })
         })
         .catch(registrationError => {
-          console.log('SW registration failed: ', registrationError)
+          console.error('SW registration failed: ', registrationError)
         })
     }
   }, [])

@@ -19,9 +19,6 @@ export const Route = createFileRoute('/api/files/$bucket/$')({
           throw new Error('Invalid bucket')
         }
 
-        // Extract actual key from the full URL format
-        console.log(_splat)
-
         const object = await bucketEnv.get(_splat as string)
         if (!object) {
           return new Response('File not found', { status: 404 })

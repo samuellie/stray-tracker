@@ -1,9 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
-import { SightingPhoto, type Sighting, type Stray } from 'db/schema'
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import { Card, CardContent, CardTitle } from '~/components/ui/card'
 import { Button } from '~/components/ui/button'
 import { Badge } from '~/components/ui/badge'
-import { Separator } from '~/components/ui/separator'
 import { Spinner } from '~/components/ui/spinner'
 import { formatRelativeDate } from '~/utils/date'
 import {
@@ -15,12 +13,13 @@ import {
   CarouselDots,
 } from '~/components/ui/carousel'
 import { useFindSightingPhotos } from '~/hooks/server/useFindSightingPhotos'
-import { getSightingFullImageUrl } from '~/utils/files'
-import { User } from 'better-auth'
+import { getSightingFullImageUrl, getSightingThumbnailUrl } from '~/utils/files'
 import { Img } from 'react-image'
 import { getPlaceholderImage } from '~/utils/strayImageFallbacks'
-import { useRouter } from '@tanstack/react-router'
 import { authClient } from '~/lib/auth-client'
+import { toast } from 'sonner'
+import { getErrorMessage } from '~/lib/errors'
+import { toastUndoable } from '~/lib/undoable'
 import { ArrowLeft, MoreVertical, X } from 'lucide-react'
 import {
   DropdownMenu,
@@ -29,86 +28,123 @@ import {
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { useDeleteSighting } from '~/hooks/server/useDeleteSighting'
+import { useSightingById } from '~/hooks/server/useSightingById'
+import { Skeleton } from '~/components/ui/skeleton'
 import { ConfirmationDialog } from './ConfirmationDialog'
+import { NamingSuggestions } from '~/components/NamingSuggestions'
+import { FollowStrayButton } from '~/components/FollowStrayButton'
 import { useState, useRef, useEffect } from 'react'
 import { useFindInfiniteStraySightings } from '~/hooks/server/useFindInfiniteStraySightings'
 import { calculateDistance } from '~/utils/distance'
-
-type SightingWithDetails = Stray & {
-  sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-}
+import type { SightingWithDetails, TimelineSighting } from '~/types/sighting'
 
 interface SightingDialogProps {
-  selectedSighting: SightingWithDetails | null
+  /** The sighting id to display — usually driven by the ?sighting URL param */
+  sightingId?: number
+  /** Already-loaded data rendered instantly while the fetch confirms it */
+  initialSighting?: SightingWithDetails | null
+  /** Navigate to another sighting (pushes a history entry, so back works) */
+  onNavigateToSighting: (id: number) => void
+  /** Whether in-dialog navigation happened (shows the back arrow) */
+  canGoBack?: boolean
+  onBack?: () => void
   onClose: () => void
 }
 
 export function SightingDialog({
-  selectedSighting: initialSighting,
+  sightingId,
+  initialSighting,
+  onNavigateToSighting,
+  canGoBack = false,
+  onBack,
   onClose,
 }: SightingDialogProps) {
-  const router = useRouter()
   const deleteSightingMutation = useDeleteSighting()
-  const [isDeleting, setIsDeleting] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
-  // Stack to keep track of navigation history within the dialog
-  const [sightingHistory, setSightingHistory] = useState<SightingWithDetails[]>([])
+  const requestedId = sightingId ?? initialSighting?.sighting.id
+  const { data: fetched } = useSightingById(requestedId)
 
-  // Current sighting to display is either the top of the stack or the initial prop
-  const currentSighting = sightingHistory.length > 0
-    ? sightingHistory[sightingHistory.length - 1]
-    : initialSighting
-
-  if (!currentSighting) return null
+  // Prefer fresh data from the server; fall back to the prop while loading
+  // (but never show a stale placeholder for a *different* sighting id)
+  const currentSighting: SightingWithDetails | null =
+    fetched && fetched.stray
+      ? {
+        ...fetched.stray,
+        sighting: {
+          ...fetched,
+          user: fetched.user,
+          sightingPhotos: fetched.sightingPhotos,
+        },
+      }
+      : initialSighting && initialSighting.sighting.id === requestedId
+        ? initialSighting
+        : null
 
   const { data: session } = authClient.useSession()
-  const isOwner = session?.user?.id === currentSighting.sighting.user.id
-
   const { data: sightingPhotos, isLoading } = useFindSightingPhotos(
-    currentSighting.sighting.id
+    currentSighting?.sighting.id
   )
 
-  const handleBack = () => {
-    setSightingHistory(prev => prev.slice(0, -1))
+  if (!requestedId) return null
+
+  if (!currentSighting) {
+    return (
+      <Card className="border-0 max-w-2xl w-full overflow-hidden">
+        <div className="p-4 flex items-center gap-3 border-b border-gray-50">
+          <Skeleton className="w-10 h-10 rounded-full" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+        </div>
+        <Skeleton className="w-full h-[500px] rounded-none" />
+        <div className="p-4 space-y-3">
+          <Skeleton className="h-6 w-40" />
+          <div className="flex gap-2">
+            <Skeleton className="h-5 w-16 rounded-full" />
+            <Skeleton className="h-5 w-14 rounded-full" />
+          </div>
+        </div>
+      </Card>
+    )
   }
 
-  const handleSightingClick = (sighting: any) => {
-    // Construct the SightingWithDetails object from the simple sighting data
-    // Note: We might be missing some deep nested data like full user details if not returned by search
-    // But for display purposes in the dialog, we map what we have.
-    // Ideally, we should fetch the full sighting details, but we can reuse the type if the structure matches.
+  const isOwner = session?.user?.id === currentSighting.sighting.user.id
 
-    // Check if the clicked sighting is already the current one (avoid duplicates)
-    if (sighting.id === currentSighting.sighting.id) return;
-
-    const newSighting: SightingWithDetails = {
-      ...currentSighting, // Inherit stray details
-      sighting: {
-        ...sighting,
-        user: sighting.user || currentSighting.sighting.user, // Fallback if user not in timeline data
-        sightingPhotos: sighting.sightingPhotos || []
-      }
-    }
-    setSightingHistory(prev => [...prev, newSighting])
+  const handleSightingClick = (sighting: TimelineSighting) => {
+    if (sighting.id === currentSighting.sighting.id) return
+    onNavigateToSighting(sighting.id)
   }
+
+  const strayLabel = currentSighting.name || `this ${currentSighting.species}`
+  const photoCount =
+    sightingPhotos?.length ?? currentSighting.sighting.sightingPhotos.length
+  const sightingDateLabel = formatRelativeDate(
+    Number(currentSighting.sighting.sightingTime)
+  )
 
   const handleDelete = () => {
-    setIsDeleting(true)
-    deleteSightingMutation.mutate(currentSighting.sighting.id, {
-      onSuccess: () => {
-        setIsDeleting(false)
-        setIsDeleteDialogOpen(false)
-        if (sightingHistory.length > 0) {
-          handleBack()
-        } else {
-          onClose()
-        }
-      },
-      onError: () => {
-        setIsDeleting(false)
-        // You might want to show a toast here
-      }
+    const deletedId = currentSighting.sighting.id
+    setIsDeleteDialogOpen(false)
+    if (canGoBack && onBack) {
+      onBack()
+    } else {
+      onClose()
+    }
+    toastUndoable({
+      message: 'Sighting deleted',
+      description: `The sighting of ${strayLabel} from ${sightingDateLabel} was removed.`,
+      onCommit: () =>
+        deleteSightingMutation.mutate(deletedId, {
+          onError: error => {
+            const { title, description } = getErrorMessage(
+              error,
+              'Could not delete the sighting'
+            )
+            toast.error(title, { description })
+          },
+        }),
     })
   }
 
@@ -133,12 +169,13 @@ export function SightingDialog({
       {/* User Header - Instagram style */}
       <div className="p-4 flex items-center justify-between border-b border-gray-50">
         <div className="flex items-center gap-3">
-          {sightingHistory.length > 0 && (
+          {canGoBack && onBack && (
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8 -ml-2 mr-1 text-muted-foreground hover:text-foreground"
-              onClick={handleBack}
+              onClick={onBack}
+              aria-label="Back to previous sighting"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -173,7 +210,6 @@ export function SightingDialog({
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive cursor-pointer"
                   onClick={() => setIsDeleteDialogOpen(true)}
-                  disabled={isDeleting}
                 >
                   Delete Sighting
                 </DropdownMenuItem>
@@ -184,11 +220,10 @@ export function SightingDialog({
               open={isDeleteDialogOpen}
               onOpenChange={setIsDeleteDialogOpen}
               title="Delete Sighting"
-              description="Are you sure you want to delete this sighting? This action cannot be undone."
+              description={`This removes the sighting of ${strayLabel} from ${sightingDateLabel}${photoCount > 0 ? ` along with ${photoCount} photo${photoCount > 1 ? 's' : ''}` : ''}. You'll have a few seconds to undo.`}
               confirmText="Delete"
               variant="destructive"
               onConfirm={handleDelete}
-              isLoading={isDeleting}
             />
           </div>
         )}
@@ -274,11 +309,14 @@ export function SightingDialog({
       <CardContent className="px-4 pb-4">
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4">
-            {currentSighting.name && (
+            {currentSighting.name ? (
               <CardTitle className="text-2xl font-bold">
                 {currentSighting.name}
               </CardTitle>
+            ) : (
+              <span />
             )}
+            <FollowStrayButton strayId={currentSighting.id} size="sm" />
           </div>
 
           <div className="flex gap-2 flex-wrap pb-2">
@@ -346,14 +384,18 @@ export function SightingDialog({
           )}
         </div>
 
-        {sightingHistory.length === 0 && (
-          <SightingTimeline
-            strayId={currentSighting.id}
-            excludeSightingId={currentSighting.sighting.id}
-            primaryLocation={currentSighting.sighting.lat && currentSighting.sighting.lng ? { lat: currentSighting.sighting.lat, lng: currentSighting.sighting.lng } : null}
-            onSightingClick={handleSightingClick}
-          />
+        {!currentSighting.name && (
+          <div className="mt-6 pt-6 border-t border-gray-100">
+            <NamingSuggestions strayId={currentSighting.id} compact />
+          </div>
         )}
+
+        <SightingTimeline
+          strayId={currentSighting.id}
+          excludeSightingId={currentSighting.sighting.id}
+          primaryLocation={currentSighting.sighting.lat && currentSighting.sighting.lng ? { lat: currentSighting.sighting.lat, lng: currentSighting.sighting.lng } : null}
+          onSightingClick={handleSightingClick}
+        />
       </CardContent>
     </Card>
   )
@@ -368,7 +410,7 @@ function SightingTimeline({
   strayId: number,
   excludeSightingId: number,
   primaryLocation: { lat: number, lng: number } | null
-  onSightingClick: (sighting: any) => void
+  onSightingClick: (sighting: TimelineSighting) => void
 }) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useFindInfiniteStraySightings(strayId, excludeSightingId)
   const observerRef = useRef<HTMLDivElement>(null)
@@ -390,7 +432,7 @@ function SightingTimeline({
     return () => observer.disconnect()
   }, [hasNextPage, fetchNextPage])
 
-  const sightings = data?.pages.flatMap((page: any) => page) || []
+  const sightings = data?.pages.flatMap(page => page) || []
 
   if (sightings.length === 0) return null
 
@@ -398,7 +440,7 @@ function SightingTimeline({
     <div className="mt-6 pt-6 border-t border-gray-100">
       <h3 className="text-sm font-semibold mb-4 text-foreground">Sighting History</h3>
       <div className="space-y-4">
-        {sightings.map((sighting: any) => {
+        {sightings.map(sighting => {
           const distance = primaryLocation
             ? calculateDistance(
               primaryLocation.lat,
@@ -417,7 +459,7 @@ function SightingTimeline({
               <div className="relative w-16 h-16 rounded-md overflow-hidden bg-muted flex-shrink-0 border border-gray-100">
                 {sighting.sightingPhotos && sighting.sightingPhotos.length > 0 ? (
                   <Img
-                    src={getSightingFullImageUrl(sighting.sightingPhotos[0].url)}
+                    src={getSightingThumbnailUrl(sighting.sightingPhotos[0].url)}
                     loader={<div className="w-full h-full bg-muted animate-pulse" />}
                     unloader={
                       <Img
@@ -425,9 +467,11 @@ function SightingTimeline({
                           sighting.sightingPhotos[0].url,
                           sighting.stray?.species === 'cat' ? 'cats' : 'dogs'
                         )}
+                        alt={`Sighting ${formatRelativeDate(Number(sighting.sightingTime))}`}
                         className="w-full h-full object-cover"
                       />
                     }
+                    alt={`Sighting ${formatRelativeDate(Number(sighting.sightingTime))}`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (

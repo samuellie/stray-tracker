@@ -5,6 +5,6 @@ import { env } from 'cloudflare:workers'
 export async function getDb() {
   return drizzle(env.DB, {
     schema,
-    logger: true,
+    logger: import.meta.env?.DEV === true,
   })
 }

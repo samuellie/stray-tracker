@@ -21,6 +21,11 @@ import {
 import { formatRelativeDate } from '~/utils/date'
 import { ColumnDef } from '@tanstack/react-table'
 import type { Stray } from 'db/schema'
+import { Skeleton } from '~/components/ui/skeleton'
+import { Button } from '~/components/ui/button'
+import { useDebounce } from '~/hooks/use-debounce'
+import { getErrorMessage } from '~/lib/errors'
+import { PawPrint, RefreshCw, SearchX } from 'lucide-react'
 
 export const Route = createFileRoute('/app/strays/')({
   component: Strays,
@@ -33,19 +38,50 @@ function Strays() {
   const [status, setStatus] = useState<string>('all')
   const [size, setSize] = useState<string>('all')
 
+  const PAGE_SIZE = 10
+  const [pageIndex, setPageIndex] = useState(0)
+
+  const debouncedSearch = useDebounce(search, 300)
+  const hasActiveFilters =
+    debouncedSearch !== '' ||
+    species !== 'all' ||
+    status !== 'all' ||
+    size !== 'all'
+
+  const clearFilters = () => {
+    setSearch('')
+    setSpecies('all')
+    setStatus('all')
+    setSize('all')
+    setPageIndex(0)
+  }
+
+  // Changing any filter returns to the first page
+  const withPageReset = <V,>(setter: (value: V) => void) => {
+    return (value: V) => {
+      setPageIndex(0)
+      setter(value)
+    }
+  }
+
   const {
-    data: strays,
+    data,
     isLoading,
     error,
+    refetch,
   } = useFindStray(
     species === 'all' ? undefined : (species as 'cat' | 'dog' | 'other'),
     status === 'all'
       ? undefined
       : (status as 'spotted' | 'being_cared_for' | 'adopted' | 'deceased'),
     size === 'all' ? undefined : (size as 'small' | 'medium' | 'large'),
-    search || undefined,
-    100
+    debouncedSearch || undefined,
+    PAGE_SIZE,
+    pageIndex * PAGE_SIZE
   )
+
+  const strays = data?.items
+  const total = data?.total ?? 0
 
   // Handle row click navigation
   const handleRowClick = (stray: Stray) => {
@@ -152,12 +188,23 @@ function Strays() {
     []
   )
 
-  // Create table instance
+  // Create table instance (server-driven pagination)
   const table = useTable({
     data: strays || [],
     columns,
     enablePagination: true,
-    pageSize: 10,
+    pageSize: PAGE_SIZE,
+    manualPagination: {
+      pageCount: Math.max(1, Math.ceil(total / PAGE_SIZE)),
+      pagination: { pageIndex, pageSize: PAGE_SIZE },
+      onPaginationChange: updater => {
+        const next =
+          typeof updater === 'function'
+            ? updater({ pageIndex, pageSize: PAGE_SIZE })
+            : updater
+        setPageIndex(next.pageIndex)
+      },
+    },
   })
 
   return (
@@ -182,12 +229,12 @@ function Strays() {
               <Input
                 placeholder="Search by name or description..."
                 value={search}
-                onChange={e => setSearch(e.target.value)}
+                onChange={e => withPageReset(setSearch)(e.target.value)}
               />
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Species</label>
-              <Select value={species} onValueChange={setSpecies}>
+              <Select value={species} onValueChange={withPageReset(setSpecies)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All species" />
                 </SelectTrigger>
@@ -201,7 +248,7 @@ function Strays() {
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Status</label>
-              <Select value={status} onValueChange={setStatus}>
+              <Select value={status} onValueChange={withPageReset(setStatus)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
@@ -218,7 +265,7 @@ function Strays() {
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Size</label>
-              <Select value={size} onValueChange={setSize}>
+              <Select value={size} onValueChange={withPageReset(setSize)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All sizes" />
                 </SelectTrigger>
@@ -239,19 +286,38 @@ function Strays() {
         <CardContent className="p-0">
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">
-                Strays ({strays?.length || 0})
-              </h2>
+              <h2 className="text-lg font-semibold">Strays ({total})</h2>
             </div>
 
             {isLoading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-                <p className="mt-4 text-muted-foreground">Loading strays...</p>
+              <div className="space-y-3 py-2" aria-label="Loading strays">
+                <Skeleton className="h-9 w-full" />
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <Skeleton className="h-5 w-1/4" />
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                    <Skeleton className="h-5 w-12" />
+                    <Skeleton className="h-5 flex-1" />
+                  </div>
+                ))}
               </div>
             ) : error ? (
-              <div className="text-center py-8 text-red-600">
-                <p>Error loading strays: {error.message}</p>
+              <div className="text-center py-12">
+                <p className="font-medium text-destructive">
+                  {getErrorMessage(error, 'Could not load strays').title}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {getErrorMessage(error, 'Could not load strays').description}
+                </p>
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => refetch()}
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Try again
+                </Button>
               </div>
             ) : strays && strays.length > 0 ? (
               <>
@@ -260,11 +326,29 @@ function Strays() {
                   onRowClick={handleRowClick}
                   clickableRows={true}
                 />
-                <Pagination table={table} />
+                <Pagination table={table} totalRows={total} />
               </>
+            ) : hasActiveFilters ? (
+              <div className="text-center py-12">
+                <SearchX className="w-10 h-10 mx-auto text-muted-foreground/50" />
+                <p className="mt-3 font-medium">No strays match your filters</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Try a different search term or remove some filters.
+                </p>
+                <Button variant="outline" className="mt-4" onClick={clearFilters}>
+                  Clear filters
+                </Button>
+              </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                No strays found
+              <div className="text-center py-12">
+                <PawPrint className="w-10 h-10 mx-auto text-muted-foreground/50" />
+                <p className="mt-3 font-medium">No strays reported yet</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Strays appear here once someone reports a sighting on the map.
+                </p>
+                <Button asChild variant="outline" className="mt-4">
+                  <Link to="/app">Go to the map</Link>
+                </Button>
               </div>
             )}
           </div>

@@ -60,6 +60,32 @@ function AppLayout() {
         Home
       </Link>
 
+      <Link
+        to="/app/feed"
+        className={`${isMobile ? 'block py-3 px-4 text-base' : 'text-muted-foreground hover:text-foreground transition-colors'}`}
+        activeProps={{
+          className: isMobile
+            ? 'text-blue-600 bg-blue-50 font-medium'
+            : 'text-blue-600 font-medium',
+        }}
+        onClick={() => isMobile && setMobileMenuOpen(false)}
+      >
+        Community
+      </Link>
+
+      <Link
+        to="/app/following"
+        className={`${isMobile ? 'block py-3 px-4 text-base' : 'text-muted-foreground hover:text-foreground transition-colors'}`}
+        activeProps={{
+          className: isMobile
+            ? 'text-blue-600 bg-blue-50 font-medium'
+            : 'text-blue-600 font-medium',
+        }}
+        onClick={() => isMobile && setMobileMenuOpen(false)}
+      >
+        Following
+      </Link>
+
       {(session?.user as any)?.role === 'admin' && (
         <>
           <Link

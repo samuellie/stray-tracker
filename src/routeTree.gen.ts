@@ -14,6 +14,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AuthAuthViewRouteImport } from './routes/auth.$authView'
 import { Route as AppStraysIndexRouteImport } from './routes/app/strays/index'
+import { Route as AppFollowingIndexRouteImport } from './routes/app/following/index'
+import { Route as AppFeedIndexRouteImport } from './routes/app/feed/index'
 import { Route as AppStraysStrayIdRouteImport } from './routes/app/strays/$strayId'
 import { Route as AppAdminUsersRouteImport } from './routes/app/admin/users'
 import { Route as AppAdminShadcnTestRouteImport } from './routes/app/admin/shadcn-test'
@@ -44,6 +46,16 @@ const AuthAuthViewRoute = AuthAuthViewRouteImport.update({
 const AppStraysIndexRoute = AppStraysIndexRouteImport.update({
   id: '/strays/',
   path: '/strays/',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppFollowingIndexRoute = AppFollowingIndexRouteImport.update({
+  id: '/following/',
+  path: '/following/',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppFeedIndexRoute = AppFeedIndexRouteImport.update({
+  id: '/feed/',
+  path: '/feed/',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppStraysStrayIdRoute = AppStraysStrayIdRouteImport.update({
@@ -88,6 +100,8 @@ export interface FileRoutesByFullPath {
   '/app/admin/shadcn-test': typeof AppAdminShadcnTestRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/strays/$strayId': typeof AppStraysStrayIdRoute
+  '/app/feed': typeof AppFeedIndexRoute
+  '/app/following': typeof AppFollowingIndexRoute
   '/app/strays': typeof AppStraysIndexRoute
   '/api/files/$bucket/$': typeof ApiFilesBucketSplatRoute
 }
@@ -100,6 +114,8 @@ export interface FileRoutesByTo {
   '/app/admin/shadcn-test': typeof AppAdminShadcnTestRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/strays/$strayId': typeof AppStraysStrayIdRoute
+  '/app/feed': typeof AppFeedIndexRoute
+  '/app/following': typeof AppFollowingIndexRoute
   '/app/strays': typeof AppStraysIndexRoute
   '/api/files/$bucket/$': typeof ApiFilesBucketSplatRoute
 }
@@ -114,6 +130,8 @@ export interface FileRoutesById {
   '/app/admin/shadcn-test': typeof AppAdminShadcnTestRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/strays/$strayId': typeof AppStraysStrayIdRoute
+  '/app/feed/': typeof AppFeedIndexRoute
+  '/app/following/': typeof AppFollowingIndexRoute
   '/app/strays/': typeof AppStraysIndexRoute
   '/api/files/$bucket/$': typeof ApiFilesBucketSplatRoute
 }
@@ -129,6 +147,8 @@ export interface FileRouteTypes {
     | '/app/admin/shadcn-test'
     | '/app/admin/users'
     | '/app/strays/$strayId'
+    | '/app/feed'
+    | '/app/following'
     | '/app/strays'
     | '/api/files/$bucket/$'
   fileRoutesByTo: FileRoutesByTo
@@ -141,6 +161,8 @@ export interface FileRouteTypes {
     | '/app/admin/shadcn-test'
     | '/app/admin/users'
     | '/app/strays/$strayId'
+    | '/app/feed'
+    | '/app/following'
     | '/app/strays'
     | '/api/files/$bucket/$'
   id:
@@ -154,6 +176,8 @@ export interface FileRouteTypes {
     | '/app/admin/shadcn-test'
     | '/app/admin/users'
     | '/app/strays/$strayId'
+    | '/app/feed/'
+    | '/app/following/'
     | '/app/strays/'
     | '/api/files/$bucket/$'
   fileRoutesById: FileRoutesById
@@ -201,6 +225,20 @@ declare module '@tanstack/react-router' {
       path: '/strays'
       fullPath: '/app/strays'
       preLoaderRoute: typeof AppStraysIndexRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/following/': {
+      id: '/app/following/'
+      path: '/following'
+      fullPath: '/app/following'
+      preLoaderRoute: typeof AppFollowingIndexRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/feed/': {
+      id: '/app/feed/'
+      path: '/feed'
+      fullPath: '/app/feed'
+      preLoaderRoute: typeof AppFeedIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/app/strays/$strayId': {
@@ -254,6 +292,8 @@ interface AppRouteRouteChildren {
   AppAdminShadcnTestRoute: typeof AppAdminShadcnTestRoute
   AppAdminUsersRoute: typeof AppAdminUsersRoute
   AppStraysStrayIdRoute: typeof AppStraysStrayIdRoute
+  AppFeedIndexRoute: typeof AppFeedIndexRoute
+  AppFollowingIndexRoute: typeof AppFollowingIndexRoute
   AppStraysIndexRoute: typeof AppStraysIndexRoute
 }
 
@@ -264,6 +304,8 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppAdminShadcnTestRoute: AppAdminShadcnTestRoute,
   AppAdminUsersRoute: AppAdminUsersRoute,
   AppStraysStrayIdRoute: AppStraysStrayIdRoute,
+  AppFeedIndexRoute: AppFeedIndexRoute,
+  AppFollowingIndexRoute: AppFollowingIndexRoute,
   AppStraysIndexRoute: AppStraysIndexRoute,
 }
 

@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react'
 import imageCompression from 'browser-image-compression'
 import { generateSessionKey, uploadSightingPhoto } from '~/server/files'
-import { file } from 'better-auth'
 import { getBaseFileName } from '~/lib/utils'
 
 export interface ProcessedImage {
@@ -10,73 +9,103 @@ export interface ProcessedImage {
   key?: string
 }
 
+// Progress per image: 1-70 compressing, 70-99 uploading, 100 done, -1 failed
+const COMPRESSION_PROGRESS_CEILING = 70
+const UPLOAD_STARTED_PROGRESS = 80
+
 export function useProcessImages() {
   const [images, setImages] = useState<ProcessedImage[]>([])
   const [progress, setProgress] = useState<number[]>([])
   const [sessionId, setSessionId] = useState<string | undefined>(undefined)
-  const maxConcurrentCompressions = 1
+  // Each compression runs in its own web worker; more than ~4 in flight
+  // risks memory pressure on low-end phones
+  const maxConcurrentCompressions = 3
 
-  const compressImages = useCallback(
-    async (
-      files: File[],
-      startIndex: number,
-      onProgress?: (actualIndex: number, progress: number) => void
-    ): Promise<{ fullSize: File[]; thumbnails: File[] }> => {
-      const fullSize: File[] = []
-      const thumbnails: File[] = []
-      for (let i = 0; i < files.length; i += maxConcurrentCompressions) {
-        const batch = files.slice(i, i + maxConcurrentCompressions)
-        // Compress full size first
-        await Promise.all(
-          batch.map(async (file, idx) => {
-            const actualIndex = startIndex + i + idx
-            try {
-              const compressedFile = await imageCompression(file, {
-                maxSizeMB: 1,
-                maxWidthOrHeight: 1920,
-                fileType: 'image/webp',
-                useWebWorker: true,
-                onProgress: progress =>
-                  onProgress?.(actualIndex, progress * 0.375), // Half progress for full size
-              })
-              const fileBaseName = getBaseFileName(file.name)
-              const fullSizeFile = new File(
-                [compressedFile],
-                `${fileBaseName}.webp`,
-                { type: 'image/webp' }
-              )
-              fullSize[actualIndex - startIndex] = fullSizeFile
-              const compressedThumbnail = await imageCompression(file, {
-                maxSizeMB: 0.1,
-                maxWidthOrHeight: 300,
-                fileType: 'image/webp',
-                useWebWorker: true,
-                onProgress: progress =>
-                  onProgress?.(actualIndex, progress * 0.375 + 37.5), // Remaining Half progress for thumbnail size
-              })
-              const thumbnailBaseName = getBaseFileName(file.name)
-              const thumbnailFile = new File(
-                [compressedThumbnail],
-                `${thumbnailBaseName}_thumbnail.webp`,
-                { type: 'image/webp' }
-              )
-              thumbnails[actualIndex - startIndex] = thumbnailFile
+  const setProgressAt = useCallback((index: number, value: number) => {
+    setProgress(prev => prev.map((p, j) => (j === index ? value : p)))
+  }, [])
 
-              onProgress?.(actualIndex, 50) // Set to 50% after full size
-            } catch (error) {
-              console.error(
-                'Full size compression failed for image',
-                actualIndex,
-                error
-              )
-              onProgress?.(actualIndex, -1) // -1 indicate failure
-            }
-          })
-        )
-      }
-      return { fullSize, thumbnails }
+  const updateImageAt = useCallback(
+    (index: number, patch: Partial<ProcessedImage>) => {
+      setImages(prev =>
+        prev.map((img, j) => (j === index ? { ...img, ...patch } : img))
+      )
     },
-    [maxConcurrentCompressions]
+    []
+  )
+
+  const compressImage = useCallback(
+    async (
+      file: File,
+      onProgress: (progress: number) => void
+    ): Promise<{ fullSize: File; thumbnail: File }> => {
+      // Full-size and thumbnail compress concurrently; each reports 0-100,
+      // combined and scaled into the 0-70 range
+      const parts = { full: 0, thumb: 0 }
+      const report = () =>
+        onProgress(
+          Math.min(
+            COMPRESSION_PROGRESS_CEILING,
+            Math.round((parts.full + parts.thumb) * 0.35)
+          )
+        )
+
+      const fileBaseName = getBaseFileName(file.name)
+      const [compressedFull, compressedThumbnail] = await Promise.all([
+        imageCompression(file, {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1920,
+          fileType: 'image/webp',
+          useWebWorker: true,
+          onProgress: p => {
+            parts.full = p
+            report()
+          },
+        }),
+        imageCompression(file, {
+          maxSizeMB: 0.1,
+          maxWidthOrHeight: 300,
+          fileType: 'image/webp',
+          useWebWorker: true,
+          onProgress: p => {
+            parts.thumb = p
+            report()
+          },
+        }),
+      ])
+
+      return {
+        fullSize: new File([compressedFull], `${fileBaseName}.webp`, {
+          type: 'image/webp',
+        }),
+        thumbnail: new File(
+          [compressedThumbnail],
+          `${fileBaseName}_thumbnail.webp`,
+          { type: 'image/webp' }
+        ),
+      }
+    },
+    []
+  )
+
+  const uploadImage = useCallback(
+    async (
+      session: string,
+      fullSize: File,
+      thumbnail: File
+    ): Promise<string> => {
+      const fullImageFormData = new FormData()
+      fullImageFormData.append('sessionId', session)
+      fullImageFormData.append('file', fullSize)
+      const thumbnailFormData = new FormData()
+      thumbnailFormData.append('sessionId', session)
+      thumbnailFormData.append('file', thumbnail)
+
+      const response = await uploadSightingPhoto({ data: fullImageFormData })
+      await uploadSightingPhoto({ data: thumbnailFormData })
+      return response.key
+    },
+    []
   )
 
   const getSessionKey = useCallback(async () => {
@@ -88,98 +117,66 @@ export function useProcessImages() {
     return sessionId
   }, [sessionId])
 
-  const uploadToTempStorage = useCallback(
-    async (
-      sessionId: string,
-      processedImages: ProcessedImage[],
+  // Compress + upload the given files, writing progress/results into the
+  // images array at each file's index. Failures mark progress -1 and leave
+  // the original file in place so it can be retried.
+  const processFiles = useCallback(
+    async (entries: { file: File; index: number }[]) => {
+      const session = await getSessionKey()
 
-      onProgress?: (index: number, progress: number) => void
-    ): Promise<ProcessedImage[]> => {
-      try {
-        // Upload files directly to R2
-        const uploadPromises = processedImages.map(async (img, index) => {
-          const fullImageFormData = new FormData()
-          fullImageFormData.append('sessionId', sessionId)
-          fullImageFormData.append('file', img.file)
-          const thumbnailFormData = new FormData()
-          thumbnailFormData.append('sessionId', sessionId)
-          thumbnailFormData.append('file', img.thumbnail!)
+      for (let i = 0; i < entries.length; i += maxConcurrentCompressions) {
+        const batch = entries.slice(i, i + maxConcurrentCompressions)
+        await Promise.all(
+          batch.map(async ({ file, index }) => {
+            try {
+              const { fullSize, thumbnail } = await compressImage(file, p =>
+                setProgressAt(index, p)
+              )
+              updateImageAt(index, { file: fullSize, thumbnail })
+              setProgressAt(index, UPLOAD_STARTED_PROGRESS)
 
-          try {
-            const response = await uploadSightingPhoto({
-              data: fullImageFormData,
-            })
-            await uploadSightingPhoto({ data: thumbnailFormData })
-
-            onProgress?.(index, 100)
-
-            return {
-              ...img,
-              key: response.key,
+              const key = await uploadImage(session, fullSize, thumbnail)
+              updateImageAt(index, { key })
+              setProgressAt(index, 100)
+            } catch (error) {
+              console.error('Failed to process image', index, error)
+              setProgressAt(index, -1)
             }
-          } catch (error) {
-            console.error('Failed to upload image:', error)
-            throw error
-          }
-        })
-
-        return await Promise.all(uploadPromises)
-      } catch (error) {
-        console.error('Failed to get upload URLs:', error)
-        throw error
+          })
+        )
       }
     },
-    []
+    [
+      getSessionKey,
+      compressImage,
+      uploadImage,
+      setProgressAt,
+      updateImageAt,
+      maxConcurrentCompressions,
+    ]
   )
 
   const addImages = useCallback(
     async (files: File[]) => {
       const startIndex = images.length
-      const initialImages: ProcessedImage[] = files.map((file, idx) => ({
-        file,
-      }))
-
-      setImages(prev => [...prev, ...initialImages])
+      setImages(prev => [...prev, ...files.map(file => ({ file }))])
       setProgress(prev => [...prev, ...new Array(files.length).fill(1)])
-      // Get sessionId
-      const sessionId = await getSessionKey()
 
-      // First compress images
-      const { fullSize, thumbnails } = await compressImages(
-        files,
-        startIndex,
-        (actualIndex, prog) =>
-          setProgress(prev =>
-            prev.map((p, j) => (j === actualIndex ? prog : p))
-          )
+      await processFiles(
+        files.map((file, i) => ({ file, index: startIndex + i }))
       )
-
-      // Create processed images
-      const processedImages: ProcessedImage[] = fullSize.map((file, idx) => ({
-        file,
-        thumbnail: thumbnails[idx],
-      }))
-
-      // Upload to temporary storage
-      const uploadedImages = await uploadToTempStorage(
-        sessionId,
-        processedImages,
-        (index, prog) => {
-          const actualIndex = startIndex + index
-          setProgress(prev =>
-            prev.map((p, j) => (j === actualIndex ? prog : p))
-          )
-        }
-      )
-      setImages(prev => {
-        const newImages = [...prev]
-        for (let i = 0; i < uploadedImages.length; i++) {
-          newImages[startIndex + i] = uploadedImages[i]
-        }
-        return newImages
-      })
     },
-    [images.length, compressImages, uploadToTempStorage]
+    [images.length, processFiles]
+  )
+
+  const retryImage = useCallback(
+    async (index: number) => {
+      const img = images[index]
+      if (!img) return
+      setProgressAt(index, 1)
+      await processFiles([{ file: img.file, index }])
+    },
+    [images, processFiles, setProgressAt]
   )
 
   const removeImage = useCallback((index: number) => {
@@ -210,6 +207,7 @@ export function useProcessImages() {
       })
     }, []),
     addImages,
+    retryImage,
     removeImage,
   }
 }

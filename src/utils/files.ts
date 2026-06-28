@@ -12,12 +12,13 @@ export const getKey = (url: string) => {
   return pathname
 }
 
+// Returns '' when no url is available so <Img> falls through to its unloader/placeholder
 export const getSightingThumbnailUrl = (url?: string) => {
   if (url) return `/api/files/animal-photos/${getThumbnailKey(url)}`
-  return 'undefined'
+  return ''
 }
 
 export const getSightingFullImageUrl = (url?: string) => {
   if (url) return `/api/files/animal-photos/${getKey(url)}`
-  return 'undefined'
+  return ''
 }

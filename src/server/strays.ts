@@ -1,5 +1,5 @@
 import { strays, sightings, sightingPhotos } from 'db/schema'
-import { desc, sql, eq, like, and } from 'drizzle-orm'
+import { desc, sql, eq, like, and, inArray } from 'drizzle-orm'
 import { getDb } from 'db'
 import { createServerFn } from '@tanstack/react-start'
 import { userMw } from '~/utils/auth-middleware'
@@ -33,18 +33,57 @@ export const getNearbyStrays = createServerFn({ method: 'GET' })
     const minLng = lng - lngDelta
     const maxLng = lng + lngDelta
 
-    const result = await db.query.strays.findMany({
-      where: sql`EXISTS (
-        SELECT 1 FROM sightings s 
-        WHERE s.stray_id = strays.id 
-        AND s.sighting_time = (SELECT MAX(s2.sighting_time) FROM sightings s2 WHERE s2.stray_id = strays.id)
-        AND s.lat BETWEEN ${minLat} AND ${maxLat}
-        AND s.lng BETWEEN ${minLng} AND ${maxLng}
-        AND (6371 * acos(cos(${lat} * 3.141592653589793 / 180) * cos(s.lat * 3.141592653589793 / 180) * cos((s.lng * 3.141592653589793 / 180) - (${lng} * 3.141592653589793 / 180)) + sin(${lat} * 3.141592653589793 / 180) * sin(s.lat * 3.141592653589793 / 180))) < ${radius}
-      )`,
-      orderBy: sql`(6371 * acos(cos(${lat} * 3.141592653589793 / 180) * cos((SELECT s.lat FROM sightings s WHERE s.stray_id = strays.id ORDER BY s.sighting_time DESC LIMIT 1) * 3.141592653589793 / 180) * cos(((SELECT s.lng FROM sightings s WHERE s.stray_id = strays.id ORDER BY s.sighting_time DESC LIMIT 1) * 3.141592653589793 / 180) - (${lng} * 3.141592653589793 / 180)) + sin(${lat} * 3.141592653589793 / 180) * sin((SELECT s.lat FROM sightings s WHERE s.stray_id = strays.id ORDER BY s.sighting_time DESC LIMIT 1) * 3.141592653589793 / 180)))`,
-      limit,
-      offset,
+    // Resolve matching stray ids + distances in one pass:
+    // 1. candidates: strays with any sighting in the bounding box (uses the
+    //    sightings(lat, lng) index instead of scanning the whole table)
+    // 2. latest: each candidate's most recent sighting (one window function
+    //    instead of the correlated MAX subqueries recomputed per row)
+    // 3. keep strays whose *latest* sighting is inside the box, computing
+    //    the Haversine distance exactly once per stray
+    const nearby = (await db.all(sql`
+      WITH candidates AS (
+        SELECT DISTINCT stray_id
+        FROM sightings
+        WHERE lat BETWEEN ${minLat} AND ${maxLat}
+          AND lng BETWEEN ${minLng} AND ${maxLng}
+      ),
+      latest AS (
+        SELECT
+          s.stray_id AS stray_id,
+          s.lat AS lat,
+          s.lng AS lng,
+          ROW_NUMBER() OVER (
+            PARTITION BY s.stray_id
+            ORDER BY s.sighting_time DESC
+          ) AS rn
+        FROM sightings s
+        JOIN candidates c ON c.stray_id = s.stray_id
+      ),
+      latest_in_box AS (
+        SELECT
+          stray_id,
+          (6371 * acos(
+            cos(${lat} * 3.141592653589793 / 180) * cos(lat * 3.141592653589793 / 180)
+              * cos((lng * 3.141592653589793 / 180) - (${lng} * 3.141592653589793 / 180))
+            + sin(${lat} * 3.141592653589793 / 180) * sin(lat * 3.141592653589793 / 180)
+          )) AS distance
+        FROM latest
+        WHERE rn = 1
+          AND lat BETWEEN ${minLat} AND ${maxLat}
+          AND lng BETWEEN ${minLng} AND ${maxLng}
+      )
+      SELECT stray_id, distance
+      FROM latest_in_box
+      WHERE distance < ${radius}
+      ORDER BY distance
+      LIMIT ${limit} OFFSET ${offset}
+    `)) as { stray_id: number; distance: number }[]
+
+    if (nearby.length === 0) return []
+
+    const ids = nearby.map(row => row.stray_id)
+    const found = await db.query.strays.findMany({
+      where: inArray(strays.id, ids),
       with: {
         sightings: {
           orderBy: [desc(sightings.sightingTime)],
@@ -59,7 +98,14 @@ export const getNearbyStrays = createServerFn({ method: 'GET' })
         },
       },
     })
-    return result
+
+    // Restore distance ordering (inArray does not preserve it) and expose
+    // the computed distance so clients don't have to recompute it
+    const byId = new Map(found.map(stray => [stray.id, stray]))
+    return nearby.flatMap(({ stray_id, distance }) => {
+      const stray = byId.get(stray_id)
+      return stray ? [{ ...stray, distance }] : []
+    })
   })
 // Search strays with flexible filtering options
 export const searchStrays = createServerFn({ method: 'GET' })
@@ -73,9 +119,13 @@ export const searchStrays = createServerFn({ method: 'GET' })
       size: z.enum(['small', 'medium', 'large']).optional(),
       search: z.string().optional(), // For name/description search
       limit: z.number().positive().default(100),
+      offset: z.number().nonnegative().default(0),
     })
   )
-  .handler(async ({ data: { species, status, size, search, limit = 100 } }) => {
+  .handler(
+    async ({
+      data: { species, status, size, search, limit = 100, offset = 0 },
+    }) => {
     const db = await getDb()
 
     const whereConditions = []
@@ -102,13 +152,20 @@ export const searchStrays = createServerFn({ method: 'GET' })
     const whereCondition =
       whereConditions.length > 0 ? and(...whereConditions) : undefined
 
-    const result = await db.query.strays.findMany({
-      where: whereCondition,
-      orderBy: [desc(strays.updatedAt)],
-      limit,
-    })
+    const [items, [{ total }]] = await Promise.all([
+      db.query.strays.findMany({
+        where: whereCondition,
+        orderBy: [desc(strays.updatedAt)],
+        limit,
+        offset,
+      }),
+      db
+        .select({ total: sql<number>`count(*)` })
+        .from(strays)
+        .where(whereCondition),
+    ])
 
-    return result
+    return { items, total }
   })
 
 // Get a single stray by ID with related data

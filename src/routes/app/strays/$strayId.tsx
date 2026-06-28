@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useFindStrayById } from '~/hooks/server/useFindStrayById'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
@@ -10,30 +10,29 @@ import { Img } from 'react-image'
 import { Spinner } from '~/components/ui/spinner'
 import { Button } from '~/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
-import { User } from 'better-auth'
 import { Dialog, DialogContent } from '~/components/ui/dialog'
 import { SightingDialog } from '~/components/dialogs/SightingDialog'
 import { useIsMobile } from '~/hooks/use-mobile'
+import { Skeleton } from '~/components/ui/skeleton'
 import { getSightingThumbnailUrl } from '~/utils/files'
-import type { Stray, Sighting, SightingPhoto } from 'db/schema'
+import type { SightingWithDetails, StrayWithRelations } from '~/types/sighting'
 import { authClient } from '~/lib/auth-client'
 import { useDeleteSighting } from '~/hooks/server/useDeleteSighting'
 import { ConfirmationDialog } from '~/components/dialogs/ConfirmationDialog'
+import { NamingSuggestions } from '~/components/NamingSuggestions'
+import { FollowStrayButton } from '~/components/FollowStrayButton'
 import { toast } from 'sonner'
+import { getErrorMessage } from '~/lib/errors'
+import { toastUndoable } from '~/lib/undoable'
 import { useRouter } from '@tanstack/react-router'
 import { Trash2 } from 'lucide-react'
 
-type StrayWithRelations = Stray & {
-  caretaker?: User
-  sightings: Array<
-    Sighting & {
-      user: User
-      sightingPhotos: SightingPhoto[]
-    }
-  >
-}
-
 export const Route = createFileRoute('/app/strays/$strayId')({
+  // ?sighting=<id> drives the sighting dialog (deep-linkable, back-button friendly)
+  validateSearch: (search: Record<string, unknown>): { sighting?: number } => {
+    const raw = Number(search.sighting)
+    return Number.isFinite(raw) && raw > 0 ? { sighting: raw } : {}
+  },
   component: StrayDetailPage,
 })
 
@@ -46,25 +45,70 @@ function StrayDetailPage() {
   const deleteSightingMutation = useDeleteSighting()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [sightingToDelete, setSightingToDelete] = useState<number | null>(null)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedSightingForDialog, setSelectedSightingForDialog] = useState<
-    | (Stray & {
-      sighting: Sighting & { sightingPhotos: SightingPhoto[]; user: User }
-    })
-    | null
-  >(null)
+  const navigate = Route.useNavigate()
+  const { sighting: sightingParam } = Route.useSearch()
+  const [dialogPlaceholder, setDialogPlaceholder] =
+    useState<SightingWithDetails | null>(null)
+  const openedFromRef = useRef<number | null>(null)
+
+  const openSightingDialog = (sighting: SightingWithDetails) => {
+    setDialogPlaceholder(sighting)
+    openedFromRef.current = sighting.sighting.id
+    navigate({ search: { sighting: sighting.sighting.id } })
+  }
+
+  const closeSightingDialog = () => {
+    navigate({ search: {} })
+  }
 
   const { data: stray, isLoading, error } = useFindStrayById(strayIdNum)
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-96">
-          <div className="text-center">
-            <Spinner />
-            <p className="mt-4 text-muted-foreground">
-              Loading stray details...
-            </p>
+      <div className="container mx-auto px-4 py-8" aria-label="Loading stray details">
+        <div className="mb-6">
+          <Skeleton className="h-10 w-36 mb-4" />
+          <Skeleton className="h-9 w-64 mb-2" />
+          <Skeleton className="h-5 w-48" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <Skeleton className="w-full h-80 rounded-t-lg rounded-b-none" />
+              <div className="p-6 space-y-3">
+                <Skeleton className="h-6 w-48" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-5 w-20 rounded-full" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                  <Skeleton className="h-5 w-14 rounded-full" />
+                </div>
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            </Card>
+            <Card>
+              <div className="p-6 space-y-4">
+                <Skeleton className="h-6 w-40" />
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex items-start gap-3 p-4 border rounded-lg">
+                    <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-40" />
+                      <Skeleton className="h-3 w-full" />
+                      <Skeleton className="w-16 h-16 rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+          <div className="space-y-6">
+            <Card>
+              <div className="p-6 space-y-3">
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            </Card>
           </div>
         </div>
       </div>
@@ -104,7 +148,10 @@ function StrayDetailPage() {
             Back to Strays
           </Link>
         </Button>
-        <h1 className="text-3xl font-bold">{stray.name || 'Unnamed Stray'}</h1>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <h1 className="text-3xl font-bold">{stray.name || 'Unnamed Stray'}</h1>
+          <FollowStrayButton strayId={strayIdNum} />
+        </div>
         <p className="text-muted-foreground">
           Detailed view and sighting history
         </p>
@@ -232,11 +279,10 @@ function StrayDetailPage() {
                     <div
                       key={sighting.id}
                       onClick={() => {
-                        setSelectedSightingForDialog({
+                        openSightingDialog({
                           ...stray,
                           sighting,
                         })
-                        setDialogOpen(true)
                       }}
                     >
                       <div className="flex items-start gap-3 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
@@ -319,13 +365,28 @@ function StrayDetailPage() {
             </CardContent>
           </Card>
 
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog
+            open={sightingParam != null}
+            onOpenChange={open => {
+              if (!open) closeSightingDialog()
+            }}
+          >
             <DialogContent
               className={`p-0 ${isMobile ? 'w-full h-full' : 'max-w-2xl'}`}
             >
               <SightingDialog
-                selectedSighting={selectedSightingForDialog}
-                onClose={() => setDialogOpen(false)}
+                sightingId={sightingParam}
+                initialSighting={dialogPlaceholder}
+                onNavigateToSighting={id =>
+                  navigate({ search: { sighting: id } })
+                }
+                canGoBack={
+                  sightingParam != null &&
+                  openedFromRef.current != null &&
+                  sightingParam !== openedFromRef.current
+                }
+                onBack={() => router.history.back()}
+                onClose={closeSightingDialog}
               />
             </DialogContent>
           </Dialog>
@@ -334,23 +395,38 @@ function StrayDetailPage() {
             open={deleteDialogOpen}
             onOpenChange={setDeleteDialogOpen}
             title="Delete Sighting"
-            description="Are you sure you want to delete this sighting? This will also delete all associated photos and community posts. This action cannot be undone."
+            description={(() => {
+              const target = strayWithRelations.sightings.find(
+                s => s.id === sightingToDelete
+              )
+              const when = target
+                ? ` from ${formatRelativeDate(Number(target.sightingTime))}`
+                : ''
+              const photos = target?.sightingPhotos.length ?? 0
+              return `This removes the sighting${when}${photos > 0 ? ` along with ${photos} photo${photos > 1 ? 's' : ''}` : ''}. You'll have a few seconds to undo.`
+            })()}
             confirmText="Delete"
             variant="destructive"
-            onConfirm={async () => {
+            onConfirm={() => {
               if (!sightingToDelete) return
-              try {
-                await deleteSightingMutation.mutateAsync(sightingToDelete)
-                toast.success('Deleted successfully')
-                setDeleteDialogOpen(false)
-                setSightingToDelete(null)
-                router.invalidate()
-              } catch (error) {
-                toast.error('Failed to delete')
-                console.error(error)
-              }
+              const id = sightingToDelete
+              setDeleteDialogOpen(false)
+              setSightingToDelete(null)
+              toastUndoable({
+                message: 'Sighting deleted',
+                onCommit: () =>
+                  deleteSightingMutation.mutate(id, {
+                    onSuccess: () => router.invalidate(),
+                    onError: error => {
+                      const { title, description } = getErrorMessage(
+                        error,
+                        'Could not delete the sighting'
+                      )
+                      toast.error(title, { description })
+                    },
+                  }),
+              })
             }}
-            isLoading={deleteSightingMutation.isPending}
           />
 
 
@@ -358,6 +434,13 @@ function StrayDetailPage() {
 
         {/* Sidebar */}
         <div className="space-y-6">
+          {/* Community naming */}
+          <Card>
+            <CardContent className="pt-6">
+              <NamingSuggestions strayId={strayIdNum} />
+            </CardContent>
+          </Card>
+
           {/* Primary Location */}
           {stray.primaryLocation && (
             <Card>
